@@ -85,5 +85,24 @@ Important implementation detail:
 Phaser is pinned to 3.90.0. Vite 7.3.6 and Vitest 5.0.1 were selected after
 an npm audit; the installed dependency tree reports zero vulnerabilities. Tests
 and the production build pass. The Vite development server returned the expected
-game mount and entry module, but no controllable browser was available for a
-visual/console smoke test, so that backlog check remains open.
+game mount and entry module, and the user verified both initial scenes in a browser.
+
+## 2026-09-18 - Helicopter Vertical Slice
+
+Decision:
+Use small `Helicopter` and `Tank` Arcade Physics entities with generated placeholder
+textures. Keep projectile creation and collisions in `GameScene` until more weapon
+or enemy types make a dedicated system worthwhile.
+
+Reason:
+This produces the first complete arcade loop—fly, land, take off, fire, and destroy
+a target—without adding infrastructure or later HUD, scoring, or enemy-attack work.
+
+Important implementation detail:
+The battlefield is 3200x900 with ground at y=790. The camera follows both axes with
+smoothing and a dead zone. Helicopter movement uses acceleration, drag, capped
+velocity, and light passive gravity; both WASD and arrow keys are supported. Safe
+landing requires ground contact within the configured horizontal and vertical speed
+limits, with the pure rule covered by unit tests. Space fires reusable horizontal
+cannon rounds on a 180ms cooldown, and the placeholder tank is destroyed after four
+hits. Movement and combat tuning belongs in the existing P2 Feel backlog.

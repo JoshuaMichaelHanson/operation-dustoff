@@ -21,7 +21,7 @@ Agents should work from top to bottom unless explicitly directed otherwise.
 - [x] Install Phaser 3.90.x
 - [x] Configure dev/build/test scripts
 - [x] Create scene skeleton
-- [ ] Confirm game renders in browser
+- [x] Confirm game renders in browser
 - [x] Add basic Vitest setup
 
 ### Acceptance
@@ -38,14 +38,14 @@ must succeed.
 
 ## P0 - Helicopter Vertical Slice
 
-- [ ] Render placeholder helicopter
-- [ ] Add keyboard controls
-- [ ] Add acceleration and velocity limits
-- [ ] Add camera follow
-- [ ] Add ground collision
-- [ ] Detect landed vs airborne state
-- [ ] Add cannon projectile
-- [ ] Add one targetable tank
+- [x] Render placeholder helicopter
+- [x] Add keyboard controls
+- [x] Add acceleration and velocity limits
+- [x] Add camera follow
+- [x] Add ground collision
+- [x] Detect landed vs airborne state
+- [x] Add cannon projectile
+- [x] Add one targetable tank
 
 ### Acceptance
 
