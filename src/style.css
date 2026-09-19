@@ -1,0 +1,35 @@
+:root {
+  color: #f4efcf;
+  background: #11150f;
+  font-family: "Courier New", monospace;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+main {
+  width: 100%;
+  min-width: 320px;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+#game {
+  width: min(100vw, 1280px);
+  height: min(100vh, 720px);
+  box-shadow: 0 0 48px rgb(0 0 0 / 55%);
+}
+
+#game canvas {
+  display: block;
+}

@@ -1,0 +1,1 @@
+{"root":["./src/main.ts","./src/vite-env.d.ts","./src/game/config.ts","./src/game/constants.ts","./src/game/scenes/bootscene.ts","./src/game/scenes/gameoverscene.ts","./src/game/scenes/gamescene.ts","./src/game/scenes/titlescene.ts","./src/game/scenes/victoryscene.ts"],"version":"5.9.2"}
