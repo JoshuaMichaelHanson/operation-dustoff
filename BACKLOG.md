@@ -42,6 +42,7 @@ must succeed.
 - [x] Add keyboard controls
 - [x] Add acceleration and velocity limits
 - [x] Add camera follow
+- [x] Keep ground targets visible during climbs and restore framing on descent
 - [x] Add ground collision
 - [x] Detect landed vs airborne state
 - [x] Add cannon projectile
@@ -62,11 +63,11 @@ Player can:
 
 ## P0 - Prison Camp Slice
 
-- [ ] Add prison camp entity
-- [ ] Give camp health
-- [ ] Allow player weapons to damage camp
-- [ ] Change camp to open/destroyed state
-- [ ] Spawn hostages when camp opens
+- [x] Add prison camp entity
+- [x] Give camp health
+- [x] Allow player weapons to damage camp
+- [x] Change camp to open/destroyed state
+- [x] Spawn hostages when camp opens
 
 ### Acceptance
 

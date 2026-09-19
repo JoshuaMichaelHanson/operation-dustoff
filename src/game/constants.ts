@@ -6,6 +6,13 @@ export const WORLD_WIDTH = 3200;
 export const WORLD_HEIGHT = 900;
 export const GROUND_Y = 790;
 
+export const CAMERA = {
+  followLerp: 0.08,
+  verticalFollowOffset: 60,
+  horizontalDeadzone: 260,
+  verticalDeadzone: 240,
+} as const;
+
 export const HELICOPTER = {
   horizontalAcceleration: 440,
   verticalAcceleration: 520,
@@ -18,8 +25,14 @@ export const HELICOPTER = {
   safeLandingVerticalSpeed: 95,
   cannonCooldownMs: 180,
   cannonRoundSpeed: 720,
+  maximumForwardPitchRadians: 0.28,
 } as const;
 
 export const TANK = {
   health: 4,
+} as const;
+
+export const PRISON_CAMP = {
+  health: 6,
+  hostageCount: 6,
 } as const;

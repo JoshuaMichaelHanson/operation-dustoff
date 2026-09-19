@@ -121,3 +121,36 @@ first argument as the projectile caused cannon hits to call `takeDamage` on a ro
 Important implementation detail:
 The cannon overlap is registered as tank first, projectile group second, so its
 callback receives `(tank, round)`. The round is disabled before tank damage is applied.
+
+## 2026-09-19 - Prison Camp Slice and Ground Aiming
+
+Decision:
+Add one six-hit prison camp near the far end of the battlefield. Opening it swaps
+the camp to a ruined texture, disables its collision body, and reveals six hostage
+placeholders. Hostage movement and boarding remain in the next vertical slice.
+
+Reason:
+This completes the camp interaction from cannon fire through a visible hostage
+release without pulling the hostage state machine forward or adding a manager early.
+
+Important implementation detail:
+Camp health and hostage count live in `PRISON_CAMP` constants. The helicopter now
+pitches forward by as much as 0.28 radians based on horizontal speed, and cannon
+velocity follows that pitch toward the ground in either facing direction. Cannon
+rounds that leave the bottom of the world are returned to the projectile pool.
+
+## 2026-09-19 - Ground-Biased Camera Framing
+
+Decision:
+Use a 240-pixel vertical dead zone and a 60-pixel vertical follow offset.
+
+Reason:
+The previous camera began panning upward too early, moving the ground, rescue base,
+and ground targets out of view during normal attack-height climbs. A taller dead zone
+lets the helicopter move higher within the viewport before the camera follows.
+
+Important implementation detail:
+Camera tuning values live in the `CAMERA` constants object. The upward-follow trigger
+remains at screen y=300, preserving the longer view of the ground during climbs. The
+downward-follow trigger is at y=540, so the camera starts returning toward the ground
+well before landing. Horizontal tracking and the 0.08 smoothing value are unchanged.

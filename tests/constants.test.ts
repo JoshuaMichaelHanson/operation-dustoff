@@ -1,11 +1,30 @@
 import { describe, expect, it } from 'vitest';
 
-import { GAME_HEIGHT, GAME_TITLE, GAME_WIDTH } from '../src/game/constants';
+import {
+  CAMERA,
+  GAME_HEIGHT,
+  GAME_TITLE,
+  GAME_WIDTH,
+} from '../src/game/constants';
 
 describe('game constants', () => {
   it('defines a playable game viewport and title', () => {
     expect(GAME_WIDTH).toBe(1280);
     expect(GAME_HEIGHT).toBe(720);
     expect(GAME_TITLE).toBe('OPERATION DUSTOFF');
+  });
+
+  it('keeps ground visibility while following descents before landing', () => {
+    const upwardFollowThreshold =
+      GAME_HEIGHT / 2 -
+      CAMERA.verticalDeadzone / 2 +
+      CAMERA.verticalFollowOffset;
+    const downwardFollowThreshold =
+      GAME_HEIGHT / 2 +
+      CAMERA.verticalDeadzone / 2 +
+      CAMERA.verticalFollowOffset;
+
+    expect(upwardFollowThreshold).toBe(300);
+    expect(downwardFollowThreshold).toBeLessThanOrEqual(GAME_HEIGHT * 0.75);
   });
 });
