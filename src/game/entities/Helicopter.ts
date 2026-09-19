@@ -24,6 +24,7 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   private facing: -1 | 1 = 1;
   private lastCannonShotAt = Number.NEGATIVE_INFINITY;
   private landed = false;
+  private passengers = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'helicopter');
@@ -66,6 +67,23 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
 
   get isLanded(): boolean {
     return this.landed;
+  }
+
+  get passengerCount(): number {
+    return this.passengers;
+  }
+
+  get passengerCapacity(): number {
+    return HELICOPTER.passengerCapacity;
+  }
+
+  tryBoardPassenger(): boolean {
+    if (this.passengers >= this.passengerCapacity) {
+      return false;
+    }
+
+    this.passengers += 1;
+    return true;
   }
 
   update(time: number): CannonShot | null {

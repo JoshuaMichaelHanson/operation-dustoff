@@ -154,3 +154,22 @@ Camera tuning values live in the `CAMERA` constants object. The upward-follow tr
 remains at screen y=300, preserving the longer view of the ground during climbs. The
 downward-follow trigger is at y=540, so the camera starts returning toward the ground
 well before landing. Horizontal tracking and the 0.08 smoothing value are unchanged.
+
+## 2026-09-19 - Hostage State Machine
+
+Decision:
+Use one small `Hostage` entity per released captive and keep the collection in
+`GameScene`. Each hostage owns its state and ground movement; the helicopter owns its
+passenger count and enforces the configurable eight-passenger capacity.
+
+Reason:
+Six hostages do not justify a manager yet. Direct updates keep the release-to-boarding
+slice easy to follow while preserving the intended ownership boundaries.
+
+Important implementation detail:
+Hostages leave the opened camp in a staggered sequence, alternate between rally points
+on both sides, and wait there. A hostage approaches only when the helicopter is safely
+landed within 190 pixels and has room. If those conditions stop being true, the hostage
+returns to `WAITING`; reaching the helicopter transitions it to `ABOARD`, hides its
+sprite, and increments the `PAX` display. Pure tests cover legal transitions, airborne
+and distance rejection, and capacity enforcement.

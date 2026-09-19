@@ -26,6 +26,7 @@ export const HELICOPTER = {
   cannonCooldownMs: 180,
   cannonRoundSpeed: 720,
   maximumForwardPitchRadians: 0.28,
+  passengerCapacity: 8,
 } as const;
 
 export const TANK = {
@@ -35,4 +36,14 @@ export const TANK = {
 export const PRISON_CAMP = {
   health: 6,
   hostageCount: 6,
+} as const;
+
+export const HOSTAGE = {
+  runningOutSpeed: 72,
+  boardingSpeed: 105,
+  boardingRadius: 190,
+  boardingDistance: 38,
+  rallyDistance: 110,
+  rallySpacing: 34,
+  releaseDelayMs: 140,
 } as const;
