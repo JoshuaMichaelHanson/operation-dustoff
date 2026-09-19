@@ -4,6 +4,12 @@ export enum HostageState {
   Waiting = 'WAITING',
   RunningToHelicopter = 'RUNNING_TO_HELICOPTER',
   Aboard = 'ABOARD',
+  RunningToBase = 'RUNNING_TO_BASE',
+  Rescued = 'RESCUED',
+}
+
+export enum HostageUpdateEvent {
+  Boarded = 'BOARDED',
   Rescued = 'RESCUED',
 }
 
@@ -15,7 +21,8 @@ const allowedTransitions: Record<HostageState, readonly HostageState[]> = {
     HostageState.Waiting,
     HostageState.Aboard,
   ],
-  [HostageState.Aboard]: [HostageState.Rescued],
+  [HostageState.Aboard]: [HostageState.RunningToBase],
+  [HostageState.RunningToBase]: [HostageState.Rescued],
   [HostageState.Rescued]: [],
 };
 

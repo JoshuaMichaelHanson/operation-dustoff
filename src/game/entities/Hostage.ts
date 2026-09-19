@@ -4,6 +4,7 @@ import { GROUND_Y, HOSTAGE } from '../constants';
 import {
   canBeginBoarding,
   HostageState,
+  HostageUpdateEvent,
   isHostageTransitionAllowed,
 } from '../logic/hostageState';
 import type { Helicopter } from './Helicopter';
@@ -11,6 +12,7 @@ import type { Helicopter } from './Helicopter';
 export class Hostage extends Phaser.GameObjects.Sprite {
   private hostageState = HostageState.Captive;
   private releaseDelayRemainingMs: number;
+  private rescueTargetX: number | null = null;
 
   constructor(
     scene: Phaser.Scene,
@@ -30,29 +32,45 @@ export class Hostage extends Phaser.GameObjects.Sprite {
     return this.hostageState;
   }
 
-  update(deltaMs: number, helicopter: Helicopter): boolean {
+  beginDisembarking(startX: number, targetX: number): boolean {
+    if (this.hostageState !== HostageState.Aboard) {
+      return false;
+    }
+
+    this.x = startX;
+    this.y = GROUND_Y;
+    this.rescueTargetX = targetX;
+    this.setVisible(true);
+    this.transitionTo(HostageState.RunningToBase);
+    return true;
+  }
+
+  update(
+    deltaMs: number,
+    helicopter: Helicopter,
+  ): HostageUpdateEvent | null {
     switch (this.hostageState) {
       case HostageState.RunningOut:
         if (this.releaseDelayRemainingMs > 0) {
           this.releaseDelayRemainingMs -= deltaMs;
-          return false;
+          return null;
         }
 
         if (this.moveToward(this.rallyX, HOSTAGE.runningOutSpeed, deltaMs)) {
           this.transitionTo(HostageState.Waiting);
         }
-        return false;
+        return null;
 
       case HostageState.Waiting:
         if (this.canApproach(helicopter)) {
           this.transitionTo(HostageState.RunningToHelicopter);
         }
-        return false;
+        return null;
 
       case HostageState.RunningToHelicopter:
         if (!this.canApproach(helicopter)) {
           this.transitionTo(HostageState.Waiting);
-          return false;
+          return null;
         }
 
         if (
@@ -61,14 +79,29 @@ export class Hostage extends Phaser.GameObjects.Sprite {
         ) {
           this.transitionTo(HostageState.Aboard);
           this.setVisible(false);
-          return true;
+          return HostageUpdateEvent.Boarded;
         }
-        return false;
+        return null;
+
+      case HostageState.RunningToBase:
+        if (
+          this.rescueTargetX !== null &&
+          this.moveToward(
+            this.rescueTargetX,
+            HOSTAGE.disembarkingSpeed,
+            deltaMs,
+          )
+        ) {
+          this.transitionTo(HostageState.Rescued);
+          this.setVisible(false);
+          return HostageUpdateEvent.Rescued;
+        }
+        return null;
 
       case HostageState.Captive:
       case HostageState.Aboard:
       case HostageState.Rescued:
-        return false;
+        return null;
     }
   }
 

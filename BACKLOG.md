@@ -93,12 +93,13 @@ Player can land near released hostages and load passengers.
 
 ## P0 - Rescue Base
 
-- [ ] Add base zone
-- [ ] Detect safe landing at base
-- [ ] Unload helicopter passengers
-- [ ] Increase rescued count
-- [ ] Increase score
-- [ ] Display rescue progress
+- [x] Add base zone
+- [x] Detect safe landing at base
+- [x] Unload helicopter passengers
+- [x] Animate passengers running into base one at a time
+- [x] Increase rescued count
+- [x] Increase score
+- [x] Display rescue progress
 
 ### Acceptance
 
