@@ -41,9 +41,18 @@ export const PRISON_CAMP = {
 export const HOSTAGE = {
   runningOutSpeed: 72,
   boardingSpeed: 105,
+  disembarkingSpeed: 115,
   boardingRadius: 190,
   boardingDistance: 38,
   rallyDistance: 110,
   rallySpacing: 34,
   releaseDelayMs: 140,
+  unloadIntervalMs: 250,
+} as const;
+
+export const RESCUE_BASE = {
+  centerX: 350,
+  landingZoneWidth: 500,
+  entranceX: 130,
+  scorePerHostage: 100,
 } as const;

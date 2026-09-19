@@ -14,24 +14,32 @@ import {
 import { Helicopter } from '../entities/Helicopter';
 import { Hostage } from '../entities/Hostage';
 import { PrisonCamp } from '../entities/PrisonCamp';
+import { RescueBase } from '../entities/RescueBase';
 import { Tank } from '../entities/Tank';
 import { getCannonVelocity } from '../logic/cannonAim';
+import { HostageState, HostageUpdateEvent } from '../logic/hostageState';
+import { GameState } from '../state/GameState';
 
 export class GameScene extends Phaser.Scene {
   private helicopter!: Helicopter;
   private tank!: Tank;
   private prisonCamp!: PrisonCamp;
+  private rescueBase!: RescueBase;
   private hostages: Hostage[] = [];
   private cannonRounds!: Phaser.Physics.Arcade.Group;
   private statusText!: Phaser.GameObjects.Text;
+  private rescueText!: Phaser.GameObjects.Text;
   private targetText!: Phaser.GameObjects.Text;
+  private gameState!: GameState;
   private targetDestroyed = false;
+  private nextPassengerUnloadAt = 0;
 
   constructor() {
     super('GameScene');
   }
 
   create(): void {
+    this.gameState = new GameState();
     this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     this.createBattlefield();
 
@@ -44,6 +52,7 @@ export class GameScene extends Phaser.Scene {
     );
     this.physics.add.existing(ground, true);
 
+    this.rescueBase = new RescueBase(this);
     this.helicopter = new Helicopter(this, 280, GROUND_Y - 21);
     this.tank = new Tank(this, 1780, GROUND_Y - 21);
     this.prisonCamp = new PrisonCamp(this, 2600, GROUND_Y - 36);
@@ -97,13 +106,21 @@ export class GameScene extends Phaser.Scene {
       );
     }
 
-    let passengerBoarded = false;
+    let hostageStateChanged = false;
     for (const hostage of this.hostages) {
-      if (hostage.update(delta, this.helicopter)) {
-        passengerBoarded = true;
+      const event = hostage.update(delta, this.helicopter);
+      if (event === HostageUpdateEvent.Boarded) {
+        hostageStateChanged = true;
+      } else if (event === HostageUpdateEvent.Rescued) {
+        this.gameState.recordRescue(1);
+        this.nextPassengerUnloadAt = time + HOSTAGE.unloadIntervalMs;
+        hostageStateChanged = true;
       }
     }
-    if (passengerBoarded) {
+    if (this.tryStartPassengerUnload(time)) {
+      hostageStateChanged = true;
+    }
+    if (hostageStateChanged) {
       this.updateObjectiveText();
     }
 
@@ -126,6 +143,9 @@ export class GameScene extends Phaser.Scene {
     this.statusText.setText(
       `FLIGHT: ${flightState}   TANK: ${tankState}   CAMP: ${campState}   PAX: ${this.helicopter.passengerCount}/${this.helicopter.passengerCapacity}`,
     );
+    this.rescueText.setText(
+      `RESCUED: ${this.gameState.rescued}   SCORE: ${this.gameState.score}`,
+    );
   }
 
   private createBattlefield(): void {
@@ -144,12 +164,6 @@ export class GameScene extends Phaser.Scene {
       );
     }
 
-    this.add.rectangle(350, GROUND_Y - 4, 500, 8, 0x74805d);
-    this.add.text(120, GROUND_Y - 72, 'DUSTOFF BASE', {
-      color: '#91a087',
-      fontFamily: 'Courier New',
-      fontSize: '18px',
-    });
     this.add.text(1665, GROUND_Y - 82, 'ARMORED TARGET', {
       color: '#c7b96a',
       fontFamily: 'Courier New',
@@ -181,11 +195,11 @@ export class GameScene extends Phaser.Scene {
 
   private createFlightDisplay(): void {
     this.add
-      .rectangle(GAME_WIDTH / 2, 31, GAME_WIDTH, 62, 0x11150f, 0.88)
+      .rectangle(GAME_WIDTH / 2, 40, GAME_WIDTH, 80, 0x11150f, 0.88)
       .setScrollFactor(0);
 
     this.add
-      .text(24, 18, 'WASD / ARROWS: FLY   SPACE: FIRE', {
+      .text(24, 12, 'WASD / ARROWS: FLY   SPACE: FIRE', {
         color: '#d6dec3',
         fontFamily: 'Courier New',
         fontSize: '18px',
@@ -195,7 +209,7 @@ export class GameScene extends Phaser.Scene {
     this.statusText = this.add
       .text(
         GAME_WIDTH - 24,
-        18,
+        12,
         'FLIGHT: LANDED   TANK: ACTIVE   CAMP: CLOSED   PAX: 0/8',
         {
           color: '#f3d45a',
@@ -205,6 +219,15 @@ export class GameScene extends Phaser.Scene {
         },
       )
       .setOrigin(1, 0)
+      .setScrollFactor(0);
+
+    this.rescueText = this.add
+      .text(24, 46, 'RESCUED: 0   SCORE: 0', {
+        color: '#8fe388',
+        fontFamily: 'Courier New',
+        fontSize: '17px',
+        fontStyle: 'bold',
+      })
       .setScrollFactor(0);
 
     this.targetText = this.add
@@ -272,17 +295,68 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private tryStartPassengerUnload(time: number): boolean {
+    if (
+      time < this.nextPassengerUnloadAt ||
+      this.helicopter.passengerCount === 0 ||
+      !this.rescueBase.canUnload(this.helicopter) ||
+      this.hostages.some(
+        (hostage) => hostage.currentState === HostageState.RunningToBase,
+      )
+    ) {
+      return false;
+    }
+
+    const passenger = this.hostages.find(
+      (hostage) => hostage.currentState === HostageState.Aboard,
+    );
+    if (
+      !passenger ||
+      !passenger.beginDisembarking(
+        this.helicopter.x,
+        this.rescueBase.entranceX,
+      )
+    ) {
+      return false;
+    }
+
+    if (!this.helicopter.unloadPassenger()) {
+      throw new Error('Passenger manifest did not match aboard hostages.');
+    }
+
+    return true;
+  }
+
   private updateObjectiveText(): void {
-    if (this.helicopter.passengerCount === this.helicopter.passengerCapacity) {
+    const passengers = this.helicopter.passengerCount;
+    const hostagesAtCamp = this.hostages.filter((hostage) =>
+      [
+        HostageState.RunningOut,
+        HostageState.Waiting,
+        HostageState.RunningToHelicopter,
+      ].includes(hostage.currentState),
+    ).length;
+    const disembarking = this.hostages.some(
+      (hostage) => hostage.currentState === HostageState.RunningToBase,
+    );
+    const unloadingAtBase =
+      passengers > 0 && this.rescueBase.canUnload(this.helicopter);
+
+    if (disembarking || unloadingAtBase) {
+      this.targetText.setText(
+        `UNLOADING: ${this.gameState.rescued} RESCUED   ${passengers} ABOARD`,
+      );
+      this.targetText.setColor('#8fe388');
+      return;
+    }
+
+    if (passengers === this.helicopter.passengerCapacity) {
       this.targetText.setText('HELICOPTER FULL — RETURN TO BASE');
       this.targetText.setColor('#8fe388');
       return;
     }
 
-    if (
-      this.hostages.length > 0 &&
-      this.helicopter.passengerCount === this.hostages.length
-    ) {
+    if (passengers > 0 && hostagesAtCamp === 0) {
       this.targetText.setText(
         this.targetDestroyed
           ? 'HOSTAGES ABOARD — RETURN TO BASE'
@@ -292,9 +366,30 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    if (this.helicopter.passengerCount > 0) {
+    if (passengers > 0) {
       this.targetText.setText(
-        `BOARDING: ${this.helicopter.passengerCount}/${this.hostages.length} ABOARD`,
+        `BOARDING: ${passengers} ABOARD   ${hostagesAtCamp} WAITING`,
+      );
+      this.targetText.setColor('#8fe388');
+      return;
+    }
+
+    if (
+      this.hostages.length > 0 &&
+      this.gameState.rescued === this.hostages.length
+    ) {
+      this.targetText.setText(
+        this.targetDestroyed
+          ? 'RESCUE COMPLETE'
+          : 'HOSTAGES RESCUED — DESTROY THE TANK',
+      );
+      this.targetText.setColor('#8fe388');
+      return;
+    }
+
+    if (this.gameState.rescued > 0) {
+      this.targetText.setText(
+        `${this.gameState.rescued} RESCUED — RETURN FOR ${hostagesAtCamp}`,
       );
       this.targetText.setColor('#8fe388');
       return;

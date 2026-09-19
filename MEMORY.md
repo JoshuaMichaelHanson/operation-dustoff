@@ -173,3 +173,26 @@ landed within 190 pixels and has room. If those conditions stop being true, the 
 returns to `WAITING`; reaching the helicopter transitions it to `ABOARD`, hides its
 sprite, and increments the `PAX` display. Pure tests cover legal transitions, airborne
 and distance rejection, and capacity enforcement.
+
+## 2026-09-19 - Rescue Base Loop
+
+Decision:
+Promote the existing 500-pixel base pad into a `RescueBase` entity and unload
+passengers sequentially when the helicopter is safely landed inside it. Each passenger
+runs into a visible base doorway before earning 100 points and increasing the rescued
+total. Show rescued and score totals in a second HUD line.
+
+Reason:
+This completes the first end-to-end rescue trip while keeping landing geometry in the
+base entity, passenger state in the helicopter, hostage state in each hostage, and
+run-wide totals in a small `GameState`.
+
+Important implementation detail:
+Returning passengers transition from `ABOARD` to `RUNNING_TO_BASE` to `RESCUED`.
+The passenger manifest removes one person as they exit; the next person waits until
+the runner reaches the doorway plus a short interval. `GameState.recordRescue(1)` is
+called only at the doorway, so score advances with the visible arrival. Taking off
+pauses passengers who remain aboard, while a passenger already on the ground continues
+inside. Partial trips also work. Victory remains in its dedicated P0 slice. Pure tests
+cover base boundaries, airborne rejection, one-at-a-time unloading, capacity, legal
+disembark transitions, and cumulative rescue scoring.

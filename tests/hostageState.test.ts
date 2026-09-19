@@ -33,7 +33,16 @@ describe('hostage state transitions', () => {
       ),
     ).toBe(true);
     expect(
-      isHostageTransitionAllowed(HostageState.Aboard, HostageState.Rescued),
+      isHostageTransitionAllowed(
+        HostageState.Aboard,
+        HostageState.RunningToBase,
+      ),
+    ).toBe(true);
+    expect(
+      isHostageTransitionAllowed(
+        HostageState.RunningToBase,
+        HostageState.Rescued,
+      ),
     ).toBe(true);
   });
 
@@ -49,6 +58,12 @@ describe('hostage state transitions', () => {
   it('rejects skipping directly from waiting to aboard', () => {
     expect(
       isHostageTransitionAllowed(HostageState.Waiting, HostageState.Aboard),
+    ).toBe(false);
+  });
+
+  it('rejects scoring an aboard hostage before they run into base', () => {
+    expect(
+      isHostageTransitionAllowed(HostageState.Aboard, HostageState.Rescued),
     ).toBe(false);
   });
 });

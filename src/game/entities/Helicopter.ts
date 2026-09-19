@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { HELICOPTER } from '../constants';
 import { isSafeLanding } from '../logic/helicopterMotion';
+import { PassengerManifest } from '../logic/passengerManifest';
 
 interface DirectionKeys {
   up: Phaser.Input.Keyboard.Key;
@@ -24,7 +25,9 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   private facing: -1 | 1 = 1;
   private lastCannonShotAt = Number.NEGATIVE_INFINITY;
   private landed = false;
-  private passengers = 0;
+  private readonly passengers = new PassengerManifest(
+    HELICOPTER.passengerCapacity,
+  );
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'helicopter');
@@ -70,7 +73,7 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   }
 
   get passengerCount(): number {
-    return this.passengers;
+    return this.passengers.count;
   }
 
   get passengerCapacity(): number {
@@ -78,12 +81,11 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   }
 
   tryBoardPassenger(): boolean {
-    if (this.passengers >= this.passengerCapacity) {
-      return false;
-    }
+    return this.passengers.tryBoard();
+  }
 
-    this.passengers += 1;
-    return true;
+  unloadPassenger(): boolean {
+    return this.passengers.unloadOne();
   }
 
   update(time: number): CannonShot | null {
