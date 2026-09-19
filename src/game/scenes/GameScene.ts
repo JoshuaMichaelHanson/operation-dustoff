@@ -45,11 +45,11 @@ export class GameScene extends Phaser.Scene {
 
     this.physics.add.collider(this.helicopter, ground);
     this.physics.add.overlap(
-      this.cannonRounds,
       this.tank,
-      (roundObject, tankObject) => {
-        const round = roundObject as Phaser.Physics.Arcade.Image;
+      this.cannonRounds,
+      (tankObject, roundObject) => {
         const target = tankObject as Tank;
+        const round = roundObject as Phaser.Physics.Arcade.Image;
         round.disableBody(true, true);
 
         if (target.active && target.takeDamage()) {

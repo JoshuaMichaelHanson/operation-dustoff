@@ -46,6 +46,7 @@ must succeed.
 - [x] Detect landed vs airborne state
 - [x] Add cannon projectile
 - [x] Add one targetable tank
+- [x] Fix cannon-to-tank collision callback ordering
 
 ### Acceptance
 

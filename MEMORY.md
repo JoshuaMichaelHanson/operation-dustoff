@@ -106,3 +106,18 @@ landing requires ground contact within the configured horizontal and vertical sp
 limits, with the pure rule covered by unit tests. Space fires reusable horizontal
 cannon rounds on a 180ms cooldown, and the placeholder tank is destroyed after four
 hits. Movement and combat tuning belongs in the existing P2 Feel backlog.
+
+## 2026-09-19 - Arcade Collision Callback Ordering
+
+Decision:
+Pass the single target sprite before the projectile group when registering Arcade
+Physics overlaps, and name callback parameters in the order Phaser supplies them.
+
+Reason:
+Phaser passes the single sprite as the first callback argument for sprite-versus-group
+checks regardless of the argument order used to register the overlap. Treating the
+first argument as the projectile caused cannon hits to call `takeDamage` on a round.
+
+Important implementation detail:
+The cannon overlap is registered as tank first, projectile group second, so its
+callback receives `(tank, round)`. The round is disabled before tank damage is applied.
