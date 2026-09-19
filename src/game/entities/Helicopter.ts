@@ -14,6 +14,7 @@ export interface CannonShot {
   x: number;
   y: number;
   direction: -1 | 1;
+  downwardAngleRadians: number;
 }
 
 export class Helicopter extends Phaser.Physics.Arcade.Sprite {
@@ -92,14 +93,16 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
       );
     }
 
-    this.setFlipX(this.facing < 0);
-    this.setRotation(
-      Phaser.Math.Clamp(
-        body.velocity.x / HELICOPTER.maximumHorizontalSpeed,
-        -1,
-        1,
-      ) * 0.08,
+    const forwardSpeedRatio = Phaser.Math.Clamp(
+      Math.abs(body.velocity.x) / HELICOPTER.maximumHorizontalSpeed,
+      0,
+      1,
     );
+    const downwardAngleRadians =
+      forwardSpeedRatio * HELICOPTER.maximumForwardPitchRadians;
+
+    this.setFlipX(this.facing < 0);
+    this.setRotation(this.facing * downwardAngleRadians);
 
     this.landed = isSafeLanding({
       touchingGround: body.blocked.down || body.touching.down,
@@ -116,6 +119,7 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
         x: this.x + this.facing * 53,
         y: this.y + 2,
         direction: this.facing,
+        downwardAngleRadians,
       };
     }
 

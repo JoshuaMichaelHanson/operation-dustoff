@@ -1,19 +1,24 @@
 import Phaser from 'phaser';
 
 import {
+  CAMERA,
   GAME_HEIGHT,
   GAME_WIDTH,
   GROUND_Y,
   HELICOPTER,
+  PRISON_CAMP,
   WORLD_HEIGHT,
   WORLD_WIDTH,
 } from '../constants';
 import { Helicopter } from '../entities/Helicopter';
+import { PrisonCamp } from '../entities/PrisonCamp';
 import { Tank } from '../entities/Tank';
+import { getCannonVelocity } from '../logic/cannonAim';
 
 export class GameScene extends Phaser.Scene {
   private helicopter!: Helicopter;
   private tank!: Tank;
+  private prisonCamp!: PrisonCamp;
   private cannonRounds!: Phaser.Physics.Arcade.Group;
   private statusText!: Phaser.GameObjects.Text;
   private targetText!: Phaser.GameObjects.Text;
@@ -38,6 +43,7 @@ export class GameScene extends Phaser.Scene {
 
     this.helicopter = new Helicopter(this, 280, GROUND_Y - 21);
     this.tank = new Tank(this, 1780, GROUND_Y - 21);
+    this.prisonCamp = new PrisonCamp(this, 2600, GROUND_Y - 36);
     this.cannonRounds = this.physics.add.group({
       allowGravity: false,
       maxSize: 32,
@@ -54,8 +60,21 @@ export class GameScene extends Phaser.Scene {
 
         if (target.active && target.takeDamage()) {
           this.targetDestroyed = true;
-          this.targetText.setText('TARGET DESTROYED');
-          this.targetText.setColor('#f3d45a');
+          this.updateObjectiveText();
+        }
+      },
+    );
+    this.physics.add.overlap(
+      this.prisonCamp,
+      this.cannonRounds,
+      (campObject, roundObject) => {
+        const camp = campObject as PrisonCamp;
+        const round = roundObject as Phaser.Physics.Arcade.Image;
+        round.disableBody(true, true);
+
+        if (camp.active && camp.takeDamage()) {
+          this.releaseHostages();
+          this.updateObjectiveText();
         }
       },
     );
@@ -67,20 +86,33 @@ export class GameScene extends Phaser.Scene {
   update(time: number): void {
     const shot = this.helicopter.update(time);
     if (shot) {
-      this.fireCannon(shot.x, shot.y, shot.direction);
+      this.fireCannon(
+        shot.x,
+        shot.y,
+        shot.direction,
+        shot.downwardAngleRadians,
+      );
     }
 
     this.cannonRounds.children.each((child) => {
       const round = child as Phaser.Physics.Arcade.Image;
-      if (round.active && (round.x < -32 || round.x > WORLD_WIDTH + 32)) {
+      if (
+        round.active &&
+        (round.x < -32 ||
+          round.x > WORLD_WIDTH + 32 ||
+          round.y > WORLD_HEIGHT + 32)
+      ) {
         round.disableBody(true, true);
       }
       return true;
     });
 
     const flightState = this.helicopter.isLanded ? 'LANDED' : 'AIRBORNE';
-    const targetState = this.targetDestroyed ? 'DESTROYED' : 'ACTIVE';
-    this.statusText.setText(`FLIGHT: ${flightState}   TARGET: ${targetState}`);
+    const tankState = this.targetDestroyed ? 'DESTROYED' : 'ACTIVE';
+    const campState = this.prisonCamp.isOpen ? 'OPEN' : 'CLOSED';
+    this.statusText.setText(
+      `FLIGHT: ${flightState}   TANK: ${tankState}   CAMP: ${campState}`,
+    );
   }
 
   private createBattlefield(): void {
@@ -110,13 +142,28 @@ export class GameScene extends Phaser.Scene {
       fontFamily: 'Courier New',
       fontSize: '18px',
     });
+    this.add.text(2475, GROUND_Y - 110, 'PRISON CAMP', {
+      color: '#c7b96a',
+      fontFamily: 'Courier New',
+      fontSize: '18px',
+    });
   }
 
   private configureCamera(): void {
     const camera = this.cameras.main;
     camera.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-    camera.startFollow(this.helicopter, true, 0.08, 0.08, 0, 210);
-    camera.setDeadzone(260, 150);
+    camera.startFollow(
+      this.helicopter,
+      true,
+      CAMERA.followLerp,
+      CAMERA.followLerp,
+      0,
+      CAMERA.verticalFollowOffset,
+    );
+    camera.setDeadzone(
+      CAMERA.horizontalDeadzone,
+      CAMERA.verticalDeadzone,
+    );
   }
 
   private createFlightDisplay(): void {
@@ -133,28 +180,43 @@ export class GameScene extends Phaser.Scene {
       .setScrollFactor(0);
 
     this.statusText = this.add
-      .text(GAME_WIDTH - 24, 18, 'FLIGHT: LANDED   TARGET: ACTIVE', {
-        color: '#f3d45a',
-        fontFamily: 'Courier New',
-        fontSize: '18px',
-        fontStyle: 'bold',
-      })
+      .text(
+        GAME_WIDTH - 24,
+        18,
+        'FLIGHT: LANDED   TANK: ACTIVE   CAMP: CLOSED',
+        {
+          color: '#f3d45a',
+          fontFamily: 'Courier New',
+          fontSize: '18px',
+          fontStyle: 'bold',
+        },
+      )
       .setOrigin(1, 0)
       .setScrollFactor(0);
 
     this.targetText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 38, 'DESTROY THE ARMORED TARGET', {
-        backgroundColor: '#243128',
-        color: '#d6dec3',
-        fontFamily: 'Courier New',
-        fontSize: '18px',
-        padding: { x: 12, y: 8 },
-      })
+      .text(
+        GAME_WIDTH / 2,
+        GAME_HEIGHT - 38,
+        'DESTROY THE TANK AND PRISON CAMP',
+        {
+          backgroundColor: '#243128',
+          color: '#d6dec3',
+          fontFamily: 'Courier New',
+          fontSize: '18px',
+          padding: { x: 12, y: 8 },
+        },
+      )
       .setOrigin(0.5, 1)
       .setScrollFactor(0);
   }
 
-  private fireCannon(x: number, y: number, direction: -1 | 1): void {
+  private fireCannon(
+    x: number,
+    y: number,
+    direction: -1 | 1,
+    downwardAngleRadians: number,
+  ): void {
     const round = this.cannonRounds.get(
       x,
       y,
@@ -165,9 +227,47 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    const velocity = getCannonVelocity(
+      direction,
+      HELICOPTER.cannonRoundSpeed,
+      downwardAngleRadians,
+    );
+
     round
       .enableBody(true, x, y, true, true)
       .setFlipX(direction < 0)
-      .setVelocity(direction * HELICOPTER.cannonRoundSpeed, 0);
+      .setRotation(direction * downwardAngleRadians)
+      .setVelocity(velocity.x, velocity.y);
+  }
+
+  private releaseHostages(): void {
+    const spacing = 24;
+    const firstX =
+      this.prisonCamp.x - ((PRISON_CAMP.hostageCount - 1) * spacing) / 2;
+
+    for (let index = 0; index < PRISON_CAMP.hostageCount; index += 1) {
+      this.add
+        .sprite(firstX + index * spacing, GROUND_Y, 'hostage')
+        .setOrigin(0.5, 1);
+    }
+  }
+
+  private updateObjectiveText(): void {
+    if (this.targetDestroyed && this.prisonCamp.isOpen) {
+      this.targetText.setText('HOSTAGES RELEASED');
+      this.targetText.setColor('#8fe388');
+      return;
+    }
+
+    if (this.prisonCamp.isOpen) {
+      this.targetText.setText('HOSTAGES RELEASED — DESTROY THE TANK');
+      this.targetText.setColor('#8fe388');
+      return;
+    }
+
+    if (this.targetDestroyed) {
+      this.targetText.setText('DESTROY THE PRISON CAMP');
+      this.targetText.setColor('#f3d45a');
+    }
   }
 }
