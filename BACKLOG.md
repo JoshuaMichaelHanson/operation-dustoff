@@ -77,13 +77,13 @@ Destroying a camp visibly releases hostages.
 
 ## P0 - Hostage State Machine
 
-- [ ] Implement hostage states
-- [ ] Hostages run out of camp
-- [ ] Hostages wait at rally point
-- [ ] Detect landed helicopter nearby
-- [ ] Hostages run toward helicopter
-- [ ] Board helicopter
-- [ ] Enforce passenger capacity
+- [x] Implement hostage states
+- [x] Hostages run out of camp
+- [x] Hostages wait at rally point
+- [x] Detect landed helicopter nearby
+- [x] Hostages run toward helicopter
+- [x] Board helicopter
+- [x] Enforce passenger capacity
 
 ### Acceptance
 

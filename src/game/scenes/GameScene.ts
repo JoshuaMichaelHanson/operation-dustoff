@@ -6,11 +6,13 @@ import {
   GAME_WIDTH,
   GROUND_Y,
   HELICOPTER,
+  HOSTAGE,
   PRISON_CAMP,
   WORLD_HEIGHT,
   WORLD_WIDTH,
 } from '../constants';
 import { Helicopter } from '../entities/Helicopter';
+import { Hostage } from '../entities/Hostage';
 import { PrisonCamp } from '../entities/PrisonCamp';
 import { Tank } from '../entities/Tank';
 import { getCannonVelocity } from '../logic/cannonAim';
@@ -19,6 +21,7 @@ export class GameScene extends Phaser.Scene {
   private helicopter!: Helicopter;
   private tank!: Tank;
   private prisonCamp!: PrisonCamp;
+  private hostages: Hostage[] = [];
   private cannonRounds!: Phaser.Physics.Arcade.Group;
   private statusText!: Phaser.GameObjects.Text;
   private targetText!: Phaser.GameObjects.Text;
@@ -83,7 +86,7 @@ export class GameScene extends Phaser.Scene {
     this.createFlightDisplay();
   }
 
-  update(time: number): void {
+  update(time: number, delta: number): void {
     const shot = this.helicopter.update(time);
     if (shot) {
       this.fireCannon(
@@ -92,6 +95,16 @@ export class GameScene extends Phaser.Scene {
         shot.direction,
         shot.downwardAngleRadians,
       );
+    }
+
+    let passengerBoarded = false;
+    for (const hostage of this.hostages) {
+      if (hostage.update(delta, this.helicopter)) {
+        passengerBoarded = true;
+      }
+    }
+    if (passengerBoarded) {
+      this.updateObjectiveText();
     }
 
     this.cannonRounds.children.each((child) => {
@@ -111,7 +124,7 @@ export class GameScene extends Phaser.Scene {
     const tankState = this.targetDestroyed ? 'DESTROYED' : 'ACTIVE';
     const campState = this.prisonCamp.isOpen ? 'OPEN' : 'CLOSED';
     this.statusText.setText(
-      `FLIGHT: ${flightState}   TANK: ${tankState}   CAMP: ${campState}`,
+      `FLIGHT: ${flightState}   TANK: ${tankState}   CAMP: ${campState}   PAX: ${this.helicopter.passengerCount}/${this.helicopter.passengerCapacity}`,
     );
   }
 
@@ -183,7 +196,7 @@ export class GameScene extends Phaser.Scene {
       .text(
         GAME_WIDTH - 24,
         18,
-        'FLIGHT: LANDED   TANK: ACTIVE   CAMP: CLOSED',
+        'FLIGHT: LANDED   TANK: ACTIVE   CAMP: CLOSED   PAX: 0/8',
         {
           color: '#f3d45a',
           fontFamily: 'Courier New',
@@ -241,20 +254,54 @@ export class GameScene extends Phaser.Scene {
   }
 
   private releaseHostages(): void {
-    const spacing = 24;
-    const firstX =
-      this.prisonCamp.x - ((PRISON_CAMP.hostageCount - 1) * spacing) / 2;
-
     for (let index = 0; index < PRISON_CAMP.hostageCount; index += 1) {
-      this.add
-        .sprite(firstX + index * spacing, GROUND_Y, 'hostage')
-        .setOrigin(0.5, 1);
+      const direction = index % 2 === 0 ? -1 : 1;
+      const row = Math.floor(index / 2);
+      const rallyX =
+        this.prisonCamp.x +
+        direction * (HOSTAGE.rallyDistance + row * HOSTAGE.rallySpacing);
+
+      this.hostages.push(
+        new Hostage(
+          this,
+          this.prisonCamp.x,
+          rallyX,
+          index * HOSTAGE.releaseDelayMs,
+        ),
+      );
     }
   }
 
   private updateObjectiveText(): void {
+    if (this.helicopter.passengerCount === this.helicopter.passengerCapacity) {
+      this.targetText.setText('HELICOPTER FULL — RETURN TO BASE');
+      this.targetText.setColor('#8fe388');
+      return;
+    }
+
+    if (
+      this.hostages.length > 0 &&
+      this.helicopter.passengerCount === this.hostages.length
+    ) {
+      this.targetText.setText(
+        this.targetDestroyed
+          ? 'HOSTAGES ABOARD — RETURN TO BASE'
+          : 'HOSTAGES ABOARD — DESTROY THE TANK',
+      );
+      this.targetText.setColor('#8fe388');
+      return;
+    }
+
+    if (this.helicopter.passengerCount > 0) {
+      this.targetText.setText(
+        `BOARDING: ${this.helicopter.passengerCount}/${this.hostages.length} ABOARD`,
+      );
+      this.targetText.setColor('#8fe388');
+      return;
+    }
+
     if (this.targetDestroyed && this.prisonCamp.isOpen) {
-      this.targetText.setText('HOSTAGES RELEASED');
+      this.targetText.setText('LAND NEAR THE HOSTAGES TO BOARD');
       this.targetText.setColor('#8fe388');
       return;
     }
