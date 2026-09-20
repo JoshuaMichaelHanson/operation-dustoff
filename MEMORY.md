@@ -219,3 +219,25 @@ can be collected again; a hostage already running into the rescue base completes
 that rescue. Scene-local flags and hostage references are reset when a new run starts
 from the game-over screen. The tank firing, cooldown, health, and destruction items
 in the P1 backlog are also complete because this slice depends on them.
+
+## 2026-09-19 - Victory Condition and Rescue Supply
+
+Decision:
+Use the design target of 20 rescued hostages and expose it through the `MISSION`
+constants object and `GameState.rescueTarget`. Place three seven-hostage camps across
+the hostile half of the level, providing 21 available hostages and requiring at least
+three trips with the eight-passenger helicopter.
+
+Reason:
+The previous single camp supplied only six hostages, so a 20-hostage victory could not
+be reached in normal play. The implementation plan includes three camps and enough
+hostages in the same playable victory milestone, making the additional camp content a
+dependency of the P0 acceptance criterion.
+
+Important implementation detail:
+`GameState.isVictory` becomes true when the rescued count reaches or exceeds its
+configured target. `GameScene` checks that state only after a hostage reaches the base
+door and the rescue score is recorded, then passes rescued, score, and remaining-life
+totals to `VictoryScene`. Enter starts a fresh `GameScene`, whose create method resets
+all per-run entity collections and state. Pure tests cover the default target, an
+injected alternate target, scoring at victory, and enough camp capacity to reach 20.
