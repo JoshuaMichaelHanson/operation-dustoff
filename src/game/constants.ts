@@ -45,9 +45,14 @@ export const PLAYER = {
   gameOverDelayMs: 1000,
 } as const;
 
+export const MISSION = {
+  rescueTarget: 20,
+} as const;
+
 export const PRISON_CAMP = {
   health: 6,
-  hostageCount: 6,
+  hostageCount: 7,
+  positions: [2100, 2550, 3000],
 } as const;
 
 export const HOSTAGE = {

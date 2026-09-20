@@ -124,10 +124,10 @@ Player can lose a helicopter and eventually lose the game.
 
 ## P0 - Victory Condition
 
-- [ ] Add configurable rescue target
-- [ ] Trigger victory when target reached
-- [ ] Add victory scene
-- [ ] Add restart
+- [x] Add configurable rescue target
+- [x] Trigger victory when target reached
+- [x] Add victory scene
+- [x] Add restart
 
 ### Acceptance
 
@@ -149,9 +149,9 @@ Player can win the game normally.
 
 ## P1 - Additional Camps
 
-- [ ] Add 3 total camps
-- [ ] Spread camps across scrolling level
-- [ ] Populate camps with hostages
+- [x] Add 3 total camps
+- [x] Spread camps across scrolling level
+- [x] Populate camps with hostages
 
 ---
 
