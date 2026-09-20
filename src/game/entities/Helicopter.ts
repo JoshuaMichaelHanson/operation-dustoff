@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { HELICOPTER } from '../constants';
+import { Health } from '../logic/health';
 import { isSafeLanding } from '../logic/helicopterMotion';
 import { PassengerManifest } from '../logic/passengerManifest';
 
@@ -28,6 +29,7 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   private readonly passengers = new PassengerManifest(
     HELICOPTER.passengerCapacity,
   );
+  private readonly healthState = new Health(HELICOPTER.maximumHealth);
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'helicopter');
@@ -80,6 +82,10 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     return HELICOPTER.passengerCapacity;
   }
 
+  get health(): number {
+    return this.healthState.current;
+  }
+
   tryBoardPassenger(): boolean {
     return this.passengers.tryBoard();
   }
@@ -88,7 +94,48 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     return this.passengers.unloadOne();
   }
 
+  takeDamage(amount: number): boolean {
+    const destroyed = this.healthState.takeDamage(amount);
+
+    if (!destroyed) {
+      this.setTintFill(0xe46b56);
+      this.scene.time.delayedCall(100, () => {
+        if (this.active) {
+          this.clearTint();
+        }
+      });
+    }
+
+    return destroyed;
+  }
+
+  disableAfterDestruction(): number {
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    body.setVelocity(0, 0);
+    body.setAcceleration(0, 0);
+    body.enable = false;
+    this.landed = false;
+    this.setActive(false).setVisible(false);
+    return this.passengers.clear();
+  }
+
+  respawn(x: number, y: number): void {
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    this.healthState.reset();
+    this.landed = false;
+    this.clearTint();
+    this.setActive(true).setVisible(true).setPosition(x, y).setRotation(0);
+    body.enable = true;
+    body.reset(x, y);
+    body.setVelocity(0, 0);
+    body.setAcceleration(0, 0);
+  }
+
   update(time: number): CannonShot | null {
+    if (!this.active) {
+      return null;
+    }
+
     const body = this.body as Phaser.Physics.Arcade.Body;
     const movingLeft = this.cursors.left.isDown || this.wasd.left.isDown;
     const movingRight = this.cursors.right.isDown || this.wasd.right.isDown;

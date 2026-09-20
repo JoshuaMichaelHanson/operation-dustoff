@@ -189,10 +189,33 @@ run-wide totals in a small `GameState`.
 
 Important implementation detail:
 Returning passengers transition from `ABOARD` to `RUNNING_TO_BASE` to `RESCUED`.
-The passenger manifest removes one person as they exit; the next person waits until
-the runner reaches the doorway plus a short interval. `GameState.recordRescue(1)` is
-called only at the doorway, so score advances with the visible arrival. Taking off
-pauses passengers who remain aboard, while a passenger already on the ground continues
+The passenger manifest removes one person as they exit. Another may follow once every
+active runner is at least 56 pixels from the helicopter and the 250 ms minimum interval
+has elapsed, producing a visible line without overlapping sprites. `GameState.recordRescue(1)`
+is called only at the doorway, so score advances with each visible arrival. Taking off
+pauses passengers who remain aboard, while passengers already on the ground continue
 inside. Partial trips also work. Victory remains in its dedicated P0 slice. Pure tests
-cover base boundaries, airborne rejection, one-at-a-time unloading, capacity, legal
+cover base boundaries, airborne rejection, staggered unloading, capacity, legal
 disembark transitions, and cumulative rescue scoring.
+
+## 2026-09-19 - Player Damage and Lives
+
+Decision:
+Give the helicopter 100 health and three lives. The tank fires a 25-damage aimed
+round every 1.7 seconds while the helicopter is within 950 pixels. A destroyed
+helicopter respawns at the rescue base after 1.2 seconds while lives remain; losing
+the last life opens the game-over scene with the run's rescue and score totals.
+
+Reason:
+This completes the enemy-fire-to-game-over vertical slice with one existing enemy
+and keeps health, lives, and projectile behavior explicit and easy to tune.
+
+Important implementation detail:
+The tank owns range, cooldown, and shot direction, while `GameScene` owns enemy
+projectiles and collision effects. A small pure `Health` class handles damage and
+respawn reset, and `GameState` retains score and rescued totals when a life is lost.
+Any hostages aboard a destroyed helicopter return to their camp rally points so they
+can be collected again; a hostage already running into the rescue base completes
+that rescue. Scene-local flags and hostage references are reset when a new run starts
+from the game-over screen. The tank firing, cooldown, health, and destruction items
+in the P1 backlog are also complete because this slice depends on them.

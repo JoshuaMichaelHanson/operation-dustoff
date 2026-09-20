@@ -23,3 +23,13 @@ export function calculateRescueScore(
 ): number {
   return rescuedHostages * scorePerHostage;
 }
+
+export function hasPassengerUnloadSpacing(
+  helicopterX: number,
+  disembarkingHostageXs: readonly number[],
+  requiredSpacing: number,
+): boolean {
+  return disembarkingHostageXs.every(
+    (hostageX) => Math.abs(hostageX - helicopterX) >= requiredSpacing,
+  );
+}

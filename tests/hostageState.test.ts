@@ -66,6 +66,12 @@ describe('hostage state transitions', () => {
       isHostageTransitionAllowed(HostageState.Aboard, HostageState.Rescued),
     ).toBe(false);
   });
+
+  it('returns an aboard hostage to waiting after a helicopter is lost', () => {
+    expect(
+      isHostageTransitionAllowed(HostageState.Aboard, HostageState.Waiting),
+    ).toBe(true);
+  });
 });
 
 describe('hostage boarding rules', () => {

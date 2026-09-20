@@ -24,4 +24,10 @@ export class PassengerManifest {
     this.passengerCount -= 1;
     return true;
   }
+
+  clear(): number {
+    const removedPassengers = this.passengerCount;
+    this.passengerCount = 0;
+    return removedPassengers;
+  }
 }
