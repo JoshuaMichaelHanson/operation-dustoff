@@ -96,7 +96,7 @@ Player can land near released hostages and load passengers.
 - [x] Add base zone
 - [x] Detect safe landing at base
 - [x] Unload helicopter passengers
-- [x] Animate passengers running into base one at a time
+- [x] Animate passengers running into base with staggered spacing
 - [x] Increase rescued count
 - [x] Increase score
 - [x] Display rescue progress
@@ -109,12 +109,12 @@ A complete rescue trip works end-to-end.
 
 ## P0 - Player Damage and Lives
 
-- [ ] Add player health
-- [ ] Add enemy projectile collision
-- [ ] Add helicopter destruction
-- [ ] Decrement lives
-- [ ] Respawn when lives remain
-- [ ] Add game-over state
+- [x] Add player health
+- [x] Add enemy projectile collision
+- [x] Add helicopter destruction
+- [x] Decrement lives
+- [x] Respawn when lives remain
+- [x] Add game-over state
 
 ### Acceptance
 
@@ -139,10 +139,10 @@ Player can win the game normally.
 
 ## P1 - Enemy Tank
 
-- [ ] Tank fires toward player
-- [ ] Fire cooldown
-- [ ] Tank health
-- [ ] Tank destruction
+- [x] Tank fires toward player
+- [x] Fire cooldown
+- [x] Tank health
+- [x] Tank destruction
 - [ ] Score award
 
 ---

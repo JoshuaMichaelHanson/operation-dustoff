@@ -21,7 +21,7 @@ const allowedTransitions: Record<HostageState, readonly HostageState[]> = {
     HostageState.Waiting,
     HostageState.Aboard,
   ],
-  [HostageState.Aboard]: [HostageState.RunningToBase],
+  [HostageState.Aboard]: [HostageState.Waiting, HostageState.RunningToBase],
   [HostageState.RunningToBase]: [HostageState.Rescued],
   [HostageState.Rescued]: [],
 };

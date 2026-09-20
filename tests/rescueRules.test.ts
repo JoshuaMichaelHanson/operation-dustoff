@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { RESCUE_BASE } from '../src/game/constants';
-import { isSafeRescueLanding } from '../src/game/logic/rescueRules';
+import {
+  hasPassengerUnloadSpacing,
+  isSafeRescueLanding,
+} from '../src/game/logic/rescueRules';
 import { GameState } from '../src/game/state/GameState';
 
 describe('rescue base landing rules', () => {
@@ -42,5 +45,19 @@ describe('rescue scoring', () => {
 
     expect(gameState.rescued).toBe(5);
     expect(gameState.score).toBe(5 * RESCUE_BASE.scorePerHostage);
+  });
+});
+
+describe('passenger unloading spacing', () => {
+  it('allows unloading when no hostage is currently running', () => {
+    expect(hasPassengerUnloadSpacing(350, [], 56)).toBe(true);
+  });
+
+  it('waits while the nearest runner is too close to the helicopter', () => {
+    expect(hasPassengerUnloadSpacing(350, [315, 220], 56)).toBe(false);
+  });
+
+  it('allows another passenger out once every runner is far enough away', () => {
+    expect(hasPassengerUnloadSpacing(350, [294, 220], 56)).toBe(true);
   });
 });

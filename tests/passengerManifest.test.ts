@@ -25,4 +25,13 @@ describe('passenger manifest', () => {
     expect(passengers.count).toBe(0);
     expect(passengers.unloadOne()).toBe(false);
   });
+
+  it('clears passengers after a helicopter is lost', () => {
+    const passengers = new PassengerManifest(8);
+    passengers.tryBoard();
+    passengers.tryBoard();
+
+    expect(passengers.clear()).toBe(2);
+    expect(passengers.count).toBe(0);
+  });
 });

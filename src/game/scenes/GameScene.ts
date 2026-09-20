@@ -7,7 +7,9 @@ import {
   GROUND_Y,
   HELICOPTER,
   HOSTAGE,
+  PLAYER,
   PRISON_CAMP,
+  TANK,
   WORLD_HEIGHT,
   WORLD_WIDTH,
 } from '../constants';
@@ -15,9 +17,10 @@ import { Helicopter } from '../entities/Helicopter';
 import { Hostage } from '../entities/Hostage';
 import { PrisonCamp } from '../entities/PrisonCamp';
 import { RescueBase } from '../entities/RescueBase';
-import { Tank } from '../entities/Tank';
+import { Tank, type EnemyShot } from '../entities/Tank';
 import { getCannonVelocity } from '../logic/cannonAim';
 import { HostageState, HostageUpdateEvent } from '../logic/hostageState';
+import { hasPassengerUnloadSpacing } from '../logic/rescueRules';
 import { GameState } from '../state/GameState';
 
 export class GameScene extends Phaser.Scene {
@@ -27,18 +30,24 @@ export class GameScene extends Phaser.Scene {
   private rescueBase!: RescueBase;
   private hostages: Hostage[] = [];
   private cannonRounds!: Phaser.Physics.Arcade.Group;
+  private enemyRounds!: Phaser.Physics.Arcade.Group;
   private statusText!: Phaser.GameObjects.Text;
   private rescueText!: Phaser.GameObjects.Text;
   private targetText!: Phaser.GameObjects.Text;
   private gameState!: GameState;
   private targetDestroyed = false;
   private nextPassengerUnloadAt = 0;
+  private playerDestroyed = false;
 
   constructor() {
     super('GameScene');
   }
 
   create(): void {
+    this.hostages = [];
+    this.targetDestroyed = false;
+    this.nextPassengerUnloadAt = 0;
+    this.playerDestroyed = false;
     this.gameState = new GameState();
     this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     this.createBattlefield();
@@ -57,6 +66,10 @@ export class GameScene extends Phaser.Scene {
     this.tank = new Tank(this, 1780, GROUND_Y - 21);
     this.prisonCamp = new PrisonCamp(this, 2600, GROUND_Y - 36);
     this.cannonRounds = this.physics.add.group({
+      allowGravity: false,
+      maxSize: 32,
+    });
+    this.enemyRounds = this.physics.add.group({
       allowGravity: false,
       maxSize: 32,
     });
@@ -90,6 +103,22 @@ export class GameScene extends Phaser.Scene {
         }
       },
     );
+    this.physics.add.overlap(
+      this.helicopter,
+      this.enemyRounds,
+      (helicopterObject, roundObject) => {
+        const helicopter = helicopterObject as Helicopter;
+        const round = roundObject as Phaser.Physics.Arcade.Image;
+        round.disableBody(true, true);
+
+        if (
+          !this.playerDestroyed &&
+          helicopter.takeDamage(TANK.projectileDamage)
+        ) {
+          this.destroyHelicopter();
+        }
+      },
+    );
 
     this.configureCamera();
     this.createFlightDisplay();
@@ -106,6 +135,17 @@ export class GameScene extends Phaser.Scene {
       );
     }
 
+    if (!this.playerDestroyed) {
+      const enemyShot = this.tank.tryFire(
+        time,
+        this.helicopter.x,
+        this.helicopter.y,
+      );
+      if (enemyShot) {
+        this.fireEnemyRound(enemyShot);
+      }
+    }
+
     let hostageStateChanged = false;
     for (const hostage of this.hostages) {
       const event = hostage.update(delta, this.helicopter);
@@ -113,7 +153,6 @@ export class GameScene extends Phaser.Scene {
         hostageStateChanged = true;
       } else if (event === HostageUpdateEvent.Rescued) {
         this.gameState.recordRescue(1);
-        this.nextPassengerUnloadAt = time + HOSTAGE.unloadIntervalMs;
         hostageStateChanged = true;
       }
     }
@@ -124,18 +163,8 @@ export class GameScene extends Phaser.Scene {
       this.updateObjectiveText();
     }
 
-    this.cannonRounds.children.each((child) => {
-      const round = child as Phaser.Physics.Arcade.Image;
-      if (
-        round.active &&
-        (round.x < -32 ||
-          round.x > WORLD_WIDTH + 32 ||
-          round.y > WORLD_HEIGHT + 32)
-      ) {
-        round.disableBody(true, true);
-      }
-      return true;
-    });
+    this.recycleOffscreenProjectiles(this.cannonRounds);
+    this.recycleOffscreenProjectiles(this.enemyRounds);
 
     const flightState = this.helicopter.isLanded ? 'LANDED' : 'AIRBORNE';
     const tankState = this.targetDestroyed ? 'DESTROYED' : 'ACTIVE';
@@ -144,7 +173,7 @@ export class GameScene extends Phaser.Scene {
       `FLIGHT: ${flightState}   TANK: ${tankState}   CAMP: ${campState}   PAX: ${this.helicopter.passengerCount}/${this.helicopter.passengerCapacity}`,
     );
     this.rescueText.setText(
-      `RESCUED: ${this.gameState.rescued}   SCORE: ${this.gameState.score}`,
+      `HEALTH: ${this.helicopter.health}   LIVES: ${this.gameState.lives}   RESCUED: ${this.gameState.rescued}   SCORE: ${this.gameState.score}`,
     );
   }
 
@@ -222,12 +251,17 @@ export class GameScene extends Phaser.Scene {
       .setScrollFactor(0);
 
     this.rescueText = this.add
-      .text(24, 46, 'RESCUED: 0   SCORE: 0', {
-        color: '#8fe388',
-        fontFamily: 'Courier New',
-        fontSize: '17px',
-        fontStyle: 'bold',
-      })
+      .text(
+        24,
+        46,
+        `HEALTH: ${HELICOPTER.maximumHealth}   LIVES: ${PLAYER.startingLives}   RESCUED: 0   SCORE: 0`,
+        {
+          color: '#8fe388',
+          fontFamily: 'Courier New',
+          fontSize: '17px',
+          fontStyle: 'bold',
+        },
+      )
       .setScrollFactor(0);
 
     this.targetText = this.add
@@ -276,6 +310,108 @@ export class GameScene extends Phaser.Scene {
       .setVelocity(velocity.x, velocity.y);
   }
 
+  private fireEnemyRound(shot: EnemyShot): void {
+    const round = this.enemyRounds.get(
+      shot.x,
+      shot.y,
+      'enemy-round',
+    ) as Phaser.Physics.Arcade.Image | null;
+
+    if (!round) {
+      return;
+    }
+
+    round
+      .enableBody(true, shot.x, shot.y, true, true)
+      .setVelocity(shot.velocityX, shot.velocityY);
+  }
+
+  private recycleOffscreenProjectiles(
+    projectiles: Phaser.Physics.Arcade.Group,
+  ): void {
+    projectiles.children.each((child) => {
+      const round = child as Phaser.Physics.Arcade.Image;
+      if (
+        round.active &&
+        (round.x < -32 ||
+          round.x > WORLD_WIDTH + 32 ||
+          round.y < -32 ||
+          round.y > WORLD_HEIGHT + 32)
+      ) {
+        round.disableBody(true, true);
+      }
+      return true;
+    });
+  }
+
+  private disableProjectiles(projectiles: Phaser.Physics.Arcade.Group): void {
+    projectiles.children.each((child) => {
+      const round = child as Phaser.Physics.Arcade.Image;
+      if (round.active) {
+        round.disableBody(true, true);
+      }
+      return true;
+    });
+  }
+
+  private destroyHelicopter(): void {
+    this.playerDestroyed = true;
+    const explosionX = this.helicopter.x;
+    const explosionY = this.helicopter.y;
+    const lostPassengers = this.helicopter.disableAfterDestruction();
+
+    let returnedHostages = 0;
+    for (const hostage of this.hostages) {
+      if (hostage.returnToRallyAfterHelicopterLoss()) {
+        returnedHostages += 1;
+      }
+    }
+    if (returnedHostages !== lostPassengers) {
+      throw new Error('Passenger manifest did not match aboard hostages.');
+    }
+
+    this.gameState.loseLife();
+    this.disableProjectiles(this.cannonRounds);
+    this.disableProjectiles(this.enemyRounds);
+    this.showHelicopterExplosion(explosionX, explosionY);
+
+    this.targetText.setText(
+      this.gameState.isGameOver
+        ? 'ALL HELICOPTERS LOST'
+        : `HELICOPTER LOST — ${this.gameState.lives} REMAINING`,
+    );
+    this.targetText.setColor('#e46b56');
+
+    if (this.gameState.isGameOver) {
+      this.time.delayedCall(PLAYER.gameOverDelayMs, () => {
+        this.scene.start('GameOverScene', {
+          rescued: this.gameState.rescued,
+          score: this.gameState.score,
+        });
+      });
+      return;
+    }
+
+    this.time.delayedCall(PLAYER.respawnDelayMs, () => {
+      this.helicopter.respawn(PLAYER.respawnX, GROUND_Y - 21);
+      this.playerDestroyed = false;
+      this.configureCamera();
+      this.updateObjectiveText();
+    });
+  }
+
+  private showHelicopterExplosion(x: number, y: number): void {
+    const blast = this.add.circle(x, y, 24, 0xf3d45a, 0.95);
+    this.cameras.main.shake(240, 0.01);
+    this.tweens.add({
+      targets: blast,
+      alpha: 0,
+      scale: 2.4,
+      duration: 420,
+      onComplete: () => blast.destroy(),
+    });
+  }
+
   private releaseHostages(): void {
     for (let index = 0; index < PRISON_CAMP.hostageCount; index += 1) {
       const direction = index % 2 === 0 ? -1 : 1;
@@ -296,12 +432,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   private tryStartPassengerUnload(time: number): boolean {
+    const disembarkingHostageXs = this.hostages
+      .filter(
+        (hostage) => hostage.currentState === HostageState.RunningToBase,
+      )
+      .map((hostage) => hostage.x);
+
     if (
       time < this.nextPassengerUnloadAt ||
       this.helicopter.passengerCount === 0 ||
       !this.rescueBase.canUnload(this.helicopter) ||
-      this.hostages.some(
-        (hostage) => hostage.currentState === HostageState.RunningToBase,
+      !hasPassengerUnloadSpacing(
+        this.helicopter.x,
+        disembarkingHostageXs,
+        HOSTAGE.unloadSpacing,
       )
     ) {
       return false;
@@ -324,6 +468,7 @@ export class GameScene extends Phaser.Scene {
       throw new Error('Passenger manifest did not match aboard hostages.');
     }
 
+    this.nextPassengerUnloadAt = time + HOSTAGE.unloadIntervalMs;
     return true;
   }
 

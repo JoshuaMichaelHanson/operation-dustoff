@@ -45,6 +45,19 @@ export class Hostage extends Phaser.GameObjects.Sprite {
     return true;
   }
 
+  returnToRallyAfterHelicopterLoss(): boolean {
+    if (this.hostageState !== HostageState.Aboard) {
+      return false;
+    }
+
+    this.x = this.rallyX;
+    this.y = GROUND_Y;
+    this.rescueTargetX = null;
+    this.setVisible(true);
+    this.transitionTo(HostageState.Waiting);
+    return true;
+  }
+
   update(
     deltaMs: number,
     helicopter: Helicopter,

@@ -8,6 +8,7 @@ export class BootScene extends Phaser.Scene {
   create(): void {
     this.createHelicopterTexture();
     this.createCannonRoundTexture();
+    this.createEnemyRoundTexture();
     this.createTankTexture();
     this.createPrisonCampTextures();
     this.createHostageTexture();
@@ -43,6 +44,14 @@ export class BootScene extends Phaser.Scene {
     graphics.fillStyle(0xffe27a);
     graphics.fillRect(0, 0, 16, 4);
     graphics.generateTexture('cannon-round', 16, 4);
+    graphics.destroy();
+  }
+
+  private createEnemyRoundTexture(): void {
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0xe46b56);
+    graphics.fillCircle(5, 5, 5);
+    graphics.generateTexture('enemy-round', 10, 10);
     graphics.destroy();
   }
 

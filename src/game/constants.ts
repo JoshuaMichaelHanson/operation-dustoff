@@ -27,10 +27,22 @@ export const HELICOPTER = {
   cannonRoundSpeed: 720,
   maximumForwardPitchRadians: 0.28,
   passengerCapacity: 8,
+  maximumHealth: 100,
 } as const;
 
 export const TANK = {
   health: 4,
+  fireCooldownMs: 1700,
+  fireRange: 950,
+  projectileSpeed: 260,
+  projectileDamage: 25,
+} as const;
+
+export const PLAYER = {
+  startingLives: 3,
+  respawnX: 280,
+  respawnDelayMs: 1200,
+  gameOverDelayMs: 1000,
 } as const;
 
 export const PRISON_CAMP = {
@@ -48,6 +60,7 @@ export const HOSTAGE = {
   rallySpacing: 34,
   releaseDelayMs: 140,
   unloadIntervalMs: 250,
+  unloadSpacing: 56,
 } as const;
 
 export const RESCUE_BASE = {
