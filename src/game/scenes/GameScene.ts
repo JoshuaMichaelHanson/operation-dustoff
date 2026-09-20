@@ -84,10 +84,14 @@ export class GameScene extends Phaser.Scene {
       (tankObject, roundObject) => {
         const target = tankObject as Tank;
         const round = roundObject as Phaser.Physics.Arcade.Image;
+        const targetX = target.x;
+        const targetY = target.y;
         round.disableBody(true, true);
 
         if (target.active && target.takeDamage()) {
           this.targetDestroyed = true;
+          this.gameState.awardScore(TANK.scoreValue);
+          this.showScoreAward(targetX, targetY - 34, TANK.scoreValue);
           this.updateObjectiveText();
         }
       },
@@ -422,6 +426,25 @@ export class GameScene extends Phaser.Scene {
       scale: 2.4,
       duration: 420,
       onComplete: () => blast.destroy(),
+    });
+  }
+
+  private showScoreAward(x: number, y: number, points: number): void {
+    const scoreText = this.add
+      .text(x, y, `+${points}`, {
+        color: '#f3d45a',
+        fontFamily: 'Courier New',
+        fontSize: '22px',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+
+    this.tweens.add({
+      targets: scoreText,
+      alpha: 0,
+      y: y - 36,
+      duration: 800,
+      onComplete: () => scoreText.destroy(),
     });
   }
 

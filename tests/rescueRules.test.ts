@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { RESCUE_BASE } from '../src/game/constants';
+import { RESCUE_BASE, TANK } from '../src/game/constants';
 import {
   hasPassengerUnloadSpacing,
   isSafeRescueLanding,
@@ -45,6 +45,18 @@ describe('rescue scoring', () => {
 
     expect(gameState.rescued).toBe(5);
     expect(gameState.score).toBe(5 * RESCUE_BASE.scorePerHostage);
+  });
+
+  it('adds a tank award without changing rescue progress', () => {
+    const gameState = new GameState();
+    gameState.recordRescue(1);
+
+    gameState.awardScore(TANK.scoreValue);
+
+    expect(gameState.rescued).toBe(1);
+    expect(gameState.score).toBe(
+      RESCUE_BASE.scorePerHostage + TANK.scoreValue,
+    );
   });
 });
 
