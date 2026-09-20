@@ -143,7 +143,7 @@ Player can win the game normally.
 - [x] Fire cooldown
 - [x] Tank health
 - [x] Tank destruction
-- [ ] Score award
+- [x] Score award
 
 ---
 

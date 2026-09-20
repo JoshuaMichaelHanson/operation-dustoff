@@ -36,6 +36,7 @@ export const TANK = {
   fireRange: 950,
   projectileSpeed: 260,
   projectileDamage: 25,
+  scoreValue: 100,
 } as const;
 
 export const PLAYER = {

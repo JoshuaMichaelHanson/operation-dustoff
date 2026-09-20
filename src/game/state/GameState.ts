@@ -40,6 +40,10 @@ export class GameState {
     );
   }
 
+  awardScore(points: number): void {
+    this.currentScore += points;
+  }
+
   loseLife(): number {
     this.remainingLives = Math.max(0, this.remainingLives - 1);
     return this.remainingLives;

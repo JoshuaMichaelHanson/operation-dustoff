@@ -241,3 +241,21 @@ door and the rescue score is recorded, then passes rescued, score, and remaining
 totals to `VictoryScene`. Enter starts a fresh `GameScene`, whose create method resets
 all per-run entity collections and state. Pure tests cover the default target, an
 injected alternate target, scoring at victory, and enough camp capacity to reach 20.
+
+## 2026-09-20 - Enemy Tank Score Award
+
+Decision:
+Award 100 points when the tank is destroyed, using the value specified in the game
+design and stored with the other tank tuning constants. Show a short-lived `+100`
+marker at the tank's final position in addition to updating the HUD score.
+
+Reason:
+The tank's aiming, cooldown, health, destruction, and projectile damage were already
+implemented by the earlier combat slices. Connecting the lethal hit to run score and
+visible feedback completes the remaining P1 tank behavior without adding a manager.
+
+Important implementation detail:
+`GameState.awardScore` changes score without affecting rescue progress. `GameScene`
+calls it only inside the successful tank-destruction branch, so later projectiles
+cannot award the points again after the tank becomes inactive. A pure test verifies
+that tank points combine with rescue points while leaving the rescued count unchanged.
