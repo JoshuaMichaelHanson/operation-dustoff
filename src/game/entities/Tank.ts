@@ -1,13 +1,7 @@
 import Phaser from 'phaser';
 
 import { TANK } from '../constants';
-
-export interface EnemyShot {
-  x: number;
-  y: number;
-  velocityX: number;
-  velocityY: number;
-}
+import type { EnemyShot } from './EnemyShot';
 
 export class Tank extends Phaser.Physics.Arcade.Sprite {
   private health: number = TANK.health;
@@ -45,6 +39,7 @@ export class Tank extends Phaser.Physics.Arcade.Sprite {
       y: shotY,
       velocityX: (deltaX / distance) * TANK.projectileSpeed,
       velocityY: (deltaY / distance) * TANK.projectileSpeed,
+      damage: TANK.projectileDamage,
     };
   }
 

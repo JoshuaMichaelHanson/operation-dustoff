@@ -280,3 +280,24 @@ to yellow and then red as health falls, and keeps controls plus flight, tank, an
 status on a smaller second row. `GameScene` supplies one explicit state object each
 frame. Every HUD object is fixed to the camera and placed above world objects, while
 the existing bottom objective prompt remains owned by `GameScene`.
+
+## 2026-09-21 - Jet Enemy Flyovers
+
+Decision:
+Spawn at most one jet at a time on alternating left-to-right and right-to-left
+flyovers. Jets use three visible altitude lanes, fire aimed rounds while within range,
+take three cannon hits to destroy, and award 200 points.
+
+Reason:
+This completes the remaining P1 enemy slice with a readable arcade threat while
+avoiding dogfighting AI, pathfinding, or an enemy-manager abstraction that the current
+entity count does not justify.
+
+Important implementation detail:
+The first flyover begins after five seconds and later flyovers are scheduled every
+15 seconds. Each jet owns movement, attack cooldown, health, and world-edge despawn.
+Tank and jet rounds share the existing projectile pool and carry their damage value on
+the pooled round, allowing jets to deal 20 damage without changing tank damage. Pure
+tests cover spawn edges, bidirectional cleanup bounds, aimed projectile speed, and
+attack range. A browser smoke test confirmed a visible flyover, an aimed projectile,
+jet damage to the helicopter, and no console errors.

@@ -7,6 +7,7 @@ import {
   GROUND_Y,
   HELICOPTER,
   HOSTAGE,
+  JET,
   PLAYER,
   PRISON_CAMP,
   TANK,
@@ -15,9 +16,11 @@ import {
 } from '../constants';
 import { Helicopter } from '../entities/Helicopter';
 import { Hostage } from '../entities/Hostage';
+import type { EnemyShot } from '../entities/EnemyShot';
+import { Jet } from '../entities/Jet';
 import { PrisonCamp } from '../entities/PrisonCamp';
 import { RescueBase } from '../entities/RescueBase';
-import { Tank, type EnemyShot } from '../entities/Tank';
+import { Tank } from '../entities/Tank';
 import { getCannonVelocity } from '../logic/cannonAim';
 import { HostageState, HostageUpdateEvent } from '../logic/hostageState';
 import { hasPassengerUnloadSpacing } from '../logic/rescueRules';
@@ -32,12 +35,15 @@ export class GameScene extends Phaser.Scene {
   private hostages: Hostage[] = [];
   private cannonRounds!: Phaser.Physics.Arcade.Group;
   private enemyRounds!: Phaser.Physics.Arcade.Group;
+  private jets!: Phaser.Physics.Arcade.Group;
   private hud!: Hud;
   private targetText!: Phaser.GameObjects.Text;
   private gameState!: GameState;
   private targetDestroyed = false;
   private nextPassengerUnloadAt = 0;
   private playerDestroyed = false;
+  private nextJetSpawnAt = 0;
+  private jetSpawnCount = 0;
 
   constructor() {
     super('GameScene');
@@ -49,6 +55,7 @@ export class GameScene extends Phaser.Scene {
     this.targetDestroyed = false;
     this.nextPassengerUnloadAt = 0;
     this.playerDestroyed = false;
+    this.jetSpawnCount = 0;
     this.gameState = new GameState();
     this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     this.createBattlefield();
@@ -76,6 +83,8 @@ export class GameScene extends Phaser.Scene {
       allowGravity: false,
       maxSize: 32,
     });
+    this.jets = this.physics.add.group({ allowGravity: false });
+    this.nextJetSpawnAt = this.time.now + JET.initialSpawnDelayMs;
 
     this.physics.add.collider(this.helicopter, ground);
     this.physics.add.overlap(
@@ -113,6 +122,23 @@ export class GameScene extends Phaser.Scene {
       );
     }
     this.physics.add.overlap(
+      this.jets,
+      this.cannonRounds,
+      (jetObject, roundObject) => {
+        const jet = jetObject as Jet;
+        const round = roundObject as Phaser.Physics.Arcade.Image;
+        const jetX = jet.x;
+        const jetY = jet.y;
+        round.disableBody(true, true);
+
+        if (jet.active && jet.takeDamage()) {
+          this.gameState.awardScore(JET.scoreValue);
+          this.showScoreAward(jetX, jetY - 28, JET.scoreValue);
+          this.showJetExplosion(jetX, jetY);
+        }
+      },
+    );
+    this.physics.add.overlap(
       this.helicopter,
       this.enemyRounds,
       (helicopterObject, roundObject) => {
@@ -122,7 +148,10 @@ export class GameScene extends Phaser.Scene {
 
         if (
           !this.playerDestroyed &&
-          helicopter.takeDamage(TANK.projectileDamage)
+          helicopter.takeDamage(
+            (round.getData('damage') as number | undefined) ??
+              TANK.projectileDamage,
+          )
         ) {
           this.destroyHelicopter();
         }
@@ -153,6 +182,20 @@ export class GameScene extends Phaser.Scene {
       );
       if (enemyShot) {
         this.fireEnemyRound(enemyShot);
+      }
+    }
+
+    this.trySpawnJet(time);
+    for (const child of [...this.jets.getChildren()]) {
+      const jet = child as Jet;
+      const jetShot = jet.update(
+        time,
+        this.playerDestroyed
+          ? undefined
+          : { x: this.helicopter.x, y: this.helicopter.y },
+      );
+      if (jetShot) {
+        this.fireEnemyRound(jetShot);
       }
     }
 
@@ -315,7 +358,30 @@ export class GameScene extends Phaser.Scene {
 
     round
       .enableBody(true, shot.x, shot.y, true, true)
+      .setData('damage', shot.damage)
       .setVelocity(shot.velocityX, shot.velocityY);
+  }
+
+  private trySpawnJet(time: number): void {
+    if (
+      this.playerDestroyed ||
+      time < this.nextJetSpawnAt ||
+      this.jets.countActive(true) >= JET.maximumActive
+    ) {
+      return;
+    }
+
+    const direction = this.jetSpawnCount % 2 === 0 ? 1 : -1;
+    const altitude =
+      JET.flightAltitudes[this.jetSpawnCount % JET.flightAltitudes.length];
+    if (altitude === undefined) {
+      return;
+    }
+
+    const jet = new Jet(this, direction, altitude);
+    this.jets.add(jet);
+    this.jetSpawnCount += 1;
+    this.nextJetSpawnAt = time + JET.spawnIntervalMs;
   }
 
   private recycleOffscreenProjectiles(
@@ -400,6 +466,18 @@ export class GameScene extends Phaser.Scene {
       alpha: 0,
       scale: 2.4,
       duration: 420,
+      onComplete: () => blast.destroy(),
+    });
+  }
+
+  private showJetExplosion(x: number, y: number): void {
+    const blast = this.add.circle(x, y, 18, 0xf3d45a, 0.95);
+    this.cameras.main.shake(120, 0.004);
+    this.tweens.add({
+      targets: blast,
+      alpha: 0,
+      scale: 2,
+      duration: 280,
       onComplete: () => blast.destroy(),
     });
   }
