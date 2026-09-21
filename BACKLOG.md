@@ -157,11 +157,11 @@ Player can win the game normally.
 
 ## P1 - HUD
 
-- [ ] Score
-- [ ] Rescued / target
-- [ ] Passengers / capacity
-- [ ] Health
-- [ ] Lives
+- [x] Score
+- [x] Rescued / target
+- [x] Passengers / capacity
+- [x] Health
+- [x] Lives
 
 ---
 

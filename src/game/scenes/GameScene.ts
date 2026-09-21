@@ -22,6 +22,7 @@ import { getCannonVelocity } from '../logic/cannonAim';
 import { HostageState, HostageUpdateEvent } from '../logic/hostageState';
 import { hasPassengerUnloadSpacing } from '../logic/rescueRules';
 import { GameState } from '../state/GameState';
+import { Hud } from '../ui/Hud';
 
 export class GameScene extends Phaser.Scene {
   private helicopter!: Helicopter;
@@ -31,8 +32,7 @@ export class GameScene extends Phaser.Scene {
   private hostages: Hostage[] = [];
   private cannonRounds!: Phaser.Physics.Arcade.Group;
   private enemyRounds!: Phaser.Physics.Arcade.Group;
-  private statusText!: Phaser.GameObjects.Text;
-  private rescueText!: Phaser.GameObjects.Text;
+  private hud!: Hud;
   private targetText!: Phaser.GameObjects.Text;
   private gameState!: GameState;
   private targetDestroyed = false;
@@ -131,6 +131,7 @@ export class GameScene extends Phaser.Scene {
 
     this.configureCamera();
     this.createFlightDisplay();
+    this.updateHud();
   }
 
   update(time: number, delta: number): void {
@@ -179,17 +180,7 @@ export class GameScene extends Phaser.Scene {
     this.recycleOffscreenProjectiles(this.cannonRounds);
     this.recycleOffscreenProjectiles(this.enemyRounds);
 
-    const flightState = this.helicopter.isLanded ? 'LANDED' : 'AIRBORNE';
-    const tankState = this.targetDestroyed ? 'DESTROYED' : 'ACTIVE';
-    const openCampCount = this.prisonCamps.filter(
-      (camp) => camp.isOpen,
-    ).length;
-    this.statusText.setText(
-      `FLIGHT: ${flightState}   TANK: ${tankState}   CAMPS: ${openCampCount}/${this.prisonCamps.length}   PAX: ${this.helicopter.passengerCount}/${this.helicopter.passengerCapacity}`,
-    );
-    this.rescueText.setText(
-      `HEALTH: ${this.helicopter.health}   LIVES: ${this.gameState.lives}   RESCUED: ${this.gameState.rescued}/${this.gameState.rescueTarget}   SCORE: ${this.gameState.score}`,
-    );
+    this.updateHud();
   }
 
   private createBattlefield(): void {
@@ -213,13 +204,15 @@ export class GameScene extends Phaser.Scene {
       fontFamily: 'Courier New',
       fontSize: '18px',
     });
-    for (const campX of PRISON_CAMP.positions) {
-      this.add.text(campX - 64, GROUND_Y - 110, 'CAMP', {
-        color: '#c7b96a',
-        fontFamily: 'Courier New',
-        fontSize: '18px',
-      });
-    }
+    PRISON_CAMP.positions.forEach((campX, index) => {
+      this.add
+        .text(campX, GROUND_Y - 110, `CAMP ${index + 1}`, {
+          color: '#c7b96a',
+          fontFamily: 'Courier New',
+          fontSize: '18px',
+        })
+        .setOrigin(0.5, 0);
+    });
   }
 
   private configureCamera(): void {
@@ -240,46 +233,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createFlightDisplay(): void {
-    this.add
-      .rectangle(GAME_WIDTH / 2, 40, GAME_WIDTH, 80, 0x11150f, 0.88)
-      .setScrollFactor(0);
-
-    this.add
-      .text(24, 12, 'WASD / ARROWS: FLY   SPACE: FIRE', {
-        color: '#d6dec3',
-        fontFamily: 'Courier New',
-        fontSize: '18px',
-      })
-      .setScrollFactor(0);
-
-    this.statusText = this.add
-      .text(
-        GAME_WIDTH - 24,
-        12,
-        `FLIGHT: LANDED   TANK: ACTIVE   CAMPS: 0/${PRISON_CAMP.positions.length}   PAX: 0/${HELICOPTER.passengerCapacity}`,
-        {
-          color: '#f3d45a',
-          fontFamily: 'Courier New',
-          fontSize: '18px',
-          fontStyle: 'bold',
-        },
-      )
-      .setOrigin(1, 0)
-      .setScrollFactor(0);
-
-    this.rescueText = this.add
-      .text(
-        24,
-        46,
-        `HEALTH: ${HELICOPTER.maximumHealth}   LIVES: ${PLAYER.startingLives}   RESCUED: 0/${this.gameState.rescueTarget}   SCORE: 0`,
-        {
-          color: '#8fe388',
-          fontFamily: 'Courier New',
-          fontSize: '17px',
-          fontStyle: 'bold',
-        },
-      )
-      .setScrollFactor(0);
+    this.hud = new Hud(this);
 
     this.targetText = this.add
       .text(
@@ -296,6 +250,27 @@ export class GameScene extends Phaser.Scene {
       )
       .setOrigin(0.5, 1)
       .setScrollFactor(0);
+  }
+
+  private updateHud(): void {
+    const openCampCount = this.prisonCamps.filter(
+      (camp) => camp.isOpen,
+    ).length;
+
+    this.hud.update({
+      score: this.gameState.score,
+      rescued: this.gameState.rescued,
+      rescueTarget: this.gameState.rescueTarget,
+      passengers: this.helicopter.passengerCount,
+      passengerCapacity: this.helicopter.passengerCapacity,
+      health: this.helicopter.health,
+      maximumHealth: HELICOPTER.maximumHealth,
+      lives: this.gameState.lives,
+      isLanded: this.helicopter.isLanded,
+      tankDestroyed: this.targetDestroyed,
+      openCamps: openCampCount,
+      totalCamps: this.prisonCamps.length,
+    });
   }
 
   private fireCannon(

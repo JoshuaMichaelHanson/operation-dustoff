@@ -259,3 +259,24 @@ Important implementation detail:
 calls it only inside the successful tank-destruction branch, so later projectiles
 cannot award the points again after the tank becomes inactive. A pure test verifies
 that tank points combine with rescue points while leaving the rescued count unchanged.
+
+## 2026-09-20 - Additional Camps and Arcade HUD
+
+Decision:
+Keep the three seven-hostage camps introduced with the victory slice and number their
+world labels from 1 through 3. Replace the two long gameplay text lines with a small
+`Hud` class that gives score, rescue progress, passenger load, hull, and remaining
+helicopters dedicated positions in a fixed top overlay.
+
+Reason:
+All additional-camp behavior was already playable and documented, while the required
+HUD values were present but crowded into debug-style status strings. Dedicated fields
+make the five P1 values easier to scan without changing gameplay ownership or adding a
+general UI framework.
+
+Important implementation detail:
+The HUD formats score as a six-digit arcade value, changes the hull readout from green
+to yellow and then red as health falls, and keeps controls plus flight, tank, and camp
+status on a smaller second row. `GameScene` supplies one explicit state object each
+frame. Every HUD object is fixed to the camera and placed above world objects, while
+the existing bottom objective prompt remains owned by `GameScene`.
