@@ -39,6 +39,21 @@ export const TANK = {
   scoreValue: 100,
 } as const;
 
+export const JET = {
+  health: 3,
+  speed: 320,
+  initialSpawnDelayMs: 5000,
+  spawnIntervalMs: 15000,
+  spawnMargin: 96,
+  flightAltitudes: [350, 430, 510],
+  fireCooldownMs: 1500,
+  fireRange: 760,
+  projectileSpeed: 360,
+  projectileDamage: 20,
+  scoreValue: 200,
+  maximumActive: 1,
+} as const;
+
 export const PLAYER = {
   startingLives: 3,
   respawnX: 280,

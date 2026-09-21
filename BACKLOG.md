@@ -167,11 +167,11 @@ Player can win the game normally.
 
 ## P1 - Jet Enemy
 
-- [ ] Spawn jets occasionally
-- [ ] Fly across level
-- [ ] Attack player
-- [ ] Allow destruction
-- [ ] Despawn cleanly
+- [x] Spawn jets occasionally
+- [x] Fly across level
+- [x] Attack player
+- [x] Allow destruction
+- [x] Despawn cleanly
 
 Jet may be deferred if MVP schedule is tight.
 
