@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "piskel-skill": {
+      "source": "Ne9roni/piskel-cli",
+      "sourceType": "github",
+      "skillPath": "skills/piskel-skill/SKILL.md",
+      "computedHash": "e82de451e2004c4f78439367e810c9faafbc699682329854db69b7715e6fb963"
+    }
+  }
+}

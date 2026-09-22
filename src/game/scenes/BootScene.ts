@@ -5,8 +5,23 @@ export class BootScene extends Phaser.Scene {
     super('BootScene');
   }
 
+  preload(): void {
+    this.load.spritesheet('helicopter', 'assets/sprites/helicopter.png', {
+      frameWidth: 96,
+      frameHeight: 54,
+    });
+  }
+
   create(): void {
-    this.createHelicopterTexture();
+    this.anims.create({
+      key: 'helicopter-rotors',
+      frames: this.anims.generateFrameNumbers('helicopter', {
+        start: 0,
+        end: 3,
+      }),
+      frameRate: 12,
+      repeat: -1,
+    });
     this.createCannonRoundTexture();
     this.createMissileTexture();
     this.createEnemyRoundTexture();
@@ -15,30 +30,6 @@ export class BootScene extends Phaser.Scene {
     this.createPrisonCampTextures();
     this.createHostageTexture();
     this.scene.start('TitleScene');
-  }
-
-  private createHelicopterTexture(): void {
-    const graphics = this.add.graphics();
-
-    graphics.fillStyle(0x6f7f46);
-    graphics.fillTriangle(23, 23, 1, 12, 1, 34);
-    graphics.fillRoundedRect(22, 14, 58, 30, 11);
-    graphics.fillStyle(0xa7b66d);
-    graphics.fillRoundedRect(54, 17, 24, 22, 8);
-    graphics.fillStyle(0x9fc7c5);
-    graphics.fillTriangle(62, 19, 77, 20, 77, 35);
-
-    graphics.lineStyle(3, 0x39452c);
-    graphics.lineBetween(39, 12, 39, 5);
-    graphics.lineBetween(9, 5, 82, 5);
-    graphics.lineBetween(29, 45, 25, 50);
-    graphics.lineBetween(66, 45, 70, 50);
-    graphics.lineBetween(19, 50, 77, 50);
-
-    graphics.fillStyle(0xf3d45a);
-    graphics.fillRect(80, 27, 13, 4);
-    graphics.generateTexture('helicopter', 96, 54);
-    graphics.destroy();
   }
 
   private createCannonRoundTexture(): void {
