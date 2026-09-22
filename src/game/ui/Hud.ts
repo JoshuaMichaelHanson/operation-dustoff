@@ -15,6 +15,8 @@ export interface HudState {
   tankDestroyed: boolean;
   openCamps: number;
   totalCamps: number;
+  missileLocked: boolean;
+  missileReady: boolean;
 }
 
 export function formatHudScore(score: number): string {
@@ -46,7 +48,7 @@ export class Hud {
     this.livesText = this.createMetric(scene, 1090, '#d6dec3');
 
     scene.add
-      .text(24, 54, 'WASD / ARROWS: FLY   SPACE: FIRE', {
+      .text(24, 54, 'WASD / ARROWS: FLY   SPACE: CANNON   X: MISSILE', {
         color: '#91a087',
         fontFamily: 'Courier New',
         fontSize: '14px',
@@ -81,8 +83,13 @@ export class Hud {
 
     const flightState = state.isLanded ? 'LANDED' : 'AIRBORNE';
     const tankState = state.tankDestroyed ? 'DESTROYED' : 'ACTIVE';
+    const missileState = state.missileLocked
+      ? state.missileReady
+        ? '   MISSILE LOCK'
+        : '   MISSILE RELOAD'
+      : '';
     this.statusText.setText(
-      `${flightState}   TANK ${tankState}   CAMPS ${state.openCamps}/${state.totalCamps}`,
+      `${flightState}   TANK ${tankState}   CAMPS ${state.openCamps}/${state.totalCamps}${missileState}`,
     );
   }
 

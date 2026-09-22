@@ -54,6 +54,16 @@ export const JET = {
   maximumActive: 1,
 } as const;
 
+export const MISSILE = {
+  cooldownMs: 2200,
+  lockRange: 900,
+  speed: 620,
+  maximumTurnRadiansPerSecond: 2.2,
+  lifetimeMs: 4500,
+  worldMargin: 80,
+  damage: 3,
+} as const;
+
 export const PLAYER = {
   startingLives: 3,
   respawnX: 280,

@@ -8,6 +8,7 @@ import {
   HELICOPTER,
   HOSTAGE,
   JET,
+  MISSILE,
   PLAYER,
   PRISON_CAMP,
   TANK,
@@ -15,6 +16,7 @@ import {
   WORLD_WIDTH,
 } from '../constants';
 import { Helicopter } from '../entities/Helicopter';
+import { HomingMissile } from '../entities/HomingMissile';
 import { Hostage } from '../entities/Hostage';
 import type { EnemyShot } from '../entities/EnemyShot';
 import { Jet } from '../entities/Jet';
@@ -24,6 +26,7 @@ import { Tank } from '../entities/Tank';
 import { getCannonVelocity } from '../logic/cannonAim';
 import { HostageState, HostageUpdateEvent } from '../logic/hostageState';
 import { hasPassengerUnloadSpacing } from '../logic/rescueRules';
+import { canLockMissileTarget } from '../logic/missileGuidance';
 import { GameState } from '../state/GameState';
 import { Hud } from '../ui/Hud';
 
@@ -36,6 +39,7 @@ export class GameScene extends Phaser.Scene {
   private cannonRounds!: Phaser.Physics.Arcade.Group;
   private enemyRounds!: Phaser.Physics.Arcade.Group;
   private jets!: Phaser.Physics.Arcade.Group;
+  private missiles!: Phaser.Physics.Arcade.Group;
   private hud!: Hud;
   private targetText!: Phaser.GameObjects.Text;
   private gameState!: GameState;
@@ -84,6 +88,7 @@ export class GameScene extends Phaser.Scene {
       maxSize: 32,
     });
     this.jets = this.physics.add.group({ allowGravity: false });
+    this.missiles = this.physics.add.group({ allowGravity: false });
     this.nextJetSpawnAt = this.time.now + JET.initialSpawnDelayMs;
 
     this.physics.add.collider(this.helicopter, ground);
@@ -132,9 +137,22 @@ export class GameScene extends Phaser.Scene {
         round.disableBody(true, true);
 
         if (jet.active && jet.takeDamage()) {
-          this.gameState.awardScore(JET.scoreValue);
-          this.showScoreAward(jetX, jetY - 28, JET.scoreValue);
-          this.showJetExplosion(jetX, jetY);
+          this.awardJetDestruction(jetX, jetY);
+        }
+      },
+    );
+    this.physics.add.overlap(
+      this.jets,
+      this.missiles,
+      (jetObject, missileObject) => {
+        const jet = jetObject as Jet;
+        const missile = missileObject as HomingMissile;
+        const jetX = jet.x;
+        const jetY = jet.y;
+        missile.destroy();
+
+        if (jet.active && jet.takeDamage(MISSILE.damage)) {
+          this.awardJetDestruction(jetX, jetY);
         }
       },
     );
@@ -174,6 +192,21 @@ export class GameScene extends Phaser.Scene {
       );
     }
 
+    const missileTarget = this.getMissileLockTarget();
+    const missileLaunch = this.helicopter.tryFireMissile(
+      time,
+      missileTarget !== null,
+    );
+    if (missileLaunch && missileTarget) {
+      this.fireMissile(
+        missileLaunch.x,
+        missileLaunch.y,
+        missileLaunch.direction,
+        missileTarget,
+        time,
+      );
+    }
+
     if (!this.playerDestroyed) {
       const enemyShot = this.tank.tryFire(
         time,
@@ -197,6 +230,9 @@ export class GameScene extends Phaser.Scene {
       if (jetShot) {
         this.fireEnemyRound(jetShot);
       }
+    }
+    for (const child of [...this.missiles.getChildren()]) {
+      (child as HomingMissile).update(time, delta);
     }
 
     let hostageStateChanged = false;
@@ -313,6 +349,8 @@ export class GameScene extends Phaser.Scene {
       tankDestroyed: this.targetDestroyed,
       openCamps: openCampCount,
       totalCamps: this.prisonCamps.length,
+      missileLocked: this.getMissileLockTarget() !== null,
+      missileReady: this.helicopter.isMissileReady(this.time.now),
     });
   }
 
@@ -343,6 +381,61 @@ export class GameScene extends Phaser.Scene {
       .setFlipX(direction < 0)
       .setRotation(direction * downwardAngleRadians)
       .setVelocity(velocity.x, velocity.y);
+
+    this.showWeaponFlash(x, y, 0xffe27a, 8);
+  }
+
+  private fireMissile(
+    x: number,
+    y: number,
+    direction: -1 | 1,
+    target: Jet,
+    time: number,
+  ): void {
+    const missile = new HomingMissile(
+      this,
+      x,
+      y,
+      direction,
+      target,
+      time,
+    );
+    this.missiles.add(missile);
+    this.showWeaponFlash(x, y, 0x9fc7c5, 14);
+    this.cameras.main.shake(70, 0.002);
+  }
+
+  private getMissileLockTarget(): Jet | null {
+    let nearestTarget: Jet | null = null;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (const child of this.jets.getChildren()) {
+      const jet = child as Jet;
+      if (
+        !jet.active ||
+        !canLockMissileTarget(
+          this.helicopter,
+          jet,
+          this.helicopter.facingDirection,
+          MISSILE.lockRange,
+        )
+      ) {
+        continue;
+      }
+
+      const distance = Phaser.Math.Distance.Between(
+        this.helicopter.x,
+        this.helicopter.y,
+        jet.x,
+        jet.y,
+      );
+      if (distance < nearestDistance) {
+        nearestTarget = jet;
+        nearestDistance = distance;
+      }
+    }
+
+    return nearestTarget;
   }
 
   private fireEnemyRound(shot: EnemyShot): void {
@@ -431,6 +524,7 @@ export class GameScene extends Phaser.Scene {
     this.gameState.loseLife();
     this.disableProjectiles(this.cannonRounds);
     this.disableProjectiles(this.enemyRounds);
+    this.destroyProjectiles(this.missiles);
     this.showHelicopterExplosion(explosionX, explosionY);
 
     this.targetText.setText(
@@ -480,6 +574,34 @@ export class GameScene extends Phaser.Scene {
       duration: 280,
       onComplete: () => blast.destroy(),
     });
+  }
+
+  private awardJetDestruction(x: number, y: number): void {
+    this.gameState.awardScore(JET.scoreValue);
+    this.showScoreAward(x, y - 28, JET.scoreValue);
+    this.showJetExplosion(x, y);
+  }
+
+  private showWeaponFlash(
+    x: number,
+    y: number,
+    color: number,
+    radius: number,
+  ): void {
+    const flash = this.add.circle(x, y, radius, color, 0.9);
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      scale: 1.8,
+      duration: 90,
+      onComplete: () => flash.destroy(),
+    });
+  }
+
+  private destroyProjectiles(projectiles: Phaser.Physics.Arcade.Group): void {
+    for (const child of [...projectiles.getChildren()]) {
+      child.destroy();
+    }
   }
 
   private showScoreAward(x: number, y: number, points: number): void {
