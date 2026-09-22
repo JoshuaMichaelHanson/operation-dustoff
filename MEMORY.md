@@ -404,3 +404,25 @@ Each smoke puff is a short-lived circle created behind the helicopter and tweene
 backward and upward before destroying itself. The damage profile is pure logic covered
 by tests, and respawning resets the smoke timer. A manual playtest accepted the effect,
 completing the P2 Feel backlog section.
+
+## 2026-09-22 - Retro Title and Helicopter Sprite
+
+Decision:
+Replace the generated helicopter placeholder with an original 96x54 pixel-art sprite
+and use the same animated asset as the focal point of a rebuilt retro title screen.
+Keep the established olive, sand, yellow, and pale-cyan palette across both contexts.
+
+Reason:
+One shared asset gives gameplay and the title screen a consistent visual identity while
+completing the first presentation slice without introducing a separate title-only art
+pipeline. The user manually accepted both the new title composition and helicopter.
+
+Important implementation detail:
+The editable source is `art/source/helicopter.piskel`, with separate body and rotor
+layers, four 96x54 frames, and a 12 FPS timeline. Its horizontal spritesheet exports to
+`public/assets/sprites/helicopter.png`. `BootScene` loads it under the existing
+`helicopter` texture key and registers the repeating `helicopter-rotors` animation, so
+the entity keeps its existing collision body, flipping, pitching, weapons, and movement
+behavior. The title screen scales the same sprite to 3x over a code-drawn sunset,
+mountains, grid, border, and scanline treatment. Tests and the production build pass,
+and a browser smoke test found no console warnings or errors.
