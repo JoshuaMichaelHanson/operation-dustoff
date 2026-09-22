@@ -30,11 +30,16 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(centerX, GAME_HEIGHT * 0.56, 'WASD / ARROWS TO FLY  •  SPACE TO FIRE', {
-        color: '#91a087',
-        fontFamily: 'Courier New',
-        fontSize: '18px',
-      })
+      .text(
+        centerX,
+        GAME_HEIGHT * 0.56,
+        'WASD / ARROWS TO FLY  •  SPACE CANNON  •  X LOCK-ON MISSILE',
+        {
+          color: '#91a087',
+          fontFamily: 'Courier New',
+          fontSize: '18px',
+        },
+      )
       .setOrigin(0.5);
 
     const startText = this.add

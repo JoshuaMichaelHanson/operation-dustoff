@@ -1,1 +1,1 @@
-{"root":["./vite.config.ts","./vitest.config.ts","./tests/constants.test.ts","./tests/helicoptermotion.test.ts"],"version":"5.9.2"}
+{"root":["./vite.config.ts","./vitest.config.ts","./tests/cannonaim.test.ts","./tests/constants.test.ts","./tests/helicoptermotion.test.ts","./tests/hostagestate.test.ts","./tests/jetbehavior.test.ts","./tests/missileguidance.test.ts","./tests/passengermanifest.test.ts","./tests/playerdamage.test.ts","./tests/rescuerules.test.ts","./tests/victorycondition.test.ts"],"version":"5.9.2"}

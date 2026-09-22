@@ -301,3 +301,29 @@ the pooled round, allowing jets to deal 20 damage without changing tank damage. 
 tests cover spawn edges, bidirectional cleanup bounds, aimed projectile speed, and
 attack range. A browser smoke test confirmed a visible flyover, an aimed projectile,
 jet damage to the helicopter, and no console errors.
+
+## 2026-09-21 - Air-to-Air Lock-On Missile
+
+Decision:
+Add one narrowly scoped secondary weapon instead of weakening the jet or improving
+the machine gun against it. Pressing X launches a homing missile only while an active
+jet is ahead of the helicopter and within 900 pixels. A missile has a capped turn rate,
+a 2.2-second cooldown, and enough damage to destroy one jet.
+
+Reason:
+The jet's speed and altitude make cannon kills intentionally demanding, which is a
+good distinction to preserve. The lock-on missile creates a different positioning and
+timing challenge without changing cannon damage, jet health, or jet movement. Bombs,
+ground targeting, ammunition, upgrades, and a general weapon framework remain out of
+scope.
+
+Important implementation detail:
+Missile lock and steering are deterministic pure functions covered by Vitest. Launch
+input uses Phaser's edge-triggered `JustDown` handling so short taps are reliable. The
+HUD exposes lock and reload states, while muzzle flash, launch shake, and a fading
+missile trail provide firing feedback. Missiles are removed on timeout, world exit,
+player destruction, or impact, and jet destruction reuses the existing 200-point
+award path. A browser smoke test confirmed the title/HUD controls, live lock state,
+jet pressure, and no console warnings or errors; automated canvas timing was not
+reliable enough to visually capture an impact, so homing and lock behavior remain
+covered at the logic-test layer.

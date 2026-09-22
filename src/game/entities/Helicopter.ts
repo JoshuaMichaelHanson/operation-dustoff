@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { HELICOPTER } from '../constants';
+import { HELICOPTER, MISSILE } from '../constants';
 import { Health } from '../logic/health';
 import { isSafeLanding } from '../logic/helicopterMotion';
 import { PassengerManifest } from '../logic/passengerManifest';
@@ -19,12 +19,20 @@ export interface CannonShot {
   downwardAngleRadians: number;
 }
 
+export interface MissileLaunch {
+  x: number;
+  y: number;
+  direction: -1 | 1;
+}
+
 export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   private readonly cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private readonly wasd: DirectionKeys;
   private readonly fireKey: Phaser.Input.Keyboard.Key;
+  private readonly missileKey: Phaser.Input.Keyboard.Key;
   private facing: -1 | 1 = 1;
   private lastCannonShotAt = Number.NEGATIVE_INFINITY;
+  private lastMissileShotAt = Number.NEGATIVE_INFINITY;
   private landed = false;
   private readonly passengers = new PassengerManifest(
     HELICOPTER.passengerCapacity,
@@ -50,12 +58,14 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
       right: Phaser.Input.Keyboard.KeyCodes.D,
     }) as DirectionKeys;
     this.fireKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.missileKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
     keyboard.addCapture([
       Phaser.Input.Keyboard.KeyCodes.UP,
       Phaser.Input.Keyboard.KeyCodes.DOWN,
       Phaser.Input.Keyboard.KeyCodes.LEFT,
       Phaser.Input.Keyboard.KeyCodes.RIGHT,
       Phaser.Input.Keyboard.KeyCodes.SPACE,
+      Phaser.Input.Keyboard.KeyCodes.X,
     ]);
 
     const body = this.body as Phaser.Physics.Arcade.Body;
@@ -84,6 +94,33 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
 
   get health(): number {
     return this.healthState.current;
+  }
+
+  get facingDirection(): -1 | 1 {
+    return this.facing;
+  }
+
+  isMissileReady(time: number): boolean {
+    return time - this.lastMissileShotAt >= MISSILE.cooldownMs;
+  }
+
+  tryFireMissile(time: number, hasLock: boolean): MissileLaunch | null {
+    const launchPressed = Phaser.Input.Keyboard.JustDown(this.missileKey);
+    if (
+      !this.active ||
+      !hasLock ||
+      !launchPressed ||
+      !this.isMissileReady(time)
+    ) {
+      return null;
+    }
+
+    this.lastMissileShotAt = time;
+    return {
+      x: this.x + this.facing * 52,
+      y: this.y - 4,
+      direction: this.facing,
+    };
   }
 
   tryBoardPassenger(): boolean {

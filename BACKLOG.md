@@ -184,7 +184,7 @@ Jet may be deferred if MVP schedule is tight.
 - [ ] Tune helicopter acceleration
 - [ ] Tune momentum
 - [ ] Improve landing tolerance
-- [ ] Add recoil or firing feedback
+- [x] Add recoil or firing feedback
 - [ ] Add camera shake for explosions
 - [ ] Add explosion particles
 - [ ] Add helicopter smoke when damaged
@@ -228,7 +228,7 @@ Jet may be deferred if MVP schedule is tight.
 
 Do not implement until MVP is complete.
 
-- [ ] Secondary weapon
+- [x] Secondary weapon — air-to-air lock-on missile (pulled forward for jet balance)
 - [ ] Bombs
 - [ ] Rockets
 - [ ] AA guns
