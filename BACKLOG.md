@@ -193,8 +193,8 @@ Jet may be deferred if MVP schedule is tight.
 
 ## P2 - Presentation
 
-- [ ] Retro title screen
-- [ ] Original pixel helicopter sprite
+- [x] Retro title screen
+- [x] Original pixel helicopter sprite
 - [ ] Tank sprite
 - [ ] Jet sprite
 - [ ] Hostage sprite
