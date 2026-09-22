@@ -4,6 +4,7 @@ import { MISSILE } from '../src/game/constants';
 import {
   canLockMissileTarget,
   getHomingMissileVelocity,
+  type Velocity,
 } from '../src/game/logic/missileGuidance';
 
 describe('missile target lock', () => {
@@ -60,7 +61,7 @@ describe('missile guidance', () => {
     const frameMs = 1000 / 60;
     const missile = { x: 332, y: 765 };
     const jet = { x: 800, y: 350 };
-    let velocity = { x: MISSILE.speed, y: 0 };
+    let velocity: Velocity = { x: MISSILE.speed, y: 0 };
     let closestDistance = Number.POSITIVE_INFINITY;
 
     for (let elapsed = 0; elapsed < MISSILE.lifetimeMs; elapsed += frameMs) {

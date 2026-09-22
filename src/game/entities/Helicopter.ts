@@ -2,7 +2,14 @@ import Phaser from 'phaser';
 
 import { HELICOPTER, MISSILE } from '../constants';
 import { Health } from '../logic/health';
-import { isSafeLanding } from '../logic/helicopterMotion';
+import { getDamageSmokeProfile } from '../logic/damageSmoke';
+import {
+  getHorizontalControlAcceleration,
+  getHorizontalDrag,
+  getVerticalControlAcceleration,
+  isSafeLanding,
+  type ControlDirection,
+} from '../logic/helicopterMotion';
 import { PassengerManifest } from '../logic/passengerManifest';
 
 interface DirectionKeys {
@@ -33,6 +40,7 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   private facing: -1 | 1 = 1;
   private lastCannonShotAt = Number.NEGATIVE_INFINITY;
   private lastMissileShotAt = Number.NEGATIVE_INFINITY;
+  private nextSmokeAt = 0;
   private landed = false;
   private readonly passengers = new PassengerManifest(
     HELICOPTER.passengerCapacity,
@@ -159,6 +167,7 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   respawn(x: number, y: number): void {
     const body = this.body as Phaser.Physics.Arcade.Body;
     this.healthState.reset();
+    this.nextSmokeAt = 0;
     this.landed = false;
     this.clearTint();
     this.setActive(true).setVisible(true).setPosition(x, y).setRotation(0);
@@ -182,20 +191,20 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     body.setAccelerationX(0);
     body.setAccelerationY(0);
 
-    if (movingLeft !== movingRight) {
-      this.facing = movingLeft ? -1 : 1;
-      body.setAccelerationX(
-        this.facing * HELICOPTER.horizontalAcceleration,
-      );
+    const horizontalInput: ControlDirection =
+      movingLeft === movingRight ? 0 : movingLeft ? -1 : 1;
+    if (horizontalInput !== 0) {
+      this.facing = horizontalInput;
     }
+    const touchingGround = body.blocked.down || body.touching.down;
+    body.setDragX(getHorizontalDrag(touchingGround, horizontalInput));
+    body.setAccelerationX(
+      getHorizontalControlAcceleration(horizontalInput, body.velocity.x),
+    );
 
-    if (movingUp !== movingDown) {
-      body.setAccelerationY(
-        movingUp
-          ? -HELICOPTER.verticalAcceleration
-          : HELICOPTER.verticalAcceleration,
-      );
-    }
+    const verticalInput: ControlDirection =
+      movingUp === movingDown ? 0 : movingUp ? -1 : 1;
+    body.setAccelerationY(getVerticalControlAcceleration(verticalInput));
 
     const forwardSpeedRatio = Phaser.Math.Clamp(
       Math.abs(body.velocity.x) / HELICOPTER.maximumHorizontalSpeed,
@@ -207,9 +216,10 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
 
     this.setFlipX(this.facing < 0);
     this.setRotation(this.facing * downwardAngleRadians);
+    this.updateDamageSmoke(time);
 
     this.landed = isSafeLanding({
-      touchingGround: body.blocked.down || body.touching.down,
+      touchingGround,
       velocityX: body.velocity.x,
       velocityY: body.velocity.y,
     });
@@ -228,5 +238,39 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     }
 
     return null;
+  }
+
+  private updateDamageSmoke(time: number): void {
+    const profile = getDamageSmokeProfile(
+      this.healthState.current,
+      HELICOPTER.maximumHealth,
+    );
+    if (!profile) {
+      this.nextSmokeAt = time;
+      return;
+    }
+
+    if (time < this.nextSmokeAt) {
+      return;
+    }
+
+    this.nextSmokeAt = time + profile.intervalMs;
+    const puff = this.scene.add.circle(
+      this.x - this.facing * 36,
+      this.y - 6,
+      profile.radius,
+      profile.color,
+      profile.alpha,
+    );
+    this.scene.tweens.add({
+      targets: puff,
+      x: puff.x - this.facing * Phaser.Math.FloatBetween(12, 26),
+      y: puff.y - Phaser.Math.FloatBetween(28, 45),
+      alpha: 0,
+      scale: Phaser.Math.FloatBetween(1.8, 2.4),
+      duration: Phaser.Math.Between(650, 900),
+      ease: 'Sine.easeOut',
+      onComplete: () => puff.destroy(),
+    });
   }
 }

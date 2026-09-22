@@ -106,6 +106,7 @@ export class GameScene extends Phaser.Scene {
           this.targetDestroyed = true;
           this.gameState.awardScore(TANK.scoreValue);
           this.showScoreAward(targetX, targetY - 34, TANK.scoreValue);
+          this.showGroundExplosion(targetX, targetY);
           this.updateObjectiveText();
         }
       },
@@ -117,9 +118,12 @@ export class GameScene extends Phaser.Scene {
         (campObject, roundObject) => {
           const camp = campObject as PrisonCamp;
           const round = roundObject as Phaser.Physics.Arcade.Image;
+          const campX = camp.x;
+          const campY = camp.y;
           round.disableBody(true, true);
 
           if (camp.active && camp.takeDamage()) {
+            this.showGroundExplosion(campX, campY);
             this.releaseHostages(camp);
             this.updateObjectiveText();
           }
@@ -553,27 +557,72 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showHelicopterExplosion(x: number, y: number): void {
-    const blast = this.add.circle(x, y, 24, 0xf3d45a, 0.95);
-    this.cameras.main.shake(240, 0.01);
-    this.tweens.add({
-      targets: blast,
-      alpha: 0,
-      scale: 2.4,
-      duration: 420,
-      onComplete: () => blast.destroy(),
-    });
+    this.showExplosion(x, y, 28, 18, 240, 0.01);
   }
 
   private showJetExplosion(x: number, y: number): void {
-    const blast = this.add.circle(x, y, 18, 0xf3d45a, 0.95);
-    this.cameras.main.shake(120, 0.004);
+    this.showExplosion(x, y, 20, 12, 120, 0.004);
+  }
+
+  private showGroundExplosion(x: number, y: number): void {
+    this.showExplosion(x, y, 24, 14, 160, 0.006);
+  }
+
+  private showExplosion(
+    x: number,
+    y: number,
+    radius: number,
+    particleCount: number,
+    shakeDuration: number,
+    shakeIntensity: number,
+  ): void {
+    const outerBlast = this.add.circle(x, y, radius, 0xe46b56, 0.82);
+    const coreBlast = this.add.circle(x, y, radius * 0.55, 0xffe27a, 1);
+    this.cameras.main.shake(shakeDuration, shakeIntensity);
+
     this.tweens.add({
-      targets: blast,
+      targets: outerBlast,
       alpha: 0,
-      scale: 2,
-      duration: 280,
-      onComplete: () => blast.destroy(),
+      scale: 2.5,
+      duration: 360,
+      ease: 'Quad.easeOut',
+      onComplete: () => outerBlast.destroy(),
     });
+    this.tweens.add({
+      targets: coreBlast,
+      alpha: 0,
+      scale: 1.8,
+      duration: 190,
+      ease: 'Quad.easeOut',
+      onComplete: () => coreBlast.destroy(),
+    });
+
+    const particleColors = [0xffe27a, 0xf3d45a, 0xe46b56, 0xd6dec3];
+    for (let index = 0; index < particleCount; index += 1) {
+      const baseAngle = (Math.PI * 2 * index) / particleCount;
+      const angle = baseAngle + Phaser.Math.FloatBetween(-0.18, 0.18);
+      const distance = Phaser.Math.FloatBetween(radius * 2.2, radius * 4);
+      const size = Phaser.Math.Between(4, 8);
+      const color = particleColors[index % particleColors.length];
+      if (color === undefined) {
+        continue;
+      }
+
+      const particle = this.add
+        .rectangle(x, y, size, size, color, 0.95)
+        .setRotation(angle);
+      this.tweens.add({
+        targets: particle,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance - radius * 0.35,
+        alpha: 0,
+        scale: 0.3,
+        rotation: angle + Phaser.Math.FloatBetween(-2.4, 2.4),
+        duration: Phaser.Math.Between(300, 520),
+        ease: 'Cubic.easeOut',
+        onComplete: () => particle.destroy(),
+      });
+    }
   }
 
   private awardJetDestruction(x: number, y: number): void {

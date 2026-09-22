@@ -181,13 +181,13 @@ Jet may be deferred if MVP schedule is tight.
 
 ## P2 - Feel
 
-- [ ] Tune helicopter acceleration
-- [ ] Tune momentum
-- [ ] Improve landing tolerance
+- [x] Tune helicopter acceleration
+- [x] Tune momentum
+- [x] Improve landing tolerance
 - [x] Add recoil or firing feedback
-- [ ] Add camera shake for explosions
-- [ ] Add explosion particles
-- [ ] Add helicopter smoke when damaged
+- [x] Add camera shake for explosions
+- [x] Add explosion particles
+- [x] Add helicopter smoke when damaged
 
 ---
 
