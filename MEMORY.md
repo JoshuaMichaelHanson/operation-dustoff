@@ -327,3 +327,80 @@ award path. A browser smoke test confirmed the title/HUD controls, live lock sta
 jet pressure, and no console warnings or errors; automated canvas timing was not
 reliable enough to visually capture an impact, so homing and lock behavior remain
 covered at the logic-test layer.
+
+## 2026-09-21 - Accepted Flight Feel Tuning
+
+Decision:
+Treat acceleration and momentum as one manual-playtest checkpoint. Reduce normal
+horizontal acceleration and drag for a smoother pickup and longer coast, but apply
+stronger acceleration when the player counter-steers against existing momentum.
+Balance climb and descent with separate acceleration values rather than one symmetric
+input value layered on top of passive gravity.
+
+Reason:
+The helicopter should feel weighty without making precise positioning frustrating.
+Slower speed buildup and a short coast create weight, while stronger counter-steering
+lets the player brake deliberately. A lower descent input offsets passive gravity and
+keeps downward control from being much sharper than climbing.
+
+Important implementation detail:
+The candidate values are 340 horizontal acceleration, 680 counter-steering
+acceleration, 190 horizontal drag, and 260 maximum horizontal speed. Vertical tuning
+uses 470 climb acceleration, 310 descent acceleration, 110 passive gravity, 100 drag,
+and a 175 maximum speed. Pure tests protect input direction, counter-steering, and
+asymmetric vertical control. The manual playtest accepted these values. Landing
+tolerance remains a separate checkpoint.
+
+## 2026-09-21 - Accepted Landing Tolerance
+
+Decision:
+Raise the safe touchdown limits from 70 to 90 horizontal speed and from 95 to 125
+vertical speed. When the helicopter is touching the ground with no horizontal input,
+increase horizontal drag from 190 to 520 so a valid touchdown settles promptly.
+
+Reason:
+Landing should remain an intentional controlled maneuver, but the original limits
+made near-safe approaches unnecessarily exact. Stronger ground-only drag prevents the
+wider horizontal tolerance from turning a successful landing into a long slide while
+preserving the accepted airborne momentum.
+
+Important implementation detail:
+Ground drag returns to the normal airborne value as soon as the helicopter leaves the
+ground or the player supplies horizontal input. Pure tests cover the assisted drag,
+the widened valid approach, and rejection immediately above both speed limits. The
+manual playtest accepted the forgiving landing behavior.
+
+## 2026-09-21 - Accepted Explosion Feedback
+
+Decision:
+Use one small explosion helper for tanks, camps, jets, and helicopter destruction.
+Each explosion combines a two-stage flash, a short radial burst of colored square
+fragments, and camera shake scaled to the destroyed object's size.
+
+Reason:
+Tank and camp destruction previously had no blast feedback, while jet and helicopter
+destruction only expanded a single circle. A compact shared effect makes successful
+hits readable without introducing a particle system or adding art dependencies.
+
+Important implementation detail:
+Ground targets emit 14 fragments with a 160 ms shake, jets emit 12 fragments with a
+120 ms shake, and helicopter loss emits 18 fragments with a 240 ms shake. Every flash
+and fragment destroys itself when its tween completes. The manual playtest accepted
+the shared effect and completed both explosion-feedback backlog items.
+
+## 2026-09-21 - Accepted Helicopter Damage Smoke
+
+Decision:
+Start a light gray smoke trail at 50 percent hull and switch to darker, larger, twice
+as frequent smoke at 25 percent hull. Healthy and destroyed helicopters emit no smoke.
+
+Reason:
+Hull color in the HUD communicates an exact value, while world-space smoke makes the
+helicopter's condition readable without looking away from play. Two severity levels
+add urgency without introducing fire animation or a persistent particle system.
+
+Important implementation detail:
+Each smoke puff is a short-lived circle created behind the helicopter and tweened
+backward and upward before destroying itself. The damage profile is pure logic covered
+by tests, and respawning resets the smoke timer. A manual playtest accepted the effect,
+completing the P2 Feel backlog section.
