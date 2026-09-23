@@ -16,6 +16,7 @@ import {
   WORLD_HEIGHT,
   WORLD_WIDTH,
 } from '../constants';
+import { AudioManager } from '../audio/AudioManager';
 import { Helicopter } from '../entities/Helicopter';
 import { HomingMissile } from '../entities/HomingMissile';
 import { Hostage } from '../entities/Hostage';
@@ -47,6 +48,7 @@ export class GameScene extends Phaser.Scene {
   private hud!: Hud;
   private targetText!: Phaser.GameObjects.Text;
   private gameState!: GameState;
+  private audioManager!: AudioManager;
   private targetDestroyed = false;
   private nextPassengerUnloadAt = 0;
   private playerDestroyed = false;
@@ -84,6 +86,10 @@ export class GameScene extends Phaser.Scene {
       PLAYER.respawnX,
       RESCUE_BASE.surfaceY - 21,
     );
+    this.audioManager = new AudioManager(this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.audioManager.destroy();
+    });
     this.tank = new Tank(this, 1500, GROUND_Y - 21);
     this.prisonCamps = PRISON_CAMP.positions.map(
       (x) => new PrisonCamp(this, x, GROUND_Y - 36),
@@ -200,6 +206,7 @@ export class GameScene extends Phaser.Scene {
 
   update(time: number, delta: number): void {
     const shot = this.helicopter.update(time);
+    this.updateRotorAudio();
     if (shot) {
       this.fireCannon(
         shot.x,
@@ -467,6 +474,22 @@ export class GameScene extends Phaser.Scene {
       .setVelocity(velocity.x, velocity.y);
 
     this.showWeaponFlash(x, y, 0xffe27a, 8);
+    this.audioManager.playCannon();
+  }
+
+  private updateRotorAudio(): void {
+    const body = this.helicopter.body as Phaser.Physics.Arcade.Body;
+    const horizontalRatio =
+      Math.abs(body.velocity.x) / HELICOPTER.maximumHorizontalSpeed;
+    const verticalRatio =
+      Math.abs(body.velocity.y) / HELICOPTER.maximumVerticalSpeed;
+    const speedRatio = Phaser.Math.Clamp(
+      Math.hypot(horizontalRatio, verticalRatio) / Math.SQRT2,
+      0,
+      1,
+    );
+
+    this.audioManager.updateRotor(this.helicopter.active, speedRatio);
   }
 
   private fireMissile(
