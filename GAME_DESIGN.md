@@ -330,6 +330,22 @@ targeting individual passengers.
 
 This rule should not affect the normal difficulty unless deliberately enabled.
 
+### Harder Terrain and SF Ground Combat (Post-MVP)
+
+Later hard levels may move mountains and hills into the helicopter's flight path as
+solid, clearly readable obstacles. Terrain should create route-planning pressure without
+requiring realistic flight physics or hiding collision boundaries from the player.
+
+The Little Bird may carry a small number of friendly Special Forces soldiers on
+external side seats. These NPC allies protect exposed hostages and loading zones through
+mounted covering fire or deployment near the rescue site. Enemy reinforcement trucks
+arrive at varied locations and unload hostile soldiers for the SF team to engage.
+
+Ground-unit behavior should use deterministic, hand-built state machines and compact
+waypoint or grid graphs. Use conventional DFS/BFS algorithms for reachability, route
+selection, patrol, and pursuit where appropriate. Do not introduce machine-learning,
+generative-AI, third-party pathfinding, or a general-purpose AI framework.
+
 ---
 
 ## Friendly Fire

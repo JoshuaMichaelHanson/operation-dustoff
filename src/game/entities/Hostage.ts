@@ -69,6 +69,7 @@ export class Hostage extends Phaser.GameObjects.Sprite {
           return null;
         }
 
+        this.play('hostage-walk', true);
         if (this.moveToward(this.rallyX, HOSTAGE.runningOutSpeed, deltaMs)) {
           this.transitionTo(HostageState.Waiting);
         }
@@ -154,5 +155,26 @@ export class Hostage extends Phaser.GameObjects.Sprite {
     }
 
     this.hostageState = nextState;
+
+    switch (nextState) {
+      case HostageState.RunningToHelicopter:
+      case HostageState.RunningToBase:
+        this.play('hostage-walk', true);
+        break;
+
+      case HostageState.RunningOut:
+      case HostageState.Waiting:
+        this.play('hostage-idle', true);
+        break;
+
+      case HostageState.Aboard:
+      case HostageState.Rescued:
+        this.stop();
+        this.setFrame(0);
+        break;
+
+      case HostageState.Captive:
+        break;
+    }
   }
 }

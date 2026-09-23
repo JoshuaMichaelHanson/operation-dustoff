@@ -197,8 +197,8 @@ Jet may be deferred if MVP schedule is tight.
 - [x] Original pixel helicopter sprite
 - [x] Tank sprite
 - [x] Jet sprite
-- [ ] Hostage sprite
-- [ ] Camp sprite
+- [x] Hostage sprite
+- [x] Camp sprite
 - [ ] Base sprite
 - [ ] Ground/background art
 
@@ -221,6 +221,22 @@ Jet may be deferred if MVP schedule is tight.
 - [ ] Player shots can kill hostages
 - [ ] Hostage death feedback
 - [ ] Dead hostages cannot be rescued
+
+---
+
+## P2 - Automated Gameplay Smoke Testing
+
+- [ ] Add a lightweight Playwright gameplay driver outside the production bundle
+- [ ] Support true held-key flight and weapon input with explicit key-down/key-up timing
+- [ ] Script focused routes for flying, firing, destroying a camp, and observing released hostages
+- [ ] Capture gameplay screenshots and browser console warnings/errors
+- [ ] Keep manual playtesting as the final feel and visual-quality checkpoint
+
+### Acceptance
+
+An agent can start the game, hold flight controls across Phaser frames, fire weapons,
+reach a selected gameplay checkpoint, and return screenshots plus console results
+without adding test-only behavior to the shipped game.
 
 ---
 
@@ -253,6 +269,26 @@ Do not implement until MVP is complete.
 - [ ] Keep boarded hostages protected by the helicopter rather than targeting passengers individually
 - [ ] Add readable warning, defense, injury, and death feedback for attacks on hostages
 - [ ] Balance the rule so opening a camp is a tactical choice best made when rescue is possible
+
+## Post-MVP - Harder Terrain and SF Ground Combat
+
+- [ ] Make mountains and hills solid flight obstacles on harder levels
+- [ ] Give terrain collision shapes clear visual silhouettes and fair approach space
+- [ ] Add friendly Special Forces soldiers with limited external Little Bird seating
+- [ ] Let SF soldiers deploy or provide covering fire around exposed hostages and loading zones
+- [ ] Add enemy reinforcement trucks that arrive at varied locations and unload hostile soldiers
+- [ ] Give friendly and hostile ground units explicit combat, cover, escort, and cleanup states
+- [ ] Use small deterministic waypoint or grid graphs with custom BFS/DFS navigation
+- [ ] Keep unit and vehicle limits low enough to preserve readable arcade gameplay
+- [ ] Add clear friendly/enemy silhouettes and prevent friendly units from targeting hostages
+
+### Acceptance
+
+On a harder level, the player must fly around solid terrain, can transport a small SF
+team on the helicopter's external seats, and can use that team to protect exposed
+hostages when an enemy truck arrives and unloads hostile soldiers. Ground units find
+valid routes with deterministic BFS/DFS-based logic, resolve combat visibly, and clean
+up without leaks or abandoned state.
 
 ---
 
