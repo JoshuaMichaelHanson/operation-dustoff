@@ -98,8 +98,12 @@ export const HOSTAGE = {
 } as const;
 
 export const RESCUE_BASE = {
-  centerX: 350,
-  landingZoneWidth: 500,
+  centerX: 390,
+  landingZoneWidth: 380,
   entranceX: 130,
+  spriteCenterX: 326,
+  spriteWidth: 512,
+  spriteHeight: 160,
+  surfaceY: GROUND_Y - 32,
   scorePerHostage: 100,
 } as const;

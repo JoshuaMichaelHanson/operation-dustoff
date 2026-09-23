@@ -11,6 +11,7 @@ import {
   MISSILE,
   PLAYER,
   PRISON_CAMP,
+  RESCUE_BASE,
   TANK,
   WORLD_HEIGHT,
   WORLD_WIDTH,
@@ -25,7 +26,10 @@ import { RescueBase } from '../entities/RescueBase';
 import { Tank } from '../entities/Tank';
 import { getCannonVelocity } from '../logic/cannonAim';
 import { HostageState, HostageUpdateEvent } from '../logic/hostageState';
-import { hasPassengerUnloadSpacing } from '../logic/rescueRules';
+import {
+  hasPassengerUnloadSpacing,
+  shouldOpenRescueDoor,
+} from '../logic/rescueRules';
 import { canLockMissileTarget } from '../logic/missileGuidance';
 import { GameState } from '../state/GameState';
 import { Hud } from '../ui/Hud';
@@ -70,11 +74,16 @@ export class GameScene extends Phaser.Scene {
       WORLD_WIDTH,
       WORLD_HEIGHT - GROUND_Y,
       0x334a2e,
-    );
+    ).setDepth(-5);
     this.physics.add.existing(ground, true);
+    this.createGroundArt();
 
     this.rescueBase = new RescueBase(this);
-    this.helicopter = new Helicopter(this, 280, GROUND_Y - 21);
+    this.helicopter = new Helicopter(
+      this,
+      PLAYER.respawnX,
+      RESCUE_BASE.surfaceY - 21,
+    );
     this.tank = new Tank(this, 1500, GROUND_Y - 21);
     this.prisonCamps = PRISON_CAMP.positions.map(
       (x) => new PrisonCamp(this, x, GROUND_Y - 36),
@@ -92,6 +101,10 @@ export class GameScene extends Phaser.Scene {
     this.nextJetSpawnAt = this.time.now + JET.initialSpawnDelayMs;
 
     this.physics.add.collider(this.helicopter, ground);
+    this.physics.add.collider(
+      this.helicopter,
+      this.rescueBase.landingSurface,
+    );
     this.physics.add.overlap(
       this.tank,
       this.cannonRounds,
@@ -256,6 +269,11 @@ export class GameScene extends Phaser.Scene {
     if (this.tryStartPassengerUnload(time)) {
       hostageStateChanged = true;
     }
+    this.rescueBase.setDoorOpen(
+      shouldOpenRescueDoor(
+        this.hostages.map((hostage) => hostage.currentState),
+      ),
+    );
     if (hostageStateChanged) {
       this.updateObjectiveText();
     }
@@ -267,19 +285,51 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createBattlefield(): void {
-    for (let x = 220; x < WORLD_WIDTH; x += 440) {
-      const height = 70 + ((x / 440) % 3) * 24;
-      this.add.triangle(
-        x,
-        GROUND_Y - height / 2,
-        0,
-        height,
-        115,
-        0,
-        230,
-        height,
-        0x263629,
-      );
+    const skyBands = [
+      { y: 90, height: 180, color: 0x17241f },
+      { y: 270, height: 180, color: 0x1d2d25 },
+      { y: 450, height: 180, color: 0x25372b },
+      { y: 630, height: 180, color: 0x304331 },
+    ];
+    for (const band of skyBands) {
+      this.add
+        .rectangle(
+          GAME_WIDTH / 2,
+          band.y,
+          GAME_WIDTH,
+          band.height,
+          band.color,
+        )
+        .setScrollFactor(0)
+        .setDepth(-30);
+    }
+
+    this.createClouds();
+
+    for (let x = -1024; x <= WORLD_WIDTH + 1024; x += 512) {
+      this.add
+        .image(x, GROUND_Y - 110, 'distant-mountains')
+        .setOrigin(0, 1)
+        .setScrollFactor(0.08, 0.28)
+        .setAlpha(0.7)
+        .setDepth(-27);
+    }
+
+    for (let x = -640; x <= WORLD_WIDTH + 960; x += 320) {
+      this.add
+        .image(x, GROUND_Y - 130, 'background-ridge')
+        .setOrigin(0, 1)
+        .setScrollFactor(0.18, 0.35)
+        .setTint(0x4a5838)
+        .setAlpha(0.55)
+        .setDepth(-25);
+    }
+    for (let x = -320; x <= WORLD_WIDTH + 640; x += 320) {
+      this.add
+        .image(x, GROUND_Y - 48, 'background-ridge')
+        .setOrigin(0, 1)
+        .setScrollFactor(0.42, 0.65)
+        .setDepth(-20);
     }
 
     this.add.text(1385, GROUND_Y - 82, 'ARMORED TARGET', {
@@ -296,6 +346,36 @@ export class GameScene extends Phaser.Scene {
         })
         .setOrigin(0.5, 0);
     });
+  }
+
+  private createClouds(): void {
+    let x = Phaser.Math.Between(-160, 120);
+
+    while (x < WORLD_WIDTH + 400) {
+      x += Phaser.Math.Between(380, 620);
+      const frame = Phaser.Math.Between(0, 2);
+      const scale = Phaser.Math.FloatBetween(1.5, 2.35);
+
+      this.add
+        .image(x, Phaser.Math.Between(190, 440), 'clouds', frame)
+        .setScale(scale)
+        .setScrollFactor(0.1 + frame * 0.025, 0.2)
+        .setAlpha(Phaser.Math.FloatBetween(0.2, 0.34))
+        .setDepth(-29);
+    }
+  }
+
+  private createGroundArt(): void {
+    const tileSize = 64;
+    const tileCount = Math.ceil(WORLD_WIDTH / tileSize);
+
+    for (let index = 0; index < tileCount; index += 1) {
+      const frame = (index * 3 + Math.floor(index / 5)) % 4;
+      this.add
+        .image(index * tileSize, GROUND_Y, 'ground-tiles', frame)
+        .setOrigin(0, 0)
+        .setDepth(-3);
+    }
   }
 
   private configureCamera(): void {
@@ -549,7 +629,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.time.delayedCall(PLAYER.respawnDelayMs, () => {
-      this.helicopter.respawn(PLAYER.respawnX, GROUND_Y - 21);
+      this.helicopter.respawn(
+        PLAYER.respawnX,
+        RESCUE_BASE.surfaceY - 21,
+      );
       this.playerDestroyed = false;
       this.configureCamera();
       this.updateObjectiveText();
@@ -719,6 +802,7 @@ export class GameScene extends Phaser.Scene {
       !passenger.beginDisembarking(
         this.helicopter.x,
         this.rescueBase.entranceX,
+        this.rescueBase.surfaceY,
       )
     ) {
       return false;

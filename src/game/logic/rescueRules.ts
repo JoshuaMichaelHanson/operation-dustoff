@@ -1,3 +1,5 @@
+import { HostageState } from './hostageState';
+
 export interface RescueLandingSituation {
   helicopterLanded: boolean;
   helicopterX: number;
@@ -32,4 +34,10 @@ export function hasPassengerUnloadSpacing(
   return disembarkingHostageXs.every(
     (hostageX) => Math.abs(hostageX - helicopterX) >= requiredSpacing,
   );
+}
+
+export function shouldOpenRescueDoor(
+  hostageStates: readonly HostageState[],
+): boolean {
+  return hostageStates.includes(HostageState.RunningToBase);
 }

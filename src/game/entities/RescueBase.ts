@@ -5,43 +5,35 @@ import { isSafeRescueLanding } from '../logic/rescueRules';
 import type { Helicopter } from './Helicopter';
 
 export class RescueBase {
-  constructor(scene: Phaser.Scene) {
-    scene.add.rectangle(
-      RESCUE_BASE.centerX,
-      GROUND_Y - 4,
-      RESCUE_BASE.landingZoneWidth,
-      8,
-      0x74805d,
-    );
+  readonly landingSurface: Phaser.GameObjects.Rectangle;
+  private readonly sprite: Phaser.GameObjects.Image;
 
-    scene.add.rectangle(
-      RESCUE_BASE.entranceX,
-      GROUND_Y - 41,
-      104,
-      82,
-      0x39452c,
-    );
-    scene.add.triangle(
-      RESCUE_BASE.entranceX,
-      GROUND_Y - 90,
-      0,
-      28,
-      60,
-      0,
-      120,
-      28,
-      0x596846,
-    );
-    scene.add.rectangle(
-      RESCUE_BASE.entranceX,
-      GROUND_Y - 24,
-      28,
-      48,
-      0x171d18,
-    );
+  constructor(scene: Phaser.Scene) {
+    this.sprite = scene.add
+      .image(
+        RESCUE_BASE.spriteCenterX,
+        GROUND_Y,
+        'rescue-base',
+      )
+      .setOrigin(0.5, 1)
+      .setDepth(-1);
+
+    const platformHeight = GROUND_Y - RESCUE_BASE.surfaceY;
+    this.landingSurface = scene.add
+      .rectangle(
+        RESCUE_BASE.spriteCenterX,
+        RESCUE_BASE.surfaceY + platformHeight / 2,
+        RESCUE_BASE.spriteWidth,
+        platformHeight,
+        0x000000,
+        0,
+      )
+      .setDepth(-1);
+    scene.physics.add.existing(this.landingSurface, true);
+
     scene.add.text(
-      RESCUE_BASE.centerX - RESCUE_BASE.landingZoneWidth / 2 + 20,
-      GROUND_Y - 128,
+      70,
+      GROUND_Y - RESCUE_BASE.spriteHeight - 18,
       'DUSTOFF BASE',
       {
         color: '#91a087',
@@ -53,6 +45,14 @@ export class RescueBase {
 
   get entranceX(): number {
     return RESCUE_BASE.entranceX;
+  }
+
+  get surfaceY(): number {
+    return RESCUE_BASE.surfaceY;
+  }
+
+  setDoorOpen(isOpen: boolean): void {
+    this.sprite.setFrame(isOpen ? 1 : 0);
   }
 
   canUnload(helicopter: Helicopter): boolean {

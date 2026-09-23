@@ -507,3 +507,65 @@ Important implementation detail:
 The user confirmed that gameplay is good with both sprite sets. The editable Piskel
 sources and exported Phaser spritesheets remain the source of truth for future visual
 changes. No additional gameplay or balance changes were needed for acceptance.
+
+## 2026-09-22 - Raised Rescue Base and Battlefield Art Candidate
+
+Decision:
+Replace the generated base shapes and flat battlefield with original pixel art. The
+rescue base now has a 32-pixel raised landing surface, while the battlefield uses four
+ground-tile variations and two parallax ridge layers over a banded dusk sky.
+
+Reason:
+The raised platform makes returning home feel like a distinct landing objective and
+gives unloading hostages a visible route into the operations building. Layered terrain
+adds depth and visual variety without making the current level geometry more complex.
+
+Important implementation detail:
+The editable sources are `art/source/rescue-base.piskel` (512x160),
+`art/source/ground-tiles.piskel` (four 64x64 frames), and
+`art/source/background-ridge.piskel` (320x96). `RescueBase` owns an invisible static
+surface matching the visible platform. The helicopter starts and respawns on that
+surface, and disembarking hostages use the same surface Y until reaching the doorway.
+All 60 tests and the production build pass. A browser smoke test confirmed a stable
+`LANDED` state on the platform, correct art layering, and no console warnings or
+errors. Manual flight, rescue, and visual acceptance are still pending.
+
+## 2026-09-23 - Environmental Depth and Reactive Base Door Candidate
+
+Decision:
+Keep the nearby ridge as an evergreen silhouette, add a broader rocky mountain layer
+behind it, and scatter a small number of translucent cloud variants across each run.
+Change the rescue base from one frame to closed-door and open-door frames, selecting
+the open frame whenever a hostage is visibly running across the deck into the base.
+
+Reason:
+Separating mountains, forest, clouds, and terrain makes the first level read with more
+depth while leaving room for later levels to use clearly different environments. A
+state-driven door makes unloading feel connected to the base without repeatedly
+opening and closing for individual animation beats.
+
+Important implementation detail:
+`art/source/distant-mountains.piskel` is a 512x128 one-frame asset and
+`art/source/clouds.piskel` contains three 96x32 non-animated variants. The existing
+512x160 rescue-base project now has two frames exported as a two-column spritesheet.
+`shouldOpenRescueDoor` keeps the door open while any hostage is in `RUNNING_TO_BASE`;
+the frame closes only after no hostage remains visible on the deck. Additional level
+palettes and authored day, dusk, and night themes remain Post-MVP requirements. All
+61 tests and the production build pass, and a browser smoke test found no console
+warnings or errors. Manual rescue-loop and visual acceptance are still pending.
+
+## 2026-09-23 - Accepted Base and Battlefield Presentation
+
+Decision:
+Accept the raised rescue base, reactive unloading door, ground tiles, layered forest
+and mountain scenery, and sparse cloud treatment after manual gameplay review. This
+completes the Base sprite and Ground/background art presentation items.
+
+Reason:
+The base clearly supports landing and unloading, while the battlefield now has enough
+depth and visual identity for the first level without reducing gameplay readability.
+
+Important implementation detail:
+The user manually accepted the composed scene. Future level-specific palettes,
+terrain silhouettes, cloud density, and day/night themes remain recorded as Post-MVP
+work and are not part of this completed first-level presentation slice.
