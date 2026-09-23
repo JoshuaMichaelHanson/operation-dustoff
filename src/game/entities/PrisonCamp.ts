@@ -7,7 +7,7 @@ export class PrisonCamp extends Phaser.Physics.Arcade.Sprite {
   private opened = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'prison-camp-closed');
+    super(scene, x, y, 'prison-camp', 0);
 
     scene.add.existing(this);
     scene.physics.add.existing(this, true);
@@ -30,7 +30,7 @@ export class PrisonCamp extends Phaser.Physics.Arcade.Sprite {
 
     if (this.health === 0) {
       this.opened = true;
-      this.setTexture('prison-camp-open');
+      this.setFrame(1);
 
       const body = this.body as Phaser.Physics.Arcade.StaticBody;
       body.enable = false;

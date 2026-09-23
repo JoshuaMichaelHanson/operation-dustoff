@@ -470,3 +470,40 @@ Important implementation detail:
 This is requirements-only Post-MVP work. A future implementation needs deliberate
 enemy target selection, exposed-hostage damage and death feedback, and balance coverage
 without changing the existing normal-difficulty rescue loop.
+
+## 2026-09-22 - Deferred Harder Terrain and SF Ground Combat
+
+Decision:
+Reserve solid mountain and hill obstacles, friendly Special Forces riders, enemy troop
+trucks, and ground combat for later hard levels. SF soldiers ride on limited external
+Little Bird seats and protect exposed hostages or loading zones when hostile soldiers
+arrive from reinforcement trucks.
+
+Reason:
+These systems add a larger tactical layer around route selection and rescue defense,
+but would substantially expand the current arcade game's entity, combat, and level
+scope. Recording them as one dependent future phase keeps the present Presentation
+work focused while preserving the intended direction.
+
+Important implementation detail:
+Friendly and hostile NPC behavior should remain deterministic and use small custom
+state machines plus waypoint or grid navigation. Use traditional BFS/DFS algorithms
+for route and reachability decisions rather than machine learning, generative AI,
+third-party pathfinding, or a general-purpose AI framework. Terrain collision must be
+visually fair, unit counts must remain small, and all truck and soldier states must
+clean up reliably.
+
+## 2026-09-22 - Accepted Hostage and Prison Camp Sprites
+
+Decision:
+Accept the original hostage animation and prison camp artwork after manual gameplay
+testing, completing both presentation checklist items.
+
+Reason:
+The hostage states remain readable during release, waiting, boarding, and unloading,
+and the closed and opened camp states are visually distinct during normal play.
+
+Important implementation detail:
+The user confirmed that gameplay is good with both sprite sets. The editable Piskel
+sources and exported Phaser spritesheets remain the source of truth for future visual
+changes. No additional gameplay or balance changes were needed for acceptance.
