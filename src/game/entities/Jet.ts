@@ -32,6 +32,7 @@ export class Jet extends Phaser.Physics.Arcade.Sprite {
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
+    this.play('jet-exhaust');
 
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setAllowGravity(false);

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { TANK } from '../constants';
+import { getTankAim } from '../logic/tankAim';
 import type { EnemyShot } from './EnemyShot';
 
 export class Tank extends Phaser.Physics.Arcade.Sprite {
@@ -19,12 +20,27 @@ export class Tank extends Phaser.Physics.Arcade.Sprite {
   }
 
   tryFire(time: number, targetX: number, targetY: number): EnemyShot | null {
-    if (!this.active || time - this.lastShotAt < TANK.fireCooldownMs) {
+    if (!this.active) {
       return null;
     }
 
-    const shotX = this.x + Math.sign(targetX - this.x) * 38;
-    const shotY = this.y - 12;
+    const facing = targetX < this.x ? -1 : 1;
+    const turretPivotX = this.x + facing * 15;
+    const turretPivotY = this.y - 7;
+    const aim = getTankAim(
+      Math.abs(targetX - turretPivotX),
+      turretPivotY - targetY,
+    );
+
+    this.setFlipX(facing < 0);
+    this.setFrame(aim.frame);
+
+    if (time - this.lastShotAt < TANK.fireCooldownMs) {
+      return null;
+    }
+
+    const shotX = this.x + facing * aim.muzzleOffsetX;
+    const shotY = this.y + aim.muzzleOffsetY;
     const deltaX = targetX - shotX;
     const deltaY = targetY - shotY;
     const distance = Math.hypot(deltaX, deltaY);

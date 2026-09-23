@@ -195,8 +195,8 @@ Jet may be deferred if MVP schedule is tight.
 
 - [x] Retro title screen
 - [x] Original pixel helicopter sprite
-- [ ] Tank sprite
-- [ ] Jet sprite
+- [x] Tank sprite
+- [x] Jet sprite
 - [ ] Hostage sprite
 - [ ] Camp sprite
 - [ ] Base sprite
@@ -244,6 +244,15 @@ Do not implement until MVP is complete.
 - [ ] Fuel
 - [ ] Weather effects
 - [ ] POW panic / dive-for-cover behavior
+
+## Post-MVP - Hard Difficulty Hostage Threat
+
+- [ ] Allow enemies to deliberately target exposed hostages on harder levels or difficulty settings
+- [ ] Keep captive hostages protected and untargetable while their prison camp remains closed
+- [ ] Make hostages vulnerable while running out, waiting, and boarding the helicopter
+- [ ] Keep boarded hostages protected by the helicopter rather than targeting passengers individually
+- [ ] Add readable warning, defense, injury, and death feedback for attacks on hostages
+- [ ] Balance the rule so opening a camp is a tactical choice best made when rescue is possible
 
 ---
 
