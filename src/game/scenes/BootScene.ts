@@ -46,6 +46,8 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 96,
       frameHeight: 32,
     });
+    this.load.audio('rotor-loop', 'assets/audio/rotor-loop.wav');
+    this.load.audio('cannon', 'assets/audio/cannon.wav');
   }
 
   create(): void {

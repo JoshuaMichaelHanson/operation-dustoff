@@ -206,8 +206,8 @@ Jet may be deferred if MVP schedule is tight.
 
 ## P2 - Audio
 
-- [ ] Rotor loop
-- [ ] Cannon
+- [x] Rotor loop
+- [x] Cannon
 - [ ] Explosion
 - [ ] Boarding sound
 - [ ] Rescue sound
@@ -260,6 +260,21 @@ Do not implement until MVP is complete.
 - [ ] Fuel
 - [ ] Weather effects
 - [ ] POW panic / dive-for-cover behavior
+
+## Post-MVP - Audio Configurator
+
+- [ ] Define a small catalog of alternate sounds for each configurable game event
+- [ ] Let the player preview and select unlocked sound variants from an audio menu
+- [ ] Allow rotor, player weapons, explosions, rescue events, and UI cues to be configured independently
+- [ ] Unlock additional sound variants through local game progression
+- [ ] Persist sound selections and volume preferences locally without accounts or backend services
+- [ ] Keep the authored defaults active when no custom selection has been made
+
+### Acceptance
+
+The player can preview available sounds, choose a variant for each supported game
+event, and hear those choices during gameplay. Selections survive a browser restart,
+and newly unlocked variants appear without changing the gameplay rules.
 
 ## Post-MVP - Hard Difficulty Hostage Threat
 

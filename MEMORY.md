@@ -569,3 +569,47 @@ Important implementation detail:
 The user manually accepted the composed scene. Future level-specific palettes,
 terrain silhouettes, cloud density, and day/night themes remain recorded as Post-MVP
 work and are not part of this completed first-level presentation slice.
+
+## 2026-09-23 - Rotor and Cannon Audio Candidate
+
+Decision:
+Add original synthesized PCM WAV assets for the first audio checkpoint. Use a seamless
+two-second rotor loop with subtle speed-based volume and playback-rate changes, plus a
+short cannon report with slight per-shot pitch variation.
+
+Reason:
+Deterministic generated audio keeps the project copyright-safe and reproducible without
+adding an audio dependency. A restrained dynamic rotor bed gives flight motion more
+presence, while the brief cannon report remains readable at the existing rapid-fire
+cadence.
+
+Important implementation detail:
+`scripts/generate-audio.mjs` produces 44.1 kHz mono `rotor-loop.wav` and `cannon.wav`
+assets under `public/assets/audio`. `AudioManager` waits for Phaser's audio unlock,
+mutes the rotor while the helicopter is destroyed, restores it after respawn, and
+destroys the loop on scene shutdown. Cannon audio plays only after a projectile is
+successfully acquired from the pool. Pure tests cover rotor profile scaling and
+clamping. All 64 tests and the production build pass; a browser smoke test entered
+gameplay, triggered a cannon input, and found no console warnings or errors. Manual
+volume, tone, and loop-quality acceptance are still pending.
+
+Comparison decision:
+The user selected the longer, low-frequency Heavy Thump candidate after comparing it
+against Balanced and Metallic Crack in gameplay. Heavy Thump is now generated directly
+as `cannon.wav`; the rejected assets and temporary 1/2/3 selector were removed. Cannon
+remains in progress until final gameplay acceptance.
+
+## 2026-09-23 - Accepted Rotor and Cannon Audio
+
+Decision:
+Accept the dynamic rotor loop and Heavy Thump cannon report for this audio pass. Mark
+both P2 backlog items complete.
+
+Reason:
+Manual gameplay review confirmed that the rotor treatment supports flight and the
+selected cannon has the desired weight without requiring more iteration for MVP.
+
+Future direction:
+Add a Post-MVP audio configurator that lets players preview and independently select
+unlocked variants for supported game events. Keep progression and preferences local;
+this does not justify accounts, a backend, or a generalized audio framework now.
