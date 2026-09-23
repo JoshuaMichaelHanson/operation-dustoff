@@ -426,3 +426,47 @@ the entity keeps its existing collision body, flipping, pitching, weapons, and m
 behavior. The title screen scales the same sprite to 3x over a code-drawn sunset,
 mountains, grid, border, and scanline treatment. Tests and the production build pass,
 and a browser smoke test found no console warnings or errors.
+
+## 2026-09-22 - Accepted Tank and Jet Sprites
+
+Decision:
+Replace the generated tank and jet placeholders with original pixel sprites that use
+the helicopter's established battlefield palette. Give the tank four manually selected
+cannon elevations at 0, 20, 40, and 60 degrees, while keeping the jet's exhaust as a
+small two-frame animation.
+
+Reason:
+The tank's projectile direction is much easier to read when the cannon visibly follows
+the helicopter. Discrete elevations preserve the deliberate pixel-art look without
+requiring smooth sprite rotation, while added jet panel, intake, hardpoint, marking,
+and highlight pixels improve its readability without changing its gameplay silhouette.
+
+Important implementation detail:
+The editable tank source is `art/source/tank.piskel`, with two layers and four 78x42
+frames exported horizontally to `public/assets/sprites/tank.png`. Pure aim logic selects
+the nearest elevation and supplies the matching muzzle offset; the projectile still
+travels precisely toward the helicopter. The editable jet source is
+`art/source/jet.piskel`, with body and exhaust layers, two 94x32 frames at 12 FPS, and
+an export at `public/assets/sprites/jet.png`. `BootScene` loads both as spritesheets and
+registers the repeating jet exhaust animation. The user accepted both sprites after a
+gameplay check. All 59 tests and the production build pass, and the browser smoke test
+found no console warnings or errors.
+
+## 2026-09-22 - Deferred Hard-Difficulty Hostage Threat
+
+Decision:
+Reserve deliberate enemy attacks against exposed hostages for harder future levels or
+difficulty settings. Closed camps protect captive hostages; opening a camp exposes them
+while they run out, wait, and board. Boarded passengers remain protected inside the
+helicopter and are represented by normal helicopter damage.
+
+Reason:
+This creates a tactical choice about when to open each camp and gives the player a
+reason to defend the loading area instead of releasing every hostage immediately. It
+also keeps the current normal game and this Presentation pull request from gaining an
+unplanned difficulty increase.
+
+Important implementation detail:
+This is requirements-only Post-MVP work. A future implementation needs deliberate
+enemy target selection, exposed-hostage damage and death feedback, and balance coverage
+without changing the existing normal-difficulty rescue loop.

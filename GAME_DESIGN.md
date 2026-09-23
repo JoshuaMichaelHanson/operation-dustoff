@@ -318,6 +318,18 @@ Difficulty should come from:
 
 Avoid adding complex enemy AI merely to increase difficulty.
 
+### Hard Difficulty Hostage Threat (Post-MVP)
+
+On harder levels or difficulty settings, enemies may deliberately fire at exposed
+hostages. Captive hostages remain protected and cannot be targeted while their prison
+camp is closed. Once the camp opens, hostages are vulnerable while running out,
+waiting, and boarding, so the player should avoid opening a camp until pickup is
+practical and must defend the loading area. Hostages already aboard are protected as
+passengers; attacks damage the helicopter through the normal combat rules instead of
+targeting individual passengers.
+
+This rule should not affect the normal difficulty unless deliberately enabled.
+
 ---
 
 ## Friendly Fire

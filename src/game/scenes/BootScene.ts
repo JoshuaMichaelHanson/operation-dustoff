@@ -10,6 +10,14 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 96,
       frameHeight: 54,
     });
+    this.load.spritesheet('tank', 'assets/sprites/tank.png', {
+      frameWidth: 78,
+      frameHeight: 42,
+    });
+    this.load.spritesheet('jet', 'assets/sprites/jet.png', {
+      frameWidth: 94,
+      frameHeight: 32,
+    });
   }
 
   create(): void {
@@ -22,11 +30,18 @@ export class BootScene extends Phaser.Scene {
       frameRate: 12,
       repeat: -1,
     });
+    this.anims.create({
+      key: 'jet-exhaust',
+      frames: this.anims.generateFrameNumbers('jet', {
+        start: 0,
+        end: 1,
+      }),
+      frameRate: 12,
+      repeat: -1,
+    });
     this.createCannonRoundTexture();
     this.createMissileTexture();
     this.createEnemyRoundTexture();
-    this.createTankTexture();
-    this.createJetTexture();
     this.createPrisonCampTextures();
     this.createHostageTexture();
     this.scene.start('TitleScene');
@@ -57,39 +72,6 @@ export class BootScene extends Phaser.Scene {
     graphics.fillStyle(0xe46b56);
     graphics.fillCircle(5, 5, 5);
     graphics.generateTexture('enemy-round', 10, 10);
-    graphics.destroy();
-  }
-
-  private createTankTexture(): void {
-    const graphics = this.add.graphics();
-
-    graphics.fillStyle(0x252b22);
-    graphics.fillRoundedRect(5, 27, 67, 13, 5);
-    graphics.fillStyle(0x73804c);
-    graphics.fillRoundedRect(12, 19, 51, 14, 3);
-    graphics.fillRoundedRect(28, 10, 28, 14, 5);
-    graphics.fillRect(52, 14, 25, 4);
-
-    graphics.fillStyle(0xb1b878);
-    graphics.fillCircle(19, 33, 4);
-    graphics.fillCircle(38, 33, 4);
-    graphics.fillCircle(57, 33, 4);
-    graphics.generateTexture('tank', 78, 42);
-    graphics.destroy();
-  }
-
-  private createJetTexture(): void {
-    const graphics = this.add.graphics();
-
-    graphics.fillStyle(0x596846);
-    graphics.fillTriangle(3, 16, 76, 4, 91, 16);
-    graphics.fillTriangle(28, 15, 50, 1, 69, 15);
-    graphics.fillTriangle(25, 18, 52, 31, 70, 18);
-    graphics.fillStyle(0x9fc7c5);
-    graphics.fillTriangle(65, 8, 80, 7, 86, 14);
-    graphics.fillStyle(0xe46b56);
-    graphics.fillRect(1, 13, 8, 6);
-    graphics.generateTexture('jet', 94, 32);
     graphics.destroy();
   }
 
