@@ -26,6 +26,26 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 128,
       frameHeight: 72,
     });
+    this.load.spritesheet('rescue-base', 'assets/sprites/rescue-base.png', {
+      frameWidth: 512,
+      frameHeight: 160,
+    });
+    this.load.spritesheet('ground-tiles', 'assets/sprites/ground-tiles.png', {
+      frameWidth: 64,
+      frameHeight: 64,
+    });
+    this.load.image(
+      'background-ridge',
+      'assets/sprites/background-ridge.png',
+    );
+    this.load.image(
+      'distant-mountains',
+      'assets/sprites/distant-mountains.png',
+    );
+    this.load.spritesheet('clouds', 'assets/sprites/clouds.png', {
+      frameWidth: 96,
+      frameHeight: 32,
+    });
   }
 
   create(): void {

@@ -388,6 +388,17 @@ Target feel:
 
 Do not copy commercial game assets.
 
+### Level Environment Variety (Post-MVP)
+
+The first level uses a muted daytime battlefield with distant rocky mountains, a
+nearer evergreen ridge, sparse clouds, and olive ground. Additional levels should mix
+terrain silhouettes, cloud density, and palette rather than repeating that exact scene.
+
+Support authored day, dusk, and night themes when multiple levels are introduced.
+Night environments need readable landing-pad, base, projectile, unit, and objective
+lighting. These are level themes, not a simulated real-time day/night cycle, and must
+never reduce the clarity of collision boundaries or gameplay silhouettes.
+
 ---
 
 ## Non-Goals

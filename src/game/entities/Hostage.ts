@@ -32,13 +32,17 @@ export class Hostage extends Phaser.GameObjects.Sprite {
     return this.hostageState;
   }
 
-  beginDisembarking(startX: number, targetX: number): boolean {
+  beginDisembarking(
+    startX: number,
+    targetX: number,
+    surfaceY: number,
+  ): boolean {
     if (this.hostageState !== HostageState.Aboard) {
       return false;
     }
 
     this.x = startX;
-    this.y = GROUND_Y;
+    this.y = surfaceY;
     this.rescueTargetX = targetX;
     this.setVisible(true);
     this.transitionTo(HostageState.RunningToBase);

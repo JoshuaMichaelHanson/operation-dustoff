@@ -199,8 +199,8 @@ Jet may be deferred if MVP schedule is tight.
 - [x] Jet sprite
 - [x] Hostage sprite
 - [x] Camp sprite
-- [ ] Base sprite
-- [ ] Ground/background art
+- [x] Base sprite
+- [x] Ground/background art
 
 ---
 
@@ -289,6 +289,21 @@ team on the helicopter's external seats, and can use that team to protect expose
 hostages when an enemy truck arrives and unloads hostile soldiers. Ground units find
 valid routes with deterministic BFS/DFS-based logic, resolve combat visibly, and clean
 up without leaks or abandoned state.
+
+## Post-MVP - Level Environment Variety
+
+- [ ] Give each additional level a distinct terrain silhouette and color palette
+- [ ] Vary distant mountains, nearby forests or hills, and cloud density by level
+- [ ] Add authored day, dusk, and night environment themes
+- [ ] Add readable base, landing-pad, projectile, and unit lighting for night levels
+- [ ] Keep gameplay silhouettes and collision boundaries readable in every theme
+- [ ] Configure environment choices as level data rather than duplicating scene logic
+
+### Acceptance
+
+Additional levels must be immediately distinguishable through terrain, sky, and
+lighting while preserving the same clear helicopter, enemy, hostage, and landing-zone
+silhouettes. Day and night are deliberate level themes rather than a real-time clock.
 
 ---
 

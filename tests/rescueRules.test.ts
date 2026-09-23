@@ -4,7 +4,9 @@ import { RESCUE_BASE, TANK } from '../src/game/constants';
 import {
   hasPassengerUnloadSpacing,
   isSafeRescueLanding,
+  shouldOpenRescueDoor,
 } from '../src/game/logic/rescueRules';
+import { HostageState } from '../src/game/logic/hostageState';
 import { GameState } from '../src/game/state/GameState';
 
 describe('rescue base landing rules', () => {
@@ -71,5 +73,23 @@ describe('passenger unloading spacing', () => {
 
   it('allows another passenger out once every runner is far enough away', () => {
     expect(hasPassengerUnloadSpacing(350, [294, 220], 56)).toBe(true);
+  });
+});
+
+describe('rescue base door', () => {
+  it('opens only while at least one hostage is visible on the deck', () => {
+    expect(shouldOpenRescueDoor([])).toBe(false);
+    expect(
+      shouldOpenRescueDoor([
+        HostageState.Aboard,
+        HostageState.Waiting,
+      ]),
+    ).toBe(false);
+    expect(
+      shouldOpenRescueDoor([
+        HostageState.Rescued,
+        HostageState.RunningToBase,
+      ]),
+    ).toBe(true);
   });
 });
