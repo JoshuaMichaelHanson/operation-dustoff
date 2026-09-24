@@ -208,11 +208,11 @@ Jet may be deferred if MVP schedule is tight.
 
 - [x] Rotor loop
 - [x] Cannon
-- [ ] Explosion
-- [ ] Boarding sound
-- [ ] Rescue sound
-- [ ] Victory sound
-- [ ] Game-over sound
+- [x] Explosion
+- [x] Boarding sound
+- [x] Rescue sound
+- [x] Victory sound
+- [x] Game-over sound
 
 ---
 

@@ -21,6 +21,8 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.sound.play('game-over', { volume: 0.36 });
+
     this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.34, 'MISSION FAILED', {
         color: '#e46b56',

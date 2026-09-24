@@ -24,6 +24,8 @@ export class VictoryScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.sound.play('victory', { volume: 0.38 });
+
     this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.3, 'MISSION COMPLETE', {
         color: '#f3d45a',

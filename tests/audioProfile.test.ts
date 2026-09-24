@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { getRotorAudioProfile } from '../src/game/audio/audioProfile';
+import {
+  getExplosionAudioProfile,
+  getRotorAudioProfile,
+} from '../src/game/audio/audioProfile';
 
 describe('rotor audio profile', () => {
   it('keeps a subdued idle loop and increases presence with speed', () => {
@@ -22,6 +25,25 @@ describe('rotor audio profile', () => {
     );
     expect(getRotorAudioProfile(true, 2)).toEqual(
       getRotorAudioProfile(true, 1),
+    );
+  });
+});
+
+describe('explosion audio profile', () => {
+  it('gives larger explosions more weight than smaller explosions', () => {
+    const small = getExplosionAudioProfile(20);
+    const large = getExplosionAudioProfile(28);
+
+    expect(large.volume).toBeGreaterThan(small.volume);
+    expect(large.rate).toBeLessThan(small.rate);
+  });
+
+  it('clamps explosion sizes outside the authored range', () => {
+    expect(getExplosionAudioProfile(0)).toEqual(
+      getExplosionAudioProfile(20),
+    );
+    expect(getExplosionAudioProfile(100)).toEqual(
+      getExplosionAudioProfile(28),
     );
   });
 });
