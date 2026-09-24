@@ -24,3 +24,19 @@ export function getRotorAudioProfile(
       (ROTOR_MAXIMUM_RATE - ROTOR_IDLE_RATE) * clampedSpeedRatio,
   };
 }
+
+export interface ExplosionAudioProfile {
+  rate: number;
+  volume: number;
+}
+
+export function getExplosionAudioProfile(
+  visualRadius: number,
+): ExplosionAudioProfile {
+  const sizeRatio = Math.min(Math.max((visualRadius - 20) / 8, 0), 1);
+
+  return {
+    volume: 0.38 + sizeRatio * 0.1,
+    rate: 1.08 - sizeRatio * 0.18,
+  };
+}

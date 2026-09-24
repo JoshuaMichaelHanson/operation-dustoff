@@ -48,6 +48,11 @@ export class BootScene extends Phaser.Scene {
     });
     this.load.audio('rotor-loop', 'assets/audio/rotor-loop.wav');
     this.load.audio('cannon', 'assets/audio/cannon.wav');
+    this.load.audio('explosion', 'assets/audio/explosion.wav');
+    this.load.audio('boarding', 'assets/audio/boarding.wav');
+    this.load.audio('rescue', 'assets/audio/rescue.wav');
+    this.load.audio('victory', 'assets/audio/victory.wav');
+    this.load.audio('game-over', 'assets/audio/game-over.wav');
   }
 
   create(): void {

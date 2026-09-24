@@ -613,3 +613,69 @@ Future direction:
 Add a Post-MVP audio configurator that lets players preview and independently select
 unlocked variants for supported game events. Keep progression and preferences local;
 this does not justify accounts, a backend, or a generalized audio framework now.
+
+## 2026-09-23 - Explosion and Boarding Audio Candidates
+
+Decision:
+Add one original generated explosion asset for all destruction effects and one short
+ascending cue for each successful hostage boarding event. Scale explosion playback
+from the existing visual blast radius so jets sound tighter, ground targets sit in the
+middle, and helicopter destruction has the deepest and loudest report.
+
+Reason:
+The shared visual explosion helper and explicit `Boarded` event are reliable semantic
+hooks, so audio can follow actual gameplay outcomes without duplicating collision or
+hostage-state rules. A brief boarding cue confirms passenger progress while leaving
+room for a distinct rescue/unload sound later.
+
+Important implementation detail:
+`scripts/generate-audio.mjs` produces deterministic 44.1 kHz mono `explosion.wav` and
+`boarding.wav` assets. `AudioManager` owns their mix settings; pure tests protect the
+clamped explosion size profile. Both backlog items remain in progress pending manual
+volume and tone acceptance.
+
+## 2026-09-23 - Accepted Explosion and Boarding Audio
+
+Decision:
+Accept the shared size-weighted explosion and per-passenger boarding chirp after manual
+gameplay review. Mark both P2 audio items complete.
+
+Future direction:
+The Post-MVP audio configurator may offer alternate variants and per-cue enable/disable
+controls. Keep the current sounds as the authored defaults.
+
+## 2026-09-23 - Rescue, Victory, and Game-Over Audio Candidates
+
+Decision:
+Add three original synthesized cues: a compact ascending rescue arpeggio when a
+hostage reaches the base door, a bright mission-complete fanfare on victory, and a
+slower descending cue on game over.
+
+Reason:
+These cues distinguish incremental rescue progress from final run outcomes without
+changing scoring, unloading cadence, or scene transitions. The sounds remain brief so
+they do not compete with the established rotor, cannon, and explosion mix.
+
+Important implementation detail:
+The generator produces deterministic mono WAV assets for all three cues. Rescue audio
+is triggered only by a non-final semantic `Rescued` event after the score and rescue
+count are updated; the final rescue proceeds directly to the victory fanfare so the
+two cues do not overlap. Victory and game-over cues play once from their destination
+scene's `create` method. All three backlog items remain in progress pending manual
+acceptance.
+
+## 2026-09-24 - Accepted Complete P2 Audio Pass
+
+Decision:
+Accept the rescue arpeggio, victory fanfare, and game-over descent, completing every
+item in the P2 Audio section for this pass.
+
+Reason:
+The full sound set gives each major gameplay outcome clear feedback and is good enough
+to move development forward. Further tone, variant, and mix refinement is optional
+icing rather than a blocker for the playable game.
+
+Future direction:
+Revisit individual sounds through the Post-MVP audio configurator, including alternate
+choices, per-cue enable/disable controls, previewing, progression unlocks, and local
+preference persistence. Keep the accepted sounds as the default configuration.

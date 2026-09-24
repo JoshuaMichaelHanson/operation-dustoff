@@ -263,6 +263,7 @@ export class GameScene extends Phaser.Scene {
     for (const hostage of this.hostages) {
       const event = hostage.update(delta, this.helicopter);
       if (event === HostageUpdateEvent.Boarded) {
+        this.audioManager.playBoarding();
         hostageStateChanged = true;
       } else if (event === HostageUpdateEvent.Rescued) {
         this.gameState.recordRescue(1);
@@ -270,6 +271,7 @@ export class GameScene extends Phaser.Scene {
           this.startVictoryScene();
           return;
         }
+        this.audioManager.playRescue();
         hostageStateChanged = true;
       }
     }
@@ -684,6 +686,7 @@ export class GameScene extends Phaser.Scene {
   ): void {
     const outerBlast = this.add.circle(x, y, radius, 0xe46b56, 0.82);
     const coreBlast = this.add.circle(x, y, radius * 0.55, 0xffe27a, 1);
+    this.audioManager.playExplosion(radius);
     this.cameras.main.shake(shakeDuration, shakeIntensity);
 
     this.tweens.add({

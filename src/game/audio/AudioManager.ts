@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 
-import { getRotorAudioProfile } from './audioProfile';
+import {
+  getExplosionAudioProfile,
+  getRotorAudioProfile,
+} from './audioProfile';
 
 type AdjustableSound = Phaser.Sound.BaseSound & {
   setRate?: (value: number) => unknown;
@@ -34,6 +37,24 @@ export class AudioManager {
     this.scene.sound.play('cannon', {
       volume: 0.32,
       detune: Phaser.Math.Between(-35, 35),
+    });
+  }
+
+  playExplosion(visualRadius: number): void {
+    const profile = getExplosionAudioProfile(visualRadius);
+    this.scene.sound.play('explosion', profile);
+  }
+
+  playBoarding(): void {
+    this.scene.sound.play('boarding', {
+      volume: 0.24,
+      detune: Phaser.Math.Between(-18, 18),
+    });
+  }
+
+  playRescue(): void {
+    this.scene.sound.play('rescue', {
+      volume: 0.27,
     });
   }
 
