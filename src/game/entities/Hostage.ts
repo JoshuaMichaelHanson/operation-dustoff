@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { GROUND_Y, HOSTAGE } from '../constants';
 import {
+  canHostageBeKilled,
   canBeginBoarding,
   HostageState,
   HostageUpdateEvent,
@@ -24,12 +25,28 @@ export class Hostage extends Phaser.GameObjects.Sprite {
 
     scene.add.existing(this);
     this.setOrigin(0.5, 1);
+    scene.physics.add.existing(this);
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    body.setAllowGravity(false);
+    body.setSize(12, 26);
+    body.setOffset(4, 4);
     this.releaseDelayRemainingMs = releaseDelayMs;
     this.transitionTo(HostageState.RunningOut);
   }
 
   get currentState(): HostageState {
     return this.hostageState;
+  }
+
+  kill(): boolean {
+    if (!canHostageBeKilled(this.hostageState)) {
+      return false;
+    }
+
+    this.transitionTo(HostageState.Dead);
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    body.enable = false;
+    return true;
   }
 
   beginDisembarking(
@@ -119,6 +136,7 @@ export class Hostage extends Phaser.GameObjects.Sprite {
       case HostageState.Captive:
       case HostageState.Aboard:
       case HostageState.Rescued:
+      case HostageState.Dead:
         return null;
     }
   }
@@ -173,6 +191,7 @@ export class Hostage extends Phaser.GameObjects.Sprite {
 
       case HostageState.Aboard:
       case HostageState.Rescued:
+      case HostageState.Dead:
         this.stop();
         this.setFrame(0);
         break;

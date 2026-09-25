@@ -5,6 +5,7 @@ import {
   hasPassengerUnloadSpacing,
   isSafeRescueLanding,
   shouldOpenRescueDoor,
+  shouldEndFailedRescue,
 } from '../src/game/logic/rescueRules';
 import { HostageState } from '../src/game/logic/hostageState';
 import { GameState } from '../src/game/state/GameState';
@@ -91,5 +92,52 @@ describe('rescue base door', () => {
         HostageState.RunningToBase,
       ]),
     ).toBe(true);
+  });
+});
+
+describe('failed rescue detection', () => {
+  const exhaustedMission = {
+    rescued: 18,
+    rescueTarget: 20,
+    closedCampCount: 0,
+    hostageStates: [
+      HostageState.Rescued,
+      HostageState.Dead,
+      HostageState.Dead,
+    ],
+  };
+
+  it('ends a below-target mission after every hostage is terminal', () => {
+    expect(shouldEndFailedRescue(exhaustedMission)).toBe(true);
+  });
+
+  it('waits for aboard and unloading hostages to finish scoring', () => {
+    expect(
+      shouldEndFailedRescue({
+        ...exhaustedMission,
+        hostageStates: [HostageState.Dead, HostageState.Aboard],
+      }),
+    ).toBe(false);
+    expect(
+      shouldEndFailedRescue({
+        ...exhaustedMission,
+        hostageStates: [HostageState.Dead, HostageState.RunningToBase],
+      }),
+    ).toBe(false);
+  });
+
+  it('waits while a closed camp can still release hostages', () => {
+    expect(
+      shouldEndFailedRescue({ ...exhaustedMission, closedCampCount: 1 }),
+    ).toBe(false);
+  });
+
+  it('does not fail a mission that has reached its rescue target', () => {
+    expect(
+      shouldEndFailedRescue({
+        ...exhaustedMission,
+        rescued: exhaustedMission.rescueTarget,
+      }),
+    ).toBe(false);
   });
 });

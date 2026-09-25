@@ -41,3 +41,25 @@ export function shouldOpenRescueDoor(
 ): boolean {
   return hostageStates.includes(HostageState.RunningToBase);
 }
+
+export interface RescueAvailability {
+  rescued: number;
+  rescueTarget: number;
+  closedCampCount: number;
+  hostageStates: readonly HostageState[];
+}
+
+export function shouldEndFailedRescue(
+  availability: RescueAvailability,
+): boolean {
+  const allHostagesAreTerminal = availability.hostageStates.every(
+    (state) =>
+      state === HostageState.Rescued || state === HostageState.Dead,
+  );
+
+  return (
+    availability.rescued < availability.rescueTarget &&
+    availability.closedCampCount === 0 &&
+    allHostagesAreTerminal
+  );
+}

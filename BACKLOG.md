@@ -213,14 +213,17 @@ Jet may be deferred if MVP schedule is tight.
 - [x] Rescue sound
 - [x] Victory sound
 - [x] Game-over sound
+- [x] Background music
 
 ---
 
 ## P2 - Friendly Fire
 
-- [ ] Player shots can kill hostages
-- [ ] Hostage death feedback
-- [ ] Dead hostages cannot be rescued
+- [x] Player shots can kill hostages
+- [x] Hostage death feedback
+- [x] Dead hostages cannot be rescued
+- [x] Descending helicopter can crush exposed hostages
+- [x] Crushed hostages have distinct feedback and a smush sound
 
 ---
 
@@ -265,7 +268,7 @@ Do not implement until MVP is complete.
 
 - [ ] Define a small catalog of alternate sounds for each configurable game event
 - [ ] Let the player preview and select unlocked sound variants from an audio menu
-- [ ] Allow rotor, player weapons, explosions, rescue events, and UI cues to be configured independently
+- [ ] Allow music, rotor, player weapons, explosions, rescue events, and UI cues to be configured independently
 - [ ] Unlock additional sound variants through local game progression
 - [ ] Persist sound selections and volume preferences locally without accounts or backend services
 - [ ] Keep the authored defaults active when no custom selection has been made

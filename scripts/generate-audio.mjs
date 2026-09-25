@@ -206,6 +206,78 @@ function createGameOverCue() {
   });
 }
 
+function createMusicLoop() {
+  const leadNotes = [
+    261.63, 311.13, 392, 523.25, 466.16, 392, 311.13, 392,
+    233.08, 311.13, 349.23, 466.16, 392, 349.23, 311.13, 233.08,
+    261.63, 311.13, 392, 622.25, 523.25, 466.16, 392, 311.13,
+    349.23, 392, 466.16, 523.25, 466.16, 392, 311.13, 392,
+  ];
+  const bassNotes = [130.81, 116.54, 103.83, 116.54];
+  let seed = 0x27d4eb2f;
+  let filteredNoise = 0;
+
+  return createSamples(8, (time) => {
+    seed = (seed * 1_664_525 + 1_013_904_223) >>> 0;
+    const noise = (seed / 0xffff_ffff) * 2 - 1;
+    filteredNoise = filteredNoise * 0.74 + noise * 0.26;
+
+    const stepLength = 0.25;
+    const stepIndex = Math.floor(time / stepLength) % leadNotes.length;
+    const stepProgress = (time % stepLength) / stepLength;
+    const note = leadNotes[stepIndex] ?? leadNotes[0];
+    const leadEnvelope = Math.sin(Math.PI * stepProgress) ** 0.85;
+    const lead =
+      (Math.sin(Math.PI * 2 * note * time) * 0.72 +
+        Math.sin(Math.PI * 4 * note * time) * 0.2) *
+      leadEnvelope;
+
+    const bassIndex = Math.floor(time / 2) % bassNotes.length;
+    const bass = bassNotes[bassIndex] ?? bassNotes[0];
+    const bassStepProgress = (time % 0.5) / 0.5;
+    const bassEnvelope = Math.sin(Math.PI * bassStepProgress) ** 0.65;
+    const bassLine = Math.sin(Math.PI * 2 * bass * time) * bassEnvelope;
+
+    const beatProgress = time % 0.5;
+    const kick =
+      Math.sin(Math.PI * 2 * (76 - beatProgress * 54) * beatProgress) *
+      Math.exp(-beatProgress * 19);
+    const snareProgress = (time + 0.25) % 0.5;
+    const snare = filteredNoise * Math.exp(-snareProgress * 28);
+
+    return lead * 0.38 + bassLine * 0.35 + kick * 0.2 + snare * 0.08;
+  });
+}
+
+function createSmush() {
+  let seed = 0x165667b1;
+  let filteredNoise = 0;
+  let phase = 0;
+
+  return createSamples(0.34, (time) => {
+    seed = (seed * 1_664_525 + 1_013_904_223) >>> 0;
+    const noise = (seed / 0xffff_ffff) * 2 - 1;
+    filteredNoise = filteredNoise * 0.9 + noise * 0.1;
+
+    const progress = time / 0.34;
+    const frequency = 92 - progress * 57;
+    phase += (Math.PI * 2 * frequency) / SAMPLE_RATE;
+    const attack = Math.min(1, time / 0.004);
+    const bodyDecay = Math.exp(-time * 10.5);
+    const wetDecay = Math.exp(-time * 15);
+    const tail = Math.min(1, (0.34 - time) / 0.035);
+    const thud = Math.sin(phase) * 0.78 * bodyDecay;
+    const squish = filteredNoise * 0.72 * wetDecay;
+    const pop = Math.sin(Math.PI * 2 * 185 * time) * Math.exp(-time * 25);
+
+    return (
+      Math.tanh((thud + squish + pop * 0.22) * 1.8) *
+      attack *
+      Math.max(0, tail)
+    );
+  });
+}
+
 mkdirSync(outputDirectory, { recursive: true });
 writeMonoPcm16('rotor-loop.wav', createRotorLoop());
 writeMonoPcm16('cannon.wav', createCannonHeavy());
@@ -214,5 +286,7 @@ writeMonoPcm16('boarding.wav', createBoardingCue());
 writeMonoPcm16('rescue.wav', createRescueCue());
 writeMonoPcm16('victory.wav', createVictoryCue());
 writeMonoPcm16('game-over.wav', createGameOverCue());
+writeMonoPcm16('music-loop.wav', createMusicLoop());
+writeMonoPcm16('smush.wav', createSmush());
 
 console.log(`Generated audio assets in ${outputDirectory}`);

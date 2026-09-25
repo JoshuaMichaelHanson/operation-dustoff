@@ -26,9 +26,14 @@ import { PrisonCamp } from '../entities/PrisonCamp';
 import { RescueBase } from '../entities/RescueBase';
 import { Tank } from '../entities/Tank';
 import { getCannonVelocity } from '../logic/cannonAim';
-import { HostageState, HostageUpdateEvent } from '../logic/hostageState';
+import {
+  canHostageBeCrushed,
+  HostageState,
+  HostageUpdateEvent,
+} from '../logic/hostageState';
 import {
   hasPassengerUnloadSpacing,
+  shouldEndFailedRescue,
   shouldOpenRescueDoor,
 } from '../logic/rescueRules';
 import { canLockMissileTarget } from '../logic/missileGuidance';
@@ -260,6 +265,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     let hostageStateChanged = false;
+    let rescueCuePending = false;
     for (const hostage of this.hostages) {
       const event = hostage.update(delta, this.helicopter);
       if (event === HostageUpdateEvent.Boarded) {
@@ -271,7 +277,7 @@ export class GameScene extends Phaser.Scene {
           this.startVictoryScene();
           return;
         }
-        this.audioManager.playRescue();
+        rescueCuePending = true;
         hostageStateChanged = true;
       }
     }
@@ -285,6 +291,18 @@ export class GameScene extends Phaser.Scene {
     );
     if (hostageStateChanged) {
       this.updateObjectiveText();
+    }
+
+    if (!this.playerDestroyed && this.shouldEndFailedRescue()) {
+      this.scene.start('GameOverScene', {
+        rescued: this.gameState.rescued,
+        score: this.gameState.score,
+        reason: 'RESCUE TARGET LOST',
+      });
+      return;
+    }
+    if (rescueCuePending) {
+      this.audioManager.playRescue();
     }
 
     this.recycleOffscreenProjectiles(this.cannonRounds);
@@ -648,6 +666,7 @@ export class GameScene extends Phaser.Scene {
         this.scene.start('GameOverScene', {
           rescued: this.gameState.rescued,
           score: this.gameState.score,
+          reason: 'ALL HELICOPTERS LOST',
         });
       });
       return;
@@ -789,14 +808,172 @@ export class GameScene extends Phaser.Scene {
         prisonCamp.x +
         direction * (HOSTAGE.rallyDistance + row * HOSTAGE.rallySpacing);
 
-      this.hostages.push(
-        new Hostage(
-          this,
-          prisonCamp.x,
-          rallyX,
-          index * HOSTAGE.releaseDelayMs,
-        ),
+      const hostage = new Hostage(
+        this,
+        prisonCamp.x,
+        rallyX,
+        index * HOSTAGE.releaseDelayMs,
       );
+      this.hostages.push(hostage);
+      this.physics.add.overlap(
+        hostage,
+        this.cannonRounds,
+        (hostageObject, roundObject) => {
+          const target = hostageObject as Hostage;
+          const round = roundObject as Phaser.Physics.Arcade.Image;
+          if (!round.active || !target.kill()) {
+            return;
+          }
+
+          const targetX = target.x;
+          const targetY = target.y;
+          round.disableBody(true, true);
+          this.showHostageDeathFeedback(target, targetX, targetY);
+          this.updateObjectiveText();
+        },
+      );
+      this.physics.add.overlap(
+        this.helicopter,
+        hostage,
+        (helicopterObject, hostageObject) => {
+          const helicopter = helicopterObject as Helicopter;
+          const target = hostageObject as Hostage;
+          const helicopterBody =
+            helicopter.body as Phaser.Physics.Arcade.Body;
+          const hostageBody = target.body as Phaser.Physics.Arcade.Body;
+
+          if (
+            this.playerDestroyed ||
+            !helicopter.active ||
+            !canHostageBeCrushed({
+              hostageState: target.currentState,
+              helicopterLanded: helicopter.isLanded,
+              helicopterVelocityY: helicopterBody.velocity.y,
+              helicopterBottom: helicopterBody.bottom,
+              hostageCenterY: hostageBody.center.y,
+            })
+          ) {
+            return;
+          }
+
+          const targetX = target.x;
+          const targetY = target.y;
+          if (!target.kill()) {
+            return;
+          }
+
+          this.audioManager.playSmush();
+          this.showHostageCrushFeedback(target, targetX, targetY);
+          this.updateObjectiveText();
+        },
+      );
+    }
+  }
+
+  private showHostageDeathFeedback(
+    hostage: Hostage,
+    x: number,
+    y: number,
+  ): void {
+    hostage.setTintFill(0xe46b56).setDepth(20);
+    this.cameras.main.shake(90, 0.002);
+    this.tweens.add({
+      targets: hostage,
+      angle: hostage.flipX ? -90 : 90,
+      alpha: 0,
+      y: y + 5,
+      duration: 620,
+      ease: 'Quad.easeIn',
+      onComplete: () => hostage.setVisible(false),
+    });
+
+    const warning = this.add
+      .text(x, y - 38, 'HOSTAGE LOST', {
+        color: '#e46b56',
+        fontFamily: 'Courier New',
+        fontSize: '17px',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+      .setDepth(21);
+    this.tweens.add({
+      targets: warning,
+      alpha: 0,
+      y: warning.y - 30,
+      duration: 950,
+      ease: 'Quad.easeOut',
+      onComplete: () => warning.destroy(),
+    });
+
+    for (let index = 0; index < 6; index += 1) {
+      const angle = (Math.PI * 2 * index) / 6;
+      const fragment = this.add
+        .rectangle(x, y - 12, 4, 4, 0xe46b56, 0.9)
+        .setDepth(19);
+      this.tweens.add({
+        targets: fragment,
+        x: x + Math.cos(angle) * 24,
+        y: y - 12 + Math.sin(angle) * 18,
+        alpha: 0,
+        duration: 360,
+        ease: 'Quad.easeOut',
+        onComplete: () => fragment.destroy(),
+      });
+    }
+  }
+
+  private showHostageCrushFeedback(
+    hostage: Hostage,
+    x: number,
+    y: number,
+  ): void {
+    hostage
+      .setTintFill(0x9f3d32)
+      .setDepth(20)
+      .setScale(1.35, 0.28)
+      .setY(y);
+    this.cameras.main.shake(70, 0.0015);
+    this.tweens.add({
+      targets: hostage,
+      alpha: 0,
+      duration: 620,
+      delay: 180,
+      ease: 'Quad.easeIn',
+      onComplete: () => hostage.setVisible(false),
+    });
+
+    const warning = this.add
+      .text(x, y - 34, 'HOSTAGE CRUSHED', {
+        color: '#e46b56',
+        fontFamily: 'Courier New',
+        fontSize: '17px',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+      .setDepth(21);
+    this.tweens.add({
+      targets: warning,
+      alpha: 0,
+      y: warning.y - 28,
+      duration: 950,
+      ease: 'Quad.easeOut',
+      onComplete: () => warning.destroy(),
+    });
+
+    for (let index = 0; index < 6; index += 1) {
+      const direction = index % 2 === 0 ? -1 : 1;
+      const fragment = this.add
+        .rectangle(x, y - 3, 5, 3, 0x9f3d32, 0.9)
+        .setDepth(19);
+      this.tweens.add({
+        targets: fragment,
+        x: x + direction * Phaser.Math.Between(16, 34),
+        y: y - Phaser.Math.Between(2, 10),
+        alpha: 0,
+        duration: Phaser.Math.Between(280, 430),
+        ease: 'Quad.easeOut',
+        onComplete: () => fragment.destroy(),
+      });
     }
   }
 
@@ -908,6 +1085,19 @@ export class GameScene extends Phaser.Scene {
         : `DESTROY THE TANK AND ${campInstruction}`,
     );
     this.targetText.setColor('#f3d45a');
+  }
+
+  private shouldEndFailedRescue(): boolean {
+    const closedCampCount = this.prisonCamps.filter(
+      (camp) => !camp.isOpen,
+    ).length;
+
+    return shouldEndFailedRescue({
+      rescued: this.gameState.rescued,
+      rescueTarget: this.gameState.rescueTarget,
+      closedCampCount,
+      hostageStates: this.hostages.map((hostage) => hostage.currentState),
+    });
   }
 
   private startVictoryScene(): void {
