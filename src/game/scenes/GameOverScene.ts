@@ -5,11 +5,13 @@ import { GAME_HEIGHT, GAME_WIDTH } from '../constants';
 interface GameOverData {
   rescued?: number;
   score?: number;
+  reason?: string;
 }
 
 export class GameOverScene extends Phaser.Scene {
   private rescued = 0;
   private score = 0;
+  private reason = 'ALL HELICOPTERS LOST';
 
   constructor() {
     super('GameOverScene');
@@ -18,6 +20,7 @@ export class GameOverScene extends Phaser.Scene {
   init(data: GameOverData): void {
     this.rescued = data.rescued ?? 0;
     this.score = data.score ?? 0;
+    this.reason = data.reason ?? 'ALL HELICOPTERS LOST';
   }
 
   create(): void {
@@ -35,7 +38,21 @@ export class GameOverScene extends Phaser.Scene {
     this.add
       .text(
         GAME_WIDTH / 2,
-        GAME_HEIGHT * 0.5,
+        GAME_HEIGHT * 0.46,
+        this.reason,
+        {
+          color: '#f3d45a',
+          fontFamily: 'Courier New',
+          fontSize: '22px',
+          fontStyle: 'bold',
+        },
+      )
+      .setOrigin(0.5);
+
+    this.add
+      .text(
+        GAME_WIDTH / 2,
+        GAME_HEIGHT * 0.54,
         `RESCUED: ${this.rescued}   SCORE: ${this.score}`,
         {
           color: '#d6dec3',
@@ -46,7 +63,7 @@ export class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const restartText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.64, 'PRESS ENTER TO REDEPLOY', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.68, 'PRESS ENTER TO REDEPLOY', {
         backgroundColor: '#4c312b',
         color: '#ffffff',
         fontFamily: 'Courier New',

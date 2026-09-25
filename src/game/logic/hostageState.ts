@@ -6,6 +6,7 @@ export enum HostageState {
   Aboard = 'ABOARD',
   RunningToBase = 'RUNNING_TO_BASE',
   Rescued = 'RESCUED',
+  Dead = 'DEAD',
 }
 
 export enum HostageUpdateEvent {
@@ -15,15 +16,20 @@ export enum HostageUpdateEvent {
 
 const allowedTransitions: Record<HostageState, readonly HostageState[]> = {
   [HostageState.Captive]: [HostageState.RunningOut],
-  [HostageState.RunningOut]: [HostageState.Waiting],
-  [HostageState.Waiting]: [HostageState.RunningToHelicopter],
+  [HostageState.RunningOut]: [HostageState.Waiting, HostageState.Dead],
+  [HostageState.Waiting]: [
+    HostageState.RunningToHelicopter,
+    HostageState.Dead,
+  ],
   [HostageState.RunningToHelicopter]: [
     HostageState.Waiting,
     HostageState.Aboard,
+    HostageState.Dead,
   ],
   [HostageState.Aboard]: [HostageState.Waiting, HostageState.RunningToBase],
-  [HostageState.RunningToBase]: [HostageState.Rescued],
+  [HostageState.RunningToBase]: [HostageState.Rescued, HostageState.Dead],
   [HostageState.Rescued]: [],
+  [HostageState.Dead]: [],
 };
 
 export function isHostageTransitionAllowed(
@@ -31,6 +37,40 @@ export function isHostageTransitionAllowed(
   to: HostageState,
 ): boolean {
   return allowedTransitions[from].includes(to);
+}
+
+export function canHostageBeKilled(state: HostageState): boolean {
+  return [
+    HostageState.RunningOut,
+    HostageState.Waiting,
+    HostageState.RunningToHelicopter,
+    HostageState.RunningToBase,
+  ].includes(state);
+}
+
+export interface HostageCrushSituation {
+  hostageState: HostageState;
+  helicopterLanded: boolean;
+  helicopterVelocityY: number;
+  helicopterBottom: number;
+  hostageCenterY: number;
+}
+
+export function canHostageBeCrushed(
+  situation: HostageCrushSituation,
+): boolean {
+  const exposedAtCamp = [
+    HostageState.RunningOut,
+    HostageState.Waiting,
+    HostageState.RunningToHelicopter,
+  ].includes(situation.hostageState);
+
+  return (
+    exposedAtCamp &&
+    !situation.helicopterLanded &&
+    situation.helicopterVelocityY > 0 &&
+    situation.helicopterBottom <= situation.hostageCenterY
+  );
 }
 
 export interface BoardingSituation {

@@ -12,6 +12,7 @@ type AdjustableSound = Phaser.Sound.BaseSound & {
 
 export class AudioManager {
   private readonly rotor: AdjustableSound;
+  private readonly music: Phaser.Sound.BaseSound;
   private destroyed = false;
 
   constructor(private readonly scene: Phaser.Scene) {
@@ -19,11 +20,18 @@ export class AudioManager {
       loop: true,
       volume: 0,
     }) as AdjustableSound;
+    this.music = scene.sound.add('music-loop', {
+      loop: true,
+      volume: 0.075,
+    });
 
     if (scene.sound.locked) {
-      scene.sound.once(Phaser.Sound.Events.UNLOCKED, this.startRotor);
+      scene.sound.once(
+        Phaser.Sound.Events.UNLOCKED,
+        this.startGameplayAudio,
+      );
     } else {
-      this.startRotor();
+      this.startGameplayAudio();
     }
   }
 
@@ -58,16 +66,31 @@ export class AudioManager {
     });
   }
 
-  destroy(): void {
-    this.destroyed = true;
-    this.scene.sound.off(Phaser.Sound.Events.UNLOCKED, this.startRotor);
-    this.rotor.stop();
-    this.rotor.destroy();
+  playSmush(): void {
+    this.scene.sound.play('smush', {
+      volume: 0.34,
+      detune: Phaser.Math.Between(-45, 25),
+    });
   }
 
-  private readonly startRotor = (): void => {
+  destroy(): void {
+    this.destroyed = true;
+    this.scene.sound.off(
+      Phaser.Sound.Events.UNLOCKED,
+      this.startGameplayAudio,
+    );
+    this.rotor.stop();
+    this.rotor.destroy();
+    this.music.stop();
+    this.music.destroy();
+  }
+
+  private readonly startGameplayAudio = (): void => {
     if (!this.destroyed && !this.rotor.isPlaying) {
       this.rotor.play();
+    }
+    if (!this.destroyed && !this.music.isPlaying) {
+      this.music.play();
     }
   };
 }

@@ -679,3 +679,104 @@ Future direction:
 Revisit individual sounds through the Post-MVP audio configurator, including alternate
 choices, per-cue enable/disable controls, previewing, progression unlocks, and local
 preference persistence. Keep the accepted sounds as the default configuration.
+
+## 2026-09-24 - Friendly Fire Candidate
+
+Decision:
+Give every released hostage a small Arcade body and allow the player's cannon rounds
+to kill hostages who are visibly running, waiting, boarding, or unloading. Captive,
+aboard, rescued, and already-dead hostages are protected.
+
+Reason:
+The feature should punish careless fire without changing weapon damage, hostage
+movement, passenger capacity, or rescue scoring. One successful overlap consumes one
+round and enters a terminal `DEAD` state, so a dead hostage cannot later board or
+produce rescue score.
+
+Important implementation detail:
+The exposed-state rule is pure and covered by state-machine tests. Death disables the
+hostage physics body and shows a short red fall/fade, fragment burst, camera nudge, and
+floating `HOSTAGE LOST` warning. The three Friendly Fire backlog items remain in
+progress pending a manual gameplay check.
+
+## 2026-09-24 - Exhausted Rescue Failure and Music Candidate
+
+Decision:
+End a below-target run with `RESCUE TARGET LOST` only after every camp is open and
+every hostage is terminal (`RESCUED` or `DEAD`). Add a quiet original eight-second
+retro patrol loop during gameplay.
+
+Reason:
+Friendly fire can reduce the surviving population below the rescue target, but an
+immediate mathematical failure would discard passengers already aboard or crossing
+the base deck before their rescue score is recorded. Waiting until all rescue
+opportunities are exhausted preserves those results and avoids an unwinnable run that
+never terminates. Low background music fills the remaining soundscape without masking
+the rotor and outcome cues.
+
+Important implementation detail:
+The pure failure rule treats closed camps and every nonterminal hostage state as a
+remaining rescue opportunity. The game-over scene now displays either `ALL HELICOPTERS
+LOST` or `RESCUE TARGET LOST`. `AudioManager` starts and owns `music-loop.wav` beside
+the rotor loop and cleans up both on scene shutdown. The normal rescue cue is deferred
+until after failure detection so the last non-winning drop-off does not overlap the
+game-over cue. Background music and the Friendly Fire slice remain in progress pending
+manual acceptance.
+
+## 2026-09-24 - Background Music Comparison
+
+Decision:
+Keep the restrained `Patrol Pulse` candidate as option 1 and add two increasingly
+upbeat original loops: option 2 `Arcade Assault` and option 3 `Rescue Run`. During the
+comparison pass, the number keys switch tracks live and a fixed label identifies the
+active choice.
+
+Reason:
+The first background track fits the battlefield but the player wants to compare it
+against livelier arcade music during real gameplay before choosing the authored
+default.
+
+Important implementation detail:
+All three eight-second loops are generated deterministically by
+`scripts/generate-audio.mjs`. The 1/2/3 selector and rejected WAV files are temporary;
+after manual selection, keep the chosen generator/output as the default and remove the
+comparison UI and unused assets, matching the earlier cannon-audio workflow.
+
+## 2026-09-24 - Arcade Assault Selection and Hostage Crushing Candidate
+
+Decision:
+Accept option 2, `Arcade Assault`, as the authored background music and remove the
+temporary comparison selector and rejected music variants. Allow an airborne,
+descending helicopter to crush a released hostage when the helicopter overlaps that
+hostage from above.
+
+Reason:
+The more energetic track better matches the arcade pacing. Helicopter crushing brings
+hostage interaction closer to the classic inspiration and makes careless landing an
+additional friendly-fire risk.
+
+Important implementation detail:
+`music-loop.wav` is now generated directly from the selected Arcade Assault function.
+Crushing applies only to hostages at the camp in `RUNNING_OUT`, `WAITING`, or
+`RUNNING_TO_HELICOPTER`; a landed helicopter cannot crush boarding hostages, and
+`RUNNING_TO_BASE` passengers are protected during unloading. A valid crush uses the
+terminal `DEAD` state, a flattened red feedback animation, `HOSTAGE CRUSHED` text, and
+the original generated `smush.wav` cue. The crush items remain in progress pending
+manual landing tests.
+
+## 2026-09-24 - Accepted Friendly Fire Pass
+
+Decision:
+Accept the complete P2 Friendly Fire pass after manual gameplay testing. Player cannon
+fire and careless helicopter descents can kill exposed hostages, both paths provide
+clear feedback, and dead hostages cannot board or contribute rescue score.
+
+Reason:
+The shooting and crushing behavior now provides the intended classic arcade risk while
+preserving normal boarding and base unloading. The exhausted-rescue rule also prevents
+these casualties from leaving the player trapped in an unwinnable run.
+
+Important implementation detail:
+All five P2 Friendly Fire checklist items are complete for this release candidate.
+Further balance or audio variants belong in later polish rather than blocking the
+first hosted version.

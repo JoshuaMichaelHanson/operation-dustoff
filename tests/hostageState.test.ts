@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  canHostageBeCrushed,
+  canHostageBeKilled,
   canBeginBoarding,
   HostageState,
   isHostageTransitionAllowed,
@@ -72,6 +74,33 @@ describe('hostage state transitions', () => {
       isHostageTransitionAllowed(HostageState.Aboard, HostageState.Waiting),
     ).toBe(true);
   });
+
+  it('allows exposed hostages to enter the terminal dead state', () => {
+    const exposedStates = [
+      HostageState.RunningOut,
+      HostageState.Waiting,
+      HostageState.RunningToHelicopter,
+      HostageState.RunningToBase,
+    ];
+
+    for (const state of exposedStates) {
+      expect(canHostageBeKilled(state)).toBe(true);
+      expect(isHostageTransitionAllowed(state, HostageState.Dead)).toBe(true);
+    }
+  });
+
+  it('protects captive, aboard, and rescued hostages from friendly fire', () => {
+    expect(canHostageBeKilled(HostageState.Captive)).toBe(false);
+    expect(canHostageBeKilled(HostageState.Aboard)).toBe(false);
+    expect(canHostageBeKilled(HostageState.Rescued)).toBe(false);
+  });
+
+  it('does not allow a dead hostage to be rescued', () => {
+    expect(
+      isHostageTransitionAllowed(HostageState.Dead, HostageState.Rescued),
+    ).toBe(false);
+    expect(canHostageBeKilled(HostageState.Dead)).toBe(false);
+  });
 });
 
 describe('hostage boarding rules', () => {
@@ -112,5 +141,56 @@ describe('hostage boarding rules', () => {
         passengerCount: safeBoardingSituation.passengerCapacity,
       }),
     ).toBe(false);
+  });
+});
+
+describe('hostage crushing rules', () => {
+  const descendingFromAbove = {
+    hostageState: HostageState.Waiting,
+    helicopterLanded: false,
+    helicopterVelocityY: 60,
+    helicopterBottom: 775,
+    hostageCenterY: 777,
+  };
+
+  it('crushes an exposed hostage while descending from above', () => {
+    expect(canHostageBeCrushed(descendingFromAbove)).toBe(true);
+  });
+
+  it('does not crush hostages while landed, climbing, or below them', () => {
+    expect(
+      canHostageBeCrushed({
+        ...descendingFromAbove,
+        helicopterLanded: true,
+      }),
+    ).toBe(false);
+    expect(
+      canHostageBeCrushed({
+        ...descendingFromAbove,
+        helicopterVelocityY: -20,
+      }),
+    ).toBe(false);
+    expect(
+      canHostageBeCrushed({
+        ...descendingFromAbove,
+        helicopterBottom: 780,
+      }),
+    ).toBe(false);
+  });
+
+  it('protects captive, aboard, unloading, rescued, and dead hostages', () => {
+    const protectedStates = [
+      HostageState.Captive,
+      HostageState.Aboard,
+      HostageState.RunningToBase,
+      HostageState.Rescued,
+      HostageState.Dead,
+    ];
+
+    for (const hostageState of protectedStates) {
+      expect(
+        canHostageBeCrushed({ ...descendingFromAbove, hostageState }),
+      ).toBe(false);
+    }
   });
 });
