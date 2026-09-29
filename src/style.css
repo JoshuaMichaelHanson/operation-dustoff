@@ -13,13 +13,15 @@ html,
 body,
 main {
   width: 100%;
-  min-width: 320px;
   height: 100%;
-  height: 100dvh;
   margin: 0;
 }
 
 body {
+  position: fixed;
+  inset: 0;
+  width: var(--viewport-width, 100vw);
+  height: var(--viewport-height, 100dvh);
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -36,13 +38,24 @@ main {
 }
 
 #game {
-  width: min(100%, 1280px);
-  height: min(100%, 720px);
+  width: min(
+    100%,
+    1280px,
+    calc(var(--viewport-height, 100dvh) * 16 / 9)
+  );
+  height: min(
+    100%,
+    720px,
+    calc(var(--viewport-width, 100vw) * 9 / 16)
+  );
+  aspect-ratio: 16 / 9;
   box-shadow: 0 0 48px rgb(0 0 0 / 55%);
 }
 
 #game canvas {
   display: block;
+  width: 100% !important;
+  height: 100% !important;
   touch-action: none;
 }
 

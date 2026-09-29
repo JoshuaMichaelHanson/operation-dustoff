@@ -805,3 +805,23 @@ with `?touch=1`. Pure touch-input tests cover quantization, action semantics, an
 detection; automated browser smoke testing found no console errors. The Post-MVP mobile
 backlog remains in progress until the complete rescue loop is accepted on a physical
 phone.
+
+## 2026-09-28 - iPhone Landscape Viewport Fix
+
+Problem:
+On an iPhone 15, rotating past the portrait prompt could leave the 1280x720 game canvas
+at its pre-rotation CSS size. Safari then showed only the canvas's upper-left area and
+the disabled browser gestures prevented zooming out to recover it.
+
+Decision:
+Size the game frame as an explicit 16:9 rectangle constrained by both axes of Safari's
+visual viewport, force the canvas to fill that frame, and refresh Phaser's scale manager
+when the window, orientation, or visual viewport changes. A delayed second refresh
+handles the intermediate dimensions iOS reports while its browser chrome settles.
+
+Important implementation detail:
+`main.ts` publishes `visualViewport` dimensions as CSS custom properties and owns all
+resize listeners, including hot-reload cleanup. The CSS no longer imposes a minimum
+page width, and the fixed body plus two-axis game-frame calculation guarantees that the
+whole canvas fits without pinch zoom. Mobile controls remain in progress pending a
+repeat iPhone 15 gameplay test.
