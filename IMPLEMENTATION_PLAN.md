@@ -276,3 +276,19 @@ Implement mobile play as a thin input and presentation layer over the existing g
 Rejected for this slice: a fixed four-button D-pad, invisible split-screen gestures,
 device tilt, and tap-to-fly assistance. These either reduce diagonal control,
 discoverability, consistency, or fidelity to the existing arcade handling.
+
+# P2 Automated Gameplay Smoke Slice
+
+Keep browser automation outside the shipped game and deliberately smaller than a full
+end-to-end suite:
+
+1. Build the production bundle and serve it through Vite Preview.
+2. Launch the installed Chrome channel through Playwright at the native 1280x720 game size.
+3. Drive Phaser with real keyboard down/up events held across multiple animation frames.
+4. Run one short flight-and-cannon route and one focused first-camp attack route.
+5. Retain screenshots and a JSON report of browser warnings, errors, and uncaught page errors.
+6. Fail on any captured browser issue, but use the screenshots for gameplay checkpoint review.
+7. Keep human playtesting responsible for feel, timing, visual quality, and complete-run acceptance.
+
+Do not expose scene internals, global test state, shortcuts, or test-only gameplay behavior
+in the production bundle. The driver should exercise the same controls and rules as a player.
