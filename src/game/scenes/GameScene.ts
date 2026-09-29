@@ -25,6 +25,11 @@ import { Jet } from '../entities/Jet';
 import { PrisonCamp } from '../entities/PrisonCamp';
 import { RescueBase } from '../entities/RescueBase';
 import { Tank } from '../entities/Tank';
+import { PlayerInput } from '../input/PlayerInput';
+import {
+  isTouchControlEnabled,
+  TouchInputState,
+} from '../input/touchInput';
 import { getCannonVelocity } from '../logic/cannonAim';
 import {
   canHostageBeCrushed,
@@ -39,6 +44,7 @@ import {
 import { canLockMissileTarget } from '../logic/missileGuidance';
 import { GameState } from '../state/GameState';
 import { Hud } from '../ui/Hud';
+import { TouchControls } from '../ui/TouchControls';
 
 export class GameScene extends Phaser.Scene {
   private helicopter!: Helicopter;
@@ -54,6 +60,9 @@ export class GameScene extends Phaser.Scene {
   private targetText!: Phaser.GameObjects.Text;
   private gameState!: GameState;
   private audioManager!: AudioManager;
+  private playerInput!: PlayerInput;
+  private touchInput!: TouchInputState;
+  private touchControls: TouchControls | null = null;
   private targetDestroyed = false;
   private nextPassengerUnloadAt = 0;
   private playerDestroyed = false;
@@ -86,14 +95,20 @@ export class GameScene extends Phaser.Scene {
     this.createGroundArt();
 
     this.rescueBase = new RescueBase(this);
+    this.touchInput = new TouchInputState();
+    this.playerInput = new PlayerInput(this, this.touchInput);
     this.helicopter = new Helicopter(
       this,
       PLAYER.respawnX,
       RESCUE_BASE.surfaceY - 21,
+      this.playerInput,
     );
     this.audioManager = new AudioManager(this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.audioManager.destroy();
+      this.touchControls?.destroy();
+      this.touchControls = null;
+      this.touchInput.reset();
     });
     this.tank = new Tank(this, 1500, GROUND_Y - 21);
     this.prisonCamps = PRISON_CAMP.positions.map(
@@ -206,10 +221,14 @@ export class GameScene extends Phaser.Scene {
 
     this.configureCamera();
     this.createFlightDisplay();
+    this.touchControls = isTouchControlEnabled()
+      ? new TouchControls(this, this.touchInput)
+      : null;
     this.updateHud();
   }
 
   update(time: number, delta: number): void {
+    this.touchControls?.update();
     const shot = this.helicopter.update(time);
     this.updateRotorAudio();
     if (shot) {
@@ -222,6 +241,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     const missileTarget = this.getMissileLockTarget();
+    this.touchControls?.setMissileStatus(
+      missileTarget !== null,
+      this.helicopter.isMissileReady(time),
+    );
     const missileLaunch = this.helicopter.tryFireMissile(
       time,
       missileTarget !== null,

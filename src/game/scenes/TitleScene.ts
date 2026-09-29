@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { GAME_HEIGHT, GAME_TITLE, GAME_WIDTH } from '../constants';
+import { isTouchControlEnabled } from '../input/touchInput';
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -9,6 +10,7 @@ export class TitleScene extends Phaser.Scene {
 
   create(): void {
     const centerX = GAME_WIDTH / 2;
+    const touchEnabled = isTouchControlEnabled();
 
     this.cameras.main.setBackgroundColor('#101810');
     this.createBackdrop();
@@ -64,7 +66,9 @@ export class TitleScene extends Phaser.Scene {
       .text(
         centerX,
         501,
-        'WASD / ARROWS  FLIGHT     SPACE  CANNON     X  LOCK-ON MISSILE',
+        touchEnabled
+          ? 'LEFT STICK  FLIGHT     HOLD CANNON     TAP MISSILE'
+          : 'WASD / ARROWS  FLIGHT     SPACE  CANNON     X  LOCK-ON MISSILE',
         {
           color: '#91a087',
           fontFamily: 'Courier New',
@@ -84,16 +88,24 @@ export class TitleScene extends Phaser.Scene {
       .setDepth(5);
 
     const startText = this.add
-      .text(centerX, 618, '▶  PRESS ENTER TO DEPLOY  ◀', {
+      .text(
+        centerX,
+        618,
+        touchEnabled
+          ? '▶  TAP TO DEPLOY  ◀'
+          : '▶  PRESS ENTER TO DEPLOY  ◀',
+        {
         backgroundColor: '#31452f',
         color: '#ffffff',
         fontFamily: 'Courier New',
         fontSize: '25px',
         fontStyle: 'bold',
         padding: { x: 22, y: 13 },
-      })
+        },
+      )
       .setOrigin(0.5)
-      .setDepth(5);
+      .setDepth(5)
+      .setInteractive({ useHandCursor: true });
 
     this.tweens.add({
       targets: startText,
@@ -103,9 +115,11 @@ export class TitleScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    this.input.keyboard?.once('keydown-ENTER', () => {
+    const deploy = (): void => {
       this.scene.start('GameScene');
-    });
+    };
+    startText.once('pointerdown', deploy);
+    this.input.keyboard?.once('keydown-ENTER', deploy);
   }
 
   private createBackdrop(): void {

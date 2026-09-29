@@ -780,3 +780,48 @@ Important implementation detail:
 All five P2 Friendly Fire checklist items are complete for this release candidate.
 Further balance or audio variants belong in later polish rather than blocking the
 first hosted version.
+
+## 2026-09-28 - Mobile Control Option 1 Candidate
+
+Decision:
+Implement the selected mobile control option: a fixed eight-way virtual stick on the
+left, a holdable cannon button on the right, and a separate tap-to-fire missile button.
+Keep the existing keyboard controls active through the same player-input abstraction.
+
+Reason:
+The virtual stick preserves the helicopter's existing weight and directional movement,
+while dedicated weapon buttons support aiming and firing at the same time. It is more
+discoverable than invisible gestures, more reliable than tilt controls, and a closer
+fit for direct arcade flight than tap-to-destination movement. A fixed D-pad remains a
+reasonable fallback if physical-phone testing shows the stick needs more precision.
+
+Important implementation detail:
+`PlayerInput` merges keyboard and touch state without changing helicopter physics.
+`TouchControls` quantizes the stick into eight directions, tracks independent pointers
+for simultaneous flight and cannon fire, queues missile taps, and clears interrupted
+inputs. Touch-capable devices receive tappable title/restart screens, mobile HUD text,
+safe-area sizing, and a portrait rotate prompt. Desktop testing can force the layout
+with `?touch=1`. Pure touch-input tests cover quantization, action semantics, and device
+detection; automated browser smoke testing found no console errors. The Post-MVP mobile
+backlog remains in progress until the complete rescue loop is accepted on a physical
+phone.
+
+## 2026-09-28 - iPhone Landscape Viewport Fix
+
+Problem:
+On an iPhone 15, rotating past the portrait prompt could leave the 1280x720 game canvas
+at its pre-rotation CSS size. Safari then showed only the canvas's upper-left area and
+the disabled browser gestures prevented zooming out to recover it.
+
+Decision:
+Size the game frame as an explicit 16:9 rectangle constrained by both axes of Safari's
+visual viewport, force the canvas to fill that frame, and refresh Phaser's scale manager
+when the window, orientation, or visual viewport changes. A delayed second refresh
+handles the intermediate dimensions iOS reports while its browser chrome settles.
+
+Important implementation detail:
+`main.ts` publishes `visualViewport` dimensions as CSS custom properties and owns all
+resize listeners, including hot-reload cleanup. The CSS no longer imposes a minimum
+page width, and the fixed body plus two-axis game-frame calculation guarantees that the
+whole canvas fits without pinch zoom. Mobile controls remain in progress pending a
+repeat iPhone 15 gameplay test.
