@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { GAME_WIDTH } from '../constants';
+import { isTouchControlEnabled } from '../input/touchInput';
 
 export interface HudState {
   score: number;
@@ -48,11 +49,18 @@ export class Hud {
     this.livesText = this.createMetric(scene, 1090, '#d6dec3');
 
     scene.add
-      .text(24, 54, 'WASD / ARROWS: FLY   SPACE: CANNON   X: MISSILE', {
+      .text(
+        24,
+        54,
+        isTouchControlEnabled()
+          ? 'LEFT STICK: FLY   HOLD CANNON   TAP MISSILE'
+          : 'WASD / ARROWS: FLY   SPACE: CANNON   X: MISSILE',
+        {
         color: '#91a087',
         fontFamily: 'Courier New',
         fontSize: '14px',
-      })
+        },
+      )
       .setScrollFactor(0)
       .setDepth(1001);
 

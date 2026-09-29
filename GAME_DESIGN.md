@@ -102,6 +102,32 @@ P or Escape       pause
 
 Gamepad support is post-MVP.
 
+### Mobile Controls (Post-MVP Selection)
+
+Considered control schemes:
+
+1. An eight-way virtual stick with separate Cannon and Missile buttons.
+2. A four-button directional pad with separate action buttons.
+3. Split-screen drag gestures with minimal visible controls.
+4. Device tilt for flight with touch action buttons.
+5. Tap-to-fly assisted movement.
+
+Selected approach: option 1. The virtual stick is quantized to the same digital
+directions used by the keyboard, preserving the existing acceleration, momentum,
+landing, and crushing rules while allowing natural diagonal flight. A fixed D-pad is
+more precise but makes diagonals awkward; gesture controls are less discoverable;
+tilt is inconsistent and requires calibration; and tap-to-fly would materially change
+the arcade handling.
+
+Touch layout:
+
+- left thumb: eight-way virtual stick
+- right thumb: hold Cannon for continuous fire
+- right thumb: tap Missile to launch when locked and ready
+- tappable deploy and redeploy prompts
+- landscape play with a portrait rotate-device prompt
+- keyboard controls remain available and unchanged
+
 ### Health
 
 Suggested starting health:

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { HELICOPTER, MISSILE } from '../constants';
+import type { PlayerInput } from '../input/PlayerInput';
 import { Health } from '../logic/health';
 import { getDamageSmokeProfile } from '../logic/damageSmoke';
 import {
@@ -8,16 +9,8 @@ import {
   getHorizontalDrag,
   getVerticalControlAcceleration,
   isSafeLanding,
-  type ControlDirection,
 } from '../logic/helicopterMotion';
 import { PassengerManifest } from '../logic/passengerManifest';
-
-interface DirectionKeys {
-  up: Phaser.Input.Keyboard.Key;
-  down: Phaser.Input.Keyboard.Key;
-  left: Phaser.Input.Keyboard.Key;
-  right: Phaser.Input.Keyboard.Key;
-}
 
 export interface CannonShot {
   x: number;
@@ -33,10 +26,6 @@ export interface MissileLaunch {
 }
 
 export class Helicopter extends Phaser.Physics.Arcade.Sprite {
-  private readonly cursors: Phaser.Types.Input.Keyboard.CursorKeys;
-  private readonly wasd: DirectionKeys;
-  private readonly fireKey: Phaser.Input.Keyboard.Key;
-  private readonly missileKey: Phaser.Input.Keyboard.Key;
   private facing: -1 | 1 = 1;
   private lastCannonShotAt = Number.NEGATIVE_INFINITY;
   private lastMissileShotAt = Number.NEGATIVE_INFINITY;
@@ -47,35 +36,17 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   );
   private readonly healthState = new Health(HELICOPTER.maximumHealth);
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    private readonly controls: PlayerInput,
+  ) {
     super(scene, x, y, 'helicopter');
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.play('helicopter-rotors');
-
-    const keyboard = scene.input.keyboard;
-    if (!keyboard) {
-      throw new Error('Keyboard input is required to control the helicopter.');
-    }
-
-    this.cursors = keyboard.createCursorKeys();
-    this.wasd = keyboard.addKeys({
-      up: Phaser.Input.Keyboard.KeyCodes.W,
-      down: Phaser.Input.Keyboard.KeyCodes.S,
-      left: Phaser.Input.Keyboard.KeyCodes.A,
-      right: Phaser.Input.Keyboard.KeyCodes.D,
-    }) as DirectionKeys;
-    this.fireKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    this.missileKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
-    keyboard.addCapture([
-      Phaser.Input.Keyboard.KeyCodes.UP,
-      Phaser.Input.Keyboard.KeyCodes.DOWN,
-      Phaser.Input.Keyboard.KeyCodes.LEFT,
-      Phaser.Input.Keyboard.KeyCodes.RIGHT,
-      Phaser.Input.Keyboard.KeyCodes.SPACE,
-      Phaser.Input.Keyboard.KeyCodes.X,
-    ]);
 
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setSize(76, 30);
@@ -114,7 +85,7 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   }
 
   tryFireMissile(time: number, hasLock: boolean): MissileLaunch | null {
-    const launchPressed = Phaser.Input.Keyboard.JustDown(this.missileKey);
+    const launchPressed = this.controls.consumeMissilePress();
     if (
       !this.active ||
       !hasLock ||
@@ -184,16 +155,11 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     }
 
     const body = this.body as Phaser.Physics.Arcade.Body;
-    const movingLeft = this.cursors.left.isDown || this.wasd.left.isDown;
-    const movingRight = this.cursors.right.isDown || this.wasd.right.isDown;
-    const movingUp = this.cursors.up.isDown || this.wasd.up.isDown;
-    const movingDown = this.cursors.down.isDown || this.wasd.down.isDown;
 
     body.setAccelerationX(0);
     body.setAccelerationY(0);
 
-    const horizontalInput: ControlDirection =
-      movingLeft === movingRight ? 0 : movingLeft ? -1 : 1;
+    const horizontalInput = this.controls.horizontalDirection;
     if (horizontalInput !== 0) {
       this.facing = horizontalInput;
     }
@@ -203,8 +169,7 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
       getHorizontalControlAcceleration(horizontalInput, body.velocity.x),
     );
 
-    const verticalInput: ControlDirection =
-      movingUp === movingDown ? 0 : movingUp ? -1 : 1;
+    const verticalInput = this.controls.verticalDirection;
     body.setAccelerationY(getVerticalControlAcceleration(verticalInput));
 
     const forwardSpeedRatio = Phaser.Math.Clamp(
@@ -226,7 +191,7 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     });
 
     if (
-      this.fireKey.isDown &&
+      this.controls.cannonDown &&
       time - this.lastCannonShotAt >= HELICOPTER.cannonCooldownMs
     ) {
       this.lastCannonShotAt = time;
