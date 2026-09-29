@@ -229,11 +229,11 @@ Jet may be deferred if MVP schedule is tight.
 
 ## P2 - Automated Gameplay Smoke Testing
 
-- [ ] Add a lightweight Playwright gameplay driver outside the production bundle
-- [ ] Support true held-key flight and weapon input with explicit key-down/key-up timing
-- [ ] Script focused routes for flying, firing, destroying a camp, and observing released hostages
-- [ ] Capture gameplay screenshots and browser console warnings/errors
-- [ ] Keep manual playtesting as the final feel and visual-quality checkpoint
+- [x] Add a lightweight Playwright gameplay driver outside the production bundle
+- [x] Support true held-key flight and weapon input with explicit key-down/key-up timing
+- [x] Script focused routes for flying, firing, destroying a camp, and observing released hostages
+- [x] Capture gameplay screenshots and browser console warnings/errors
+- [x] Keep manual playtesting as the final feel and visual-quality checkpoint
 
 ### Acceptance
 
@@ -256,7 +256,7 @@ Do not implement until MVP is complete.
 - [ ] Multiple levels
 - [ ] Difficulty settings
 - [ ] Gamepad support
-- [~] Mobile controls
+- [x] Mobile controls
 - [ ] Local high-score table
 - [ ] Full-load rescue bonus
 - [ ] Boss helicopter
@@ -266,12 +266,12 @@ Do not implement until MVP is complete.
 
 ## Post-MVP - Mobile Controls
 
-- [~] Add an eight-way virtual flight stick for touch devices
-- [~] Add hold-to-fire Cannon and tap-to-launch Missile buttons
-- [~] Keep keyboard and touch input behavior equivalent
-- [~] Make title, victory, and game-over actions tappable
-- [~] Add landscape guidance and mobile-safe viewport behavior
-- [~] Cover stick direction, release, and action-button semantics with tests
+- [x] Add an eight-way virtual flight stick for touch devices
+- [x] Add hold-to-fire Cannon and tap-to-launch Missile buttons
+- [x] Keep keyboard and touch input behavior equivalent
+- [x] Make title, victory, and game-over actions tappable
+- [x] Add landscape guidance and mobile-safe viewport behavior
+- [x] Cover stick direction, release, and action-button semantics with tests
 
 ### Acceptance
 
@@ -337,6 +337,10 @@ up without leaks or abandoned state.
 Additional levels must be immediately distinguishable through terrain, sky, and
 lighting while preserving the same clear helicopter, enemy, hostage, and landing-zone
 silhouettes. Day and night are deliberate level themes rather than a real-time clock.
+
+## Post-MVP - Device Compatibility Checks
+
+- [ ] Low priority: test touch layout and the complete rescue loop on a larger tablet such as an iPad
 
 ---
 

@@ -7,12 +7,16 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "generate:audio": "node scripts/generate-audio.mjs",
-    "test": "vitest run"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:gameplay": "npm run build && playwright test --config playwright.config.ts"
   },
   "dependencies": {
     "phaser": "3.90.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.19.0",
     "typescript": "5.9.2",
     "vite": "7.3.6",
     "vitest": "5.0.1"
