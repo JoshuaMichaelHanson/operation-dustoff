@@ -141,6 +141,32 @@ Manual mobile checks:
 7. Land near hostages, board, return, unload, and verify precision remains practical.
 8. Reach victory or game over and restart by touch.
 
+## Automated Gameplay Smoke Driver
+
+Run:
+
+```text
+npm run test:gameplay
+```
+
+The command builds the production bundle, starts Vite Preview, and drives the installed
+Chrome browser with Playwright. It intentionally uses explicit keyboard-down, timed hold,
+and keyboard-up calls so flight and weapon input persist across real Phaser frames.
+
+Current routes:
+
+1. Take off diagonally and hold the cannon while continuing forward flight.
+2. Fly to Camp 1, brake, descend, destroy the camp, and wait for released hostages.
+
+Each route retains a checkpoint PNG and `browser-console.json` under
+`test-results/gameplay/`. The console report includes warnings, errors, and uncaught page
+errors; any entry fails the smoke test. The artifact directory is intentionally ignored by
+Git because it is regenerated on every run.
+
+The driver requires a local Chrome installation. It does not add browser binaries or
+automation hooks to the production bundle. Review the screenshots after route changes,
+and continue to use manual playtesting for control feel and visual quality.
+
 ---
 
 ## Test Naming

@@ -825,3 +825,42 @@ resize listeners, including hot-reload cleanup. The CSS no longer imposes a mini
 page width, and the fixed body plus two-axis game-frame calculation guarantees that the
 whole canvas fits without pinch zoom. Mobile controls remain in progress pending a
 repeat iPhone 15 gameplay test.
+
+## 2026-09-29 - Mobile Controls Accepted on iPhone
+
+Decision:
+Mark the Post-MVP Mobile Controls slice complete after successful play on an iPhone 15.
+Keep larger-tablet compatibility as a separate low-priority follow-up rather than
+holding the accepted phone implementation open.
+
+Reason:
+The player confirmed that the landscape viewport fix makes the game playable on the
+target phone. The available larger iPad could not be tested because its battery was
+dead, and that coverage is less important than the remaining feature backlog.
+
+Important implementation detail:
+All six mobile checklist items are complete for this round. A final, low-priority
+Post-MVP device-compatibility item now requests the full touch rescue loop on an iPad-
+class screen; it should only trigger layout tuning if that real-device test finds an
+issue.
+
+## 2026-09-29 - Automated Gameplay Smoke Driver
+
+Decision:
+Add a small Playwright suite that builds and previews the production game, launches the
+installed Chrome channel, and exercises two focused routes with real held keyboard input.
+
+Reason:
+Playwright's explicit key-down and key-up events remain active across Phaser frames, so
+the agent can now fly and fire reliably instead of depending on short computer-use key
+taps. Focused checkpoints catch startup, input, rendering, route, and console failures
+without trying to automate the entire rescue game or replacing human feel testing.
+
+Important implementation detail:
+`npm run test:gameplay` runs the build and two serial routes at 1280x720. The first holds
+diagonal flight and cannon input; the second flies to Camp 1, brakes, lands, destroys it,
+and waits for the released hostages. Each test keeps a PNG and `browser-console.json`
+under the ignored `test-results/gameplay` directory, and any warning, console error, or
+uncaught page error fails the run. The verified camp screenshot shows `CAMPS 1/3` and four
+released hostages. The suite uses no scene globals, debug shortcuts, or test-only behavior
+in the production bundle; manual play remains the final feel and visual-quality gate.
