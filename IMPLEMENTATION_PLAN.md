@@ -256,3 +256,23 @@ If a feature requires more than roughly one focused coding session and is not ne
 Move it to Post-MVP.
 
 The player experience matters more than feature count.
+
+---
+
+# Post-MVP Mobile Control Slice
+
+Implement mobile play as a thin input and presentation layer over the existing game:
+
+1. Represent keyboard and touch through one small player-input state.
+2. Quantize a left-side virtual stick into eight digital directions.
+3. Add right-side hold Cannon and press Missile controls with multitouch support.
+4. Make scene start and restart prompts tappable.
+5. Preserve the current helicopter physics and weapon cooldown rules.
+6. Fit the game to the dynamic mobile viewport and request landscape orientation
+   through a portrait overlay rather than browser permission APIs.
+7. Validate pure input rules automatically, then perform final feel testing on a
+   physical phone.
+
+Rejected for this slice: a fixed four-button D-pad, invisible split-screen gestures,
+device tilt, and tap-to-fly assistance. These either reduce diagonal control,
+discoverability, consistency, or fidelity to the existing arcade handling.

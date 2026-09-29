@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { GAME_HEIGHT, GAME_WIDTH } from '../constants';
+import { isTouchControlEnabled } from '../input/touchInput';
 
 interface VictoryData {
   rescued?: number;
@@ -24,6 +25,7 @@ export class VictoryScene extends Phaser.Scene {
   }
 
   create(): void {
+    const touchEnabled = isTouchControlEnabled();
     this.sound.play('victory', { volume: 0.38 });
 
     this.add
@@ -62,14 +64,17 @@ export class VictoryScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const restartText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.68, 'PRESS ENTER TO FLY AGAIN', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.68, touchEnabled
+        ? 'TAP TO FLY AGAIN'
+        : 'PRESS ENTER TO FLY AGAIN', {
         backgroundColor: '#39452c',
         color: '#ffffff',
         fontFamily: 'Courier New',
         fontSize: '24px',
         padding: { x: 18, y: 12 },
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
 
     this.tweens.add({
       targets: restartText,
@@ -79,8 +84,10 @@ export class VictoryScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    this.input.keyboard?.once('keydown-ENTER', () => {
+    const restart = (): void => {
       this.scene.start('GameScene');
-    });
+    };
+    restartText.once('pointerdown', restart);
+    this.input.keyboard?.once('keydown-ENTER', restart);
   }
 }

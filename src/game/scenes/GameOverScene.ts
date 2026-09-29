@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import { GAME_HEIGHT, GAME_WIDTH } from '../constants';
+import { isTouchControlEnabled } from '../input/touchInput';
 
 interface GameOverData {
   rescued?: number;
@@ -24,6 +25,7 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(): void {
+    const touchEnabled = isTouchControlEnabled();
     this.sound.play('game-over', { volume: 0.36 });
 
     this.add
@@ -63,14 +65,17 @@ export class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const restartText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.68, 'PRESS ENTER TO REDEPLOY', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.68, touchEnabled
+        ? 'TAP TO REDEPLOY'
+        : 'PRESS ENTER TO REDEPLOY', {
         backgroundColor: '#4c312b',
         color: '#ffffff',
         fontFamily: 'Courier New',
         fontSize: '24px',
         padding: { x: 18, y: 12 },
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
 
     this.tweens.add({
       targets: restartText,
@@ -80,8 +85,10 @@ export class GameOverScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    this.input.keyboard?.once('keydown-ENTER', () => {
+    const restart = (): void => {
       this.scene.start('GameScene');
-    });
+    };
+    restartText.once('pointerdown', restart);
+    this.input.keyboard?.once('keydown-ENTER', restart);
   }
 }

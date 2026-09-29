@@ -120,6 +120,29 @@ Do not automate the entire game.
 
 ---
 
+## Mobile Controls
+
+Pure tests should cover the virtual-stick dead zone, cardinal and diagonal direction
+selection, held Cannon state, one-shot Missile consumption, and touch capability
+detection.
+
+For desktop preview, append `?touch=1` to the game URL to render the touch controls
+without emulating a phone. This override is for layout and pointer smoke testing; final
+acceptance still requires a physical phone in landscape orientation.
+
+Manual mobile checks:
+
+1. Open the title screen in portrait and confirm the rotate-device prompt.
+2. Rotate to landscape and tap Deploy.
+3. Fly in all cardinal and diagonal directions.
+4. Hold the stick and Cannon simultaneously.
+5. Release each touch outside its original control and confirm no input sticks.
+6. Launch a locked Missile and confirm the reload/lock label changes.
+7. Land near hostages, board, return, unload, and verify precision remains practical.
+8. Reach victory or game over and restart by touch.
+
+---
+
 ## Test Naming
 
 Use behavior-oriented names.

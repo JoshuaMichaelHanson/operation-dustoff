@@ -256,13 +256,28 @@ Do not implement until MVP is complete.
 - [ ] Multiple levels
 - [ ] Difficulty settings
 - [ ] Gamepad support
-- [ ] Mobile controls
+- [~] Mobile controls
 - [ ] Local high-score table
 - [ ] Full-load rescue bonus
 - [ ] Boss helicopter
 - [ ] Fuel
 - [ ] Weather effects
 - [ ] POW panic / dive-for-cover behavior
+
+## Post-MVP - Mobile Controls
+
+- [~] Add an eight-way virtual flight stick for touch devices
+- [~] Add hold-to-fire Cannon and tap-to-launch Missile buttons
+- [~] Keep keyboard and touch input behavior equivalent
+- [~] Make title, victory, and game-over actions tappable
+- [~] Add landscape guidance and mobile-safe viewport behavior
+- [~] Cover stick direction, release, and action-button semantics with tests
+
+### Acceptance
+
+On a phone in landscape orientation, the player can start a game, fly diagonally,
+land precisely, hold the cannon, launch a locked missile, complete or lose a mission,
+and restart without a physical keyboard. Desktop keyboard play remains unchanged.
 
 ## Post-MVP - Audio Configurator
 
