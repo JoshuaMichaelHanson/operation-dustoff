@@ -41,8 +41,19 @@ import {
   HostageState,
   HostageUpdateEvent,
 } from '../logic/hostageState';
-import { getHostageRallyPositions } from '../logic/hostageRally';
 import {
+  getHostageRallyPositions,
+  isGroundPathClear,
+} from '../logic/hostageRally';
+import { formatIntelCue, nearestX } from '../logic/battlefieldIntel';
+import {
+  canStartHostageThreat,
+  HOSTAGE_THREAT,
+  hostageThreatIntervalMs,
+  isThreatTargetStillExposed,
+} from '../logic/hostageThreat';
+import {
+  calculateFullLoadBonus,
   hasPassengerUnloadSpacing,
   shouldEndFailedRescue,
   shouldOpenRescueDoor,
@@ -57,6 +68,14 @@ import {
 import { GameState } from '../state/GameState';
 import { Hud } from '../ui/Hud';
 import { TouchControls } from '../ui/TouchControls';
+
+interface PendingHostageThreat {
+  source: Tank | Jet;
+  target: Hostage;
+  startedAt: number;
+  coverStarted: boolean;
+  marker: Phaser.GameObjects.Text;
+}
 
 export class GameScene extends Phaser.Scene {
   private helicopter!: Helicopter;
@@ -86,6 +105,9 @@ export class GameScene extends Phaser.Scene {
   private level!: LevelConfig;
   private initialScore = 0;
   private initialLives: number | undefined;
+  private pendingHostageThreat: PendingHostageThreat | null = null;
+  private nextHostageThreatAt = Number.POSITIVE_INFINITY;
+  private fullLoadBonusReady = false;
 
   constructor() {
     super('GameScene');
@@ -111,6 +133,9 @@ export class GameScene extends Phaser.Scene {
     this.nextPassengerUnloadAt = 0;
     this.playerDestroyed = false;
     this.jetSpawnCount = 0;
+    this.pendingHostageThreat = null;
+    this.nextHostageThreatAt = Number.POSITIVE_INFINITY;
+    this.fullLoadBonusReady = false;
     this.gameState = new GameState(this.level.rescueTarget, {
       score: this.initialScore,
       lives: this.initialLives,
@@ -344,7 +369,11 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (!this.playerDestroyed) {
+      this.updateHostageThreat(time);
       for (const tank of this.tanks) {
+        if (tank === this.pendingHostageThreat?.source) {
+          continue;
+        }
         const enemyShot = tank.tryFire(
           time,
           this.helicopter.x,
@@ -361,7 +390,7 @@ export class GameScene extends Phaser.Scene {
       const jet = child as Jet;
       const jetShot = jet.update(
         time,
-        this.playerDestroyed
+        this.playerDestroyed || jet === this.pendingHostageThreat?.source
           ? undefined
           : { x: this.helicopter.x, y: this.helicopter.y },
       );
@@ -382,6 +411,9 @@ export class GameScene extends Phaser.Scene {
       const event = hostage.update(delta, this.helicopter);
       if (event === HostageUpdateEvent.Boarded) {
         this.audioManager.playBoarding();
+        if (this.helicopter.passengerCount === this.helicopter.passengerCapacity) {
+          this.fullLoadBonusReady = true;
+        }
         hostageStateChanged = true;
       } else if (event === HostageUpdateEvent.Rescued) {
         this.gameState.recordRescue(1);
@@ -679,6 +711,26 @@ export class GameScene extends Phaser.Scene {
       missileLocked: this.getMissileLockTarget() !== null,
       missileReady: this.helicopter.isMissileReady(this.time.now),
       bombReady: this.helicopter.isBombReady(this.time.now),
+      intel: [
+        formatIntelCue('BASE', this.helicopter.x, RESCUE_BASE.centerX),
+        formatIntelCue('POW', this.helicopter.x, nearestX(
+          this.helicopter.x,
+          this.hostages.filter((hostage) =>
+            isThreatTargetStillExposed(hostage.currentState),
+          ).map((hostage) => hostage.x),
+        )),
+        formatIntelCue('CAMP', this.helicopter.x, nearestX(
+          this.helicopter.x,
+          this.prisonCamps.filter((camp) => !camp.isOpen).map((camp) => camp.x),
+        )),
+      ].join('    •    '),
+      threatWarning: this.pendingHostageThreat
+        ? `INCOMING ${formatIntelCue(
+          this.pendingHostageThreat.source instanceof Tank ? 'TANK' : 'JET',
+          this.helicopter.x,
+          this.pendingHostageThreat.source.x,
+        )} FIRE ON ${formatIntelCue('POW', this.helicopter.x, this.pendingHostageThreat.target.x)}`
+        : '',
     });
   }
 
@@ -868,7 +920,109 @@ export class GameScene extends Phaser.Scene {
     return nearestTarget;
   }
 
-  private fireEnemyRound(shot: EnemyShot): void {
+  private updateHostageThreat(time: number): void {
+    const pending = this.pendingHostageThreat;
+    if (pending) {
+      if (!pending.source.active ||
+        !isThreatTargetStillExposed(pending.target.currentState)) {
+        this.clearHostageThreat(time);
+        return;
+      }
+
+      pending.marker.setPosition(pending.target.x, pending.target.y - 59);
+      if (!pending.coverStarted &&
+        time - pending.startedAt >= HOSTAGE_THREAT.coverReactionMs) {
+        pending.target.takeCover(HOSTAGE.coverDurationMs);
+        pending.coverStarted = true;
+      }
+
+      if (time - pending.startedAt < HOSTAGE_THREAT.warningMs) {
+        return;
+      }
+
+      const shot = pending.source instanceof Tank
+        ? pending.source.tryFire(time, pending.target.x, pending.target.y - 20)
+        : pending.source.update(time, {
+          x: pending.target.x,
+          y: pending.target.y - 20,
+        });
+      if (shot) {
+        this.fireEnemyRound(shot, true);
+      }
+      this.clearHostageThreat(time);
+      return;
+    }
+
+    if (this.level.difficultyRank <= 1 || time < this.nextHostageThreatAt) {
+      return;
+    }
+
+    const exposed = this.hostages.filter((hostage) =>
+      canStartHostageThreat(
+        this.level.difficultyRank,
+        hostage.currentState,
+        Math.abs(hostage.x - this.helicopter.x),
+      ) && this.cameras.main.worldView.contains(hostage.x, hostage.y - 50),
+    );
+    let bestSource: Tank | Jet | null = null;
+    let bestTarget: Hostage | null = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    const sources: (Tank | Jet)[] = [
+      ...this.tanks.filter((tank) => tank.active),
+      ...this.jets.getChildren().filter((jet) => jet.active) as Jet[],
+    ];
+    for (const source of sources) {
+      for (const target of exposed) {
+        const distance = Phaser.Math.Distance.Between(
+          source.x, source.y, target.x, target.y - 20,
+        );
+        const range = source instanceof Tank ? TANK.fireRange : JET.fireRange;
+        if (distance > range - 80 || distance >= bestDistance ||
+          (source instanceof Tank && !isGroundPathClear(
+            source.x,
+            target.x,
+            this.level.flightObstacles,
+            8,
+          ))) {
+          continue;
+        }
+        bestSource = source;
+        bestTarget = target;
+        bestDistance = distance;
+      }
+    }
+
+    if (!bestSource || !bestTarget) {
+      this.nextHostageThreatAt = time + HOSTAGE_THREAT.retryMs;
+      return;
+    }
+
+    const marker = this.add.text(bestTarget.x, bestTarget.y - 59,
+      '▼ POW TARGET', {
+        color: '#ff7b62',
+        backgroundColor: '#3d1918',
+        fontFamily: 'Courier New',
+        fontSize: '16px',
+        fontStyle: 'bold',
+        padding: { x: 5, y: 3 },
+      }).setOrigin(0.5).setDepth(30);
+    this.pendingHostageThreat = {
+      source: bestSource,
+      target: bestTarget,
+      startedAt: time,
+      coverStarted: false,
+      marker,
+    };
+  }
+
+  private clearHostageThreat(time: number): void {
+    this.pendingHostageThreat?.marker.destroy();
+    this.pendingHostageThreat = null;
+    this.nextHostageThreatAt = time +
+      hostageThreatIntervalMs(this.level.difficultyRank);
+  }
+
+  private fireEnemyRound(shot: EnemyShot, hostageTargeted = false): void {
     const round = this.enemyRounds.get(
       shot.x,
       shot.y,
@@ -882,6 +1036,7 @@ export class GameScene extends Phaser.Scene {
     round
       .enableBody(true, shot.x, shot.y, true, true)
       .setData('damage', shot.damage)
+      .setData('hostageTargeted', hostageTargeted)
       .setVelocity(shot.velocityX, shot.velocityY);
   }
 
@@ -937,18 +1092,25 @@ export class GameScene extends Phaser.Scene {
 
   private destroyHelicopter(): void {
     this.playerDestroyed = true;
+    this.clearHostageThreat(this.time.now);
+    this.fullLoadBonusReady = false;
     const explosionX = this.helicopter.x;
     const explosionY = this.helicopter.y;
     const lostPassengers = this.helicopter.disableAfterDestruction();
 
-    let returnedHostages = 0;
-    for (const hostage of this.hostages) {
-      if (hostage.returnToRallyAfterHelicopterLoss()) {
-        returnedHostages += 1;
-      }
-    }
-    if (returnedHostages !== lostPassengers) {
+    const regroupingHostages = this.hostages.filter(
+      (hostage) => hostage.currentState === HostageState.Aboard,
+    );
+    if (regroupingHostages.length !== lostPassengers) {
       throw new Error('Passenger manifest did not match aboard hostages.');
+    }
+    if (lostPassengers > 0) {
+      this.showPassengerRegroupNotice(lostPassengers);
+      this.time.delayedCall(HOSTAGE.crashRegroupDelayMs, () => {
+        for (const hostage of regroupingHostages) {
+          hostage.returnToRallyAfterHelicopterLoss();
+        }
+      });
     }
 
     this.gameState.loseLife();
@@ -990,6 +1152,29 @@ export class GameScene extends Phaser.Scene {
 
   private showHelicopterExplosion(x: number, y: number): void {
     this.showExplosion(x, y, 28, 18, 240, 0.01);
+  }
+
+  private showPassengerRegroupNotice(count: number): void {
+    const notice = this.add.text(
+      GAME_WIDTH / 2,
+      146,
+      `${count} ${count === 1 ? 'POW' : 'POWS'} SURVIVED — REGROUPING AT CAMP RALLY POINTS`,
+      {
+        backgroundColor: '#243128',
+        color: '#9fc7c5',
+        fontFamily: 'Courier New',
+        fontSize: '19px',
+        fontStyle: 'bold',
+        padding: { x: 12, y: 7 },
+      },
+    ).setOrigin(0.5).setScrollFactor(0).setDepth(1500);
+    this.tweens.add({
+      targets: notice,
+      alpha: 0,
+      delay: 1500,
+      duration: 700,
+      onComplete: () => notice.destroy(),
+    });
   }
 
   private showJetExplosion(x: number, y: number): void {
@@ -1086,9 +1271,14 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private showScoreAward(x: number, y: number, points: number): void {
+  private showScoreAward(
+    x: number,
+    y: number,
+    points: number,
+    label = '',
+  ): void {
     const scoreText = this.add
-      .text(x, y, `+${points}`, {
+      .text(x, y, `${label ? `${label} ` : ''}+${points}`, {
         color: '#f3d45a',
         fontFamily: 'Courier New',
         fontSize: '22px',
@@ -1106,6 +1296,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private releaseHostages(prisonCamp: PrisonCamp): void {
+    if (this.level.difficultyRank > 1 &&
+      !Number.isFinite(this.nextHostageThreatAt)) {
+      this.nextHostageThreatAt = this.time.now +
+        HOSTAGE_THREAT.initialDelayMs;
+    }
     const rallyPositions = getHostageRallyPositions(
       prisonCamp.x,
       PRISON_CAMP.hostageCount,
@@ -1144,6 +1339,26 @@ export class GameScene extends Phaser.Scene {
           this.updateObjectiveText();
         },
       );
+      if (this.level.difficultyRank > 1) {
+        this.physics.add.overlap(
+          hostage,
+          this.enemyRounds,
+          (hostageObject, roundObject) => {
+            const target = hostageObject as Hostage;
+            const round = roundObject as Phaser.Physics.Arcade.Image;
+            if (
+              !round.active ||
+              !round.getData('hostageTargeted') ||
+              !target.kill()
+            ) {
+              return;
+            }
+            round.disableBody(true, true);
+            this.showHostageDeathFeedback(target, target.x, target.y);
+            this.updateObjectiveText();
+          },
+        );
+      }
       this.physics.add.overlap(
         hostage,
         this.bombs,
@@ -1331,8 +1546,28 @@ export class GameScene extends Phaser.Scene {
       return false;
     }
 
+    const fullLoadBonus = this.fullLoadBonusReady
+      ? calculateFullLoadBonus(
+        this.helicopter.passengerCount,
+        this.helicopter.passengerCapacity,
+        RESCUE_BASE.fullLoadBonus,
+      )
+      : 0;
     if (!this.helicopter.unloadPassenger()) {
       throw new Error('Passenger manifest did not match aboard hostages.');
+    }
+
+    if (this.fullLoadBonusReady) {
+      if (fullLoadBonus > 0) {
+        this.gameState.awardScore(fullLoadBonus);
+        this.showScoreAward(
+          this.helicopter.x,
+          this.helicopter.y - 65,
+          fullLoadBonus,
+          'FULL LOAD',
+        );
+      }
+      this.fullLoadBonusReady = false;
     }
 
     this.nextPassengerUnloadAt = time + HOSTAGE.unloadIntervalMs;
@@ -1346,6 +1581,7 @@ export class GameScene extends Phaser.Scene {
         HostageState.RunningOut,
         HostageState.Waiting,
         HostageState.RunningToHelicopter,
+        HostageState.TakingCover,
       ].includes(hostage.currentState),
     ).length;
     const disembarking = this.hostages.some(
@@ -1368,7 +1604,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (passengers === this.helicopter.passengerCapacity) {
-      this.targetText.setText('HELICOPTER FULL — RETURN TO BASE');
+      this.targetText.setText(
+        `HELICOPTER FULL — RETURN TO BASE FOR +${RESCUE_BASE.fullLoadBonus}`,
+      );
       this.targetText.setColor('#8fe388');
       return;
     }
@@ -1385,7 +1623,7 @@ export class GameScene extends Phaser.Scene {
 
     if (passengers > 0) {
       this.targetText.setText(
-        `BOARDING: ${passengers} ABOARD   ${hostagesAtCamp} WAITING`,
+        `BOARDING: ${passengers} ABOARD   ${hostagesAtCamp} WAITING   FULL LOAD +${RESCUE_BASE.fullLoadBonus}`,
       );
       this.targetText.setColor('#8fe388');
       return;

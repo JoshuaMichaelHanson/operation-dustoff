@@ -247,6 +247,71 @@ without adding test-only behavior to the shipped game.
 
 Do not implement until MVP is complete.
 
+## Next Development Phases (priority order)
+
+Work through these phases in order, delivering and playtesting one vertical slice at a
+time. Reassess the remaining backlog after Phase 3. The sections below retain detailed
+requirements; this roadmap determines what to work on next.
+
+### Phase 1 - Make Rescues More Tense and Rewarding
+
+- [x] On Highland Pass and Black Ridge, let enemies threaten released hostages with
+      clear targeting warnings and a fair chance to intervene; keep Green Valley's
+      current behavior
+- [x] Let threatened POWs dive for cover or pause their run, then resume boarding
+      when the danger passes
+- [x] Award the existing full-load rescue bonus and show it at unloading, making
+      another pickup a visible risk/reward choice
+- [x] Add compact battlefield intel: direction and distance cues for the nearest
+      active camp, stranded hostages, and the rescue base, plus incoming-threat warnings
+- [x] Explain crash-surviving passengers with a brief regrouping delay and on-screen cue
+- [~] Playtest complete rescue trips on keyboard and touch; tune threat frequency,
+      warning time, cover behavior, and bonus value
+
+Keyboard browser route scored a rescue; touch browser route opened a camp and boarded
+a POW but lost the helicopter on return. Complete touch-trip and full-load manual
+acceptance remain before closing Phase 1.
+
+Acceptance: Opening a camp on a harder mission creates a readable rescue urgency.
+The player can protect or promptly collect exposed hostages, choose whether to fill
+the helicopter or return early, and find the next objective without searching blindly.
+
+### Phase 2 - Add Air Defenses in a Feature-Driven Mission
+
+- [ ] Add a destructible AA gun with a visible aiming or burst warning and a clear
+      safe approach or bomb counterplay
+- [ ] Author the next mission around AA placement and rescue routes rather than
+      increasing enemy counts alone
+- [ ] After AA is accepted, add a SAM launcher with an avoidable projectile and a
+      readable lock warning as a separate vertical slice
+- [ ] Validate each defense with focused logic tests, one gameplay route, and manual
+      keyboard and touch playtesting
+
+Acceptance: The new defenses make the player plan altitude, approach, and attack
+timing while preserving fair landing and rescue opportunities. Add the SAM to that
+mission or a later one only if playtesting supports the added pressure.
+
+### Phase 3 - Build the Ground Combat Slice
+
+- [ ] Add limited external SF seats, boarding, transport, and deployment
+- [ ] Add one reinforcement truck that unloads a small hostile infantry squad
+- [ ] Add deterministic ground-unit movement, cover, combat, and cleanup, with
+      waypoint or grid BFS/DFS only where terrain requires routing
+- [ ] Give the SF team a useful role defending exposed hostages and loading zones
+- [ ] Introduce and manually accept the new systems in a feature-driven mission
+
+Acceptance: The player can fly an SF team to a threatened camp, deploy it, protect
+hostages from one truck-borne attack, rescue the survivors, and finish the mission.
+
+### After Phase 3 - Reassess
+
+Use playtest feedback to choose among rockets, difficulty settings, gamepad support,
+local high scores, pause controls, an audio configurator, fuel, weather, and a boss
+helicopter. Keep new weapons or systems only when they create a distinct decision
+in the rescue loop.
+
+## Feature Inventory
+
 - [x] Secondary weapon — air-to-air lock-on missile (pulled forward for jet balance)
 - [x] Bombs
 - [ ] Rockets
@@ -263,7 +328,8 @@ Do not implement until MVP is complete.
 - [ ] Boss helicopter
 - [ ] Fuel
 - [ ] Weather effects
-- [ ] POW panic / dive-for-cover behavior
+- [x] POW panic / dive-for-cover behavior
+- [ ] Pause and resume from keyboard and touch controls
 
 ## Post-MVP - Mobile Controls
 
@@ -347,12 +413,12 @@ blocks direct fire, and an inaccurate bomb can miss or endanger released hostage
 
 ## Post-MVP - Hard Difficulty Hostage Threat
 
-- [ ] Allow enemies to deliberately target exposed hostages on harder levels or difficulty settings
-- [ ] Keep captive hostages protected and untargetable while their prison camp remains closed
-- [ ] Make hostages vulnerable while running out, waiting, and boarding the helicopter
-- [ ] Keep boarded hostages protected by the helicopter rather than targeting passengers individually
-- [ ] Add readable warning, defense, injury, and death feedback for attacks on hostages
-- [ ] Balance the rule so opening a camp is a tactical choice best made when rescue is possible
+- [x] Allow enemies to deliberately target exposed hostages on harder levels or difficulty settings
+- [x] Keep captive hostages protected and untargetable while their prison camp remains closed
+- [x] Make hostages vulnerable while running out, waiting, and boarding the helicopter
+- [x] Keep boarded hostages protected by the helicopter rather than targeting passengers individually
+- [~] Add readable warning, defense, injury, and death feedback for attacks on hostages
+- [~] Balance the rule so opening a camp is a tactical choice best made when rescue is possible
 
 ## Post-MVP - Harder Terrain and SF Ground Combat
 
@@ -392,9 +458,9 @@ silhouettes. Day and night are deliberate level themes rather than a real-time c
 
 ## Post-MVP - Device Compatibility Checks
 
-- [~] Contain the complete 16:9 canvas inside older 4:3 iPad landscape viewports
+- [x] Contain the complete 16:9 canvas inside older 4:3 iPad landscape viewports
 - [x] Add an automated 1024x768 layout check that keeps the Cannon button fully visible
-- [ ] Confirm the containment fix on the reported physical iPad
+- [x] Confirm playable landscape controls and canvas containment on a physical tablet
 - [ ] Complete the full touch rescue loop on a larger tablet such as an iPad
 
 ---
