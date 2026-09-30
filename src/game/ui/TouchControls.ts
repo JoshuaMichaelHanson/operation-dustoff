@@ -17,6 +17,8 @@ export class TouchControls {
   private readonly cannonButton: Phaser.GameObjects.Arc;
   private readonly missileButton: Phaser.GameObjects.Arc;
   private readonly missileText: Phaser.GameObjects.Text;
+  private readonly bombButton: Phaser.GameObjects.Arc;
+  private readonly bombText: Phaser.GameObjects.Text;
   private stickPointer: Phaser.Input.Pointer | null = null;
   private readonly cannonPointers = new Set<Phaser.Input.Pointer>();
 
@@ -24,7 +26,7 @@ export class TouchControls {
     private readonly scene: Phaser.Scene,
     private readonly inputState: TouchInputState,
   ) {
-    scene.input.addPointer(2);
+    scene.input.addPointer(3);
 
     const stickBase = scene.add
       .circle(STICK_X, STICK_Y, STICK_RADIUS, 0x11150f, 0.46)
@@ -71,6 +73,22 @@ export class TouchControls {
       .zone(GAME_WIDTH - 285, GAME_HEIGHT - 105, 120, 120)
       .setInteractive();
 
+    this.bombButton = scene.add
+      .circle(GAME_WIDTH - 445, GAME_HEIGHT - 105, 50, 0x4a3b25, 0.72)
+      .setStrokeStyle(3, 0xc7b96a, 0.86);
+    this.bombText = scene.add
+      .text(GAME_WIDTH - 445, GAME_HEIGHT - 105, 'BOMB\nREADY', {
+        align: 'center',
+        color: '#f3d45a',
+        fontFamily: 'Courier New',
+        fontSize: '15px',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+    const bombZone = scene.add
+      .zone(GAME_WIDTH - 445, GAME_HEIGHT - 105, 116, 116)
+      .setInteractive();
+
     this.objects.push(
       stickBase,
       stickCrossHorizontal,
@@ -83,6 +101,9 @@ export class TouchControls {
       this.missileButton,
       this.missileText,
       missileZone,
+      this.bombButton,
+      this.bombText,
+      bombZone,
     );
     for (const object of this.objects) {
       const displayObject = object as Phaser.GameObjects.GameObject & {
@@ -100,6 +121,7 @@ export class TouchControls {
     cannonZone.on('pointerup', this.handlePointerUp);
     cannonZone.on('pointerupoutside', this.handlePointerUp);
     missileZone.on('pointerdown', this.handleMissileDown);
+    bombZone.on('pointerdown', this.handleBombDown);
     scene.input.on('pointermove', this.handlePointerMove);
     scene.input.on('pointerup', this.handlePointerUp);
     scene.input.on('gameout', this.reset);
@@ -138,6 +160,19 @@ export class TouchControls {
     this.missileText.setColor('#8fe388').setText('MISSILE\nLOCK');
   }
 
+  setBombStatus(isReady: boolean): void {
+    if (isReady) {
+      this.bombButton.setFillStyle(0x4a3b25, 0.72);
+      this.bombButton.setStrokeStyle(3, 0xf3d45a, 0.9);
+      this.bombText.setColor('#f3d45a').setText('BOMB\nREADY');
+      return;
+    }
+
+    this.bombButton.setFillStyle(0x302d25, 0.64);
+    this.bombButton.setStrokeStyle(3, 0x766d4c, 0.72);
+    this.bombText.setColor('#91886d').setText('BOMB\nRELOAD');
+  }
+
   destroy(): void {
     this.reset();
     this.scene.input.off('pointermove', this.handlePointerMove);
@@ -166,6 +201,16 @@ export class TouchControls {
     this.inputState.queueMissile();
     this.scene.tweens.add({
       targets: this.missileButton,
+      scale: 0.88,
+      duration: 70,
+      yoyo: true,
+    });
+  };
+
+  private readonly handleBombDown = (): void => {
+    this.inputState.queueBomb();
+    this.scene.tweens.add({
+      targets: this.bombButton,
       scale: 0.88,
       duration: 70,
       yoyo: true,

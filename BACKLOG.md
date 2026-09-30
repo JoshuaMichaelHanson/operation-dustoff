@@ -248,12 +248,13 @@ without adding test-only behavior to the shipped game.
 Do not implement until MVP is complete.
 
 - [x] Secondary weapon — air-to-air lock-on missile (pulled forward for jet balance)
-- [ ] Bombs
+- [x] Bombs
 - [ ] Rockets
 - [ ] AA guns
 - [ ] SAM launchers
-- [ ] Night mission
-- [ ] Multiple levels
+- [x] Night mission
+- [x] Multiple levels
+- [ ] Additional feature-driven levels
 - [ ] Difficulty settings
 - [ ] Gamepad support
 - [x] Mobile controls
@@ -294,6 +295,56 @@ The player can preview available sounds, choose a variant for each supported gam
 event, and hear those choices during gameplay. Selections survive a browser restart,
 and newly unlocked variants appear without changing the gameplay rules.
 
+## Post-MVP - Multiple Levels
+
+- [x] Define three authored missions through compact level data
+- [x] Let keyboard and touch players select a mission from the title screen
+- [x] Advance to the next mission after victory while carrying score and remaining helicopters
+- [x] Retry the current mission after failure
+- [x] Increase route length, rescue target, tank count, and jet pressure by mission
+- [x] Give each mission a clear name, difficulty label, HUD identity, and completion screen
+- [x] Manually complete or meaningfully playtest all three missions
+
+### Acceptance
+
+The player can select any authored mission for testing, or begin with Green Valley and
+advance through Highland Pass to Black Ridge. Each mission is visibly distinct and more
+demanding than the previous one, while preserving the complete rescue loop.
+
+## Post-MVP - Future Feature-Driven Levels
+
+- [ ] Add a new authored mission when a new gameplay feature needs a complete vertical slice
+- [ ] Give each new mission a focused gameplay identity beyond palette and terrain changes
+- [ ] Introduce new mechanics gradually so each mission teaches and tests its added feature
+- [ ] Preserve selection, campaign progression, retry behavior, and carried run state
+- [ ] Add pure tests and a focused gameplay route for each mission-specific rule
+- [ ] Manually accept each new mission before marking its feature slice complete
+
+Candidate feature missions may introduce rockets, AA guns, SAM launchers, difficulty
+rules, or SF ground combat. Keep each addition in the existing `LevelConfig`-driven
+structure and avoid creating levels that only increase content volume.
+
+### Acceptance
+
+Each additional mission introduces and validates at least one focused gameplay feature,
+remains compatible with the existing campaign flow, and keeps earlier missions playable.
+
+## Post-MVP - Bombs
+
+- [x] Add a gravity-driven air-to-ground bomb with inherited helicopter momentum
+- [x] Add keyboard `Z` and touch Bomb controls with an independent reload indicator
+- [x] Detonate bombs against ground, base surfaces, and solid terrain
+- [x] Give the blast enough damage for one accurate tank hit or two accurate camp hits
+- [x] Preserve friendly-fire risk for exposed hostages inside the blast
+- [x] Cover launch physics, blast bounds, touch input, and a Level 2 tank-drop route
+- [x] Manually accept bomb timing, aiming, blast radius, and touch-button placement
+
+### Acceptance
+
+On Highland Pass, the player can fly over the first solid ridge and destroy the armored
+tank behind it with an accurate bomb drop. The cannon remains unchanged, terrain still
+blocks direct fire, and an inaccurate bomb can miss or endanger released hostages.
+
 ## Post-MVP - Hard Difficulty Hostage Threat
 
 - [ ] Allow enemies to deliberately target exposed hostages on harder levels or difficulty settings
@@ -305,8 +356,9 @@ and newly unlocked variants appear without changing the gameplay rules.
 
 ## Post-MVP - Harder Terrain and SF Ground Combat
 
-- [ ] Make mountains and hills solid flight obstacles on harder levels
-- [ ] Give terrain collision shapes clear visual silhouettes and fair approach space
+- [~] Make mountains and hills solid flight obstacles on harder levels
+- [~] Give terrain collision shapes clear visual silhouettes and fair approach space
+- [~] Keep hostage rally points and boarding routes from crossing solid terrain
 - [ ] Add friendly Special Forces soldiers with limited external Little Bird seating
 - [ ] Let SF soldiers deploy or provide covering fire around exposed hostages and loading zones
 - [ ] Add enemy reinforcement trucks that arrive at varied locations and unload hostile soldiers
@@ -325,12 +377,12 @@ up without leaks or abandoned state.
 
 ## Post-MVP - Level Environment Variety
 
-- [ ] Give each additional level a distinct terrain silhouette and color palette
-- [ ] Vary distant mountains, nearby forests or hills, and cloud density by level
-- [ ] Add authored day, dusk, and night environment themes
-- [ ] Add readable base, landing-pad, projectile, and unit lighting for night levels
-- [ ] Keep gameplay silhouettes and collision boundaries readable in every theme
-- [ ] Configure environment choices as level data rather than duplicating scene logic
+- [x] Give each additional level a distinct terrain silhouette and color palette
+- [x] Vary distant mountains, nearby forests or hills, and cloud density by level
+- [x] Add authored day, dusk, and night environment themes
+- [x] Add readable base, landing-pad, projectile, and unit lighting for night levels
+- [x] Keep gameplay silhouettes and collision boundaries readable in every theme
+- [x] Configure environment choices as level data rather than duplicating scene logic
 
 ### Acceptance
 
@@ -340,7 +392,10 @@ silhouettes. Day and night are deliberate level themes rather than a real-time c
 
 ## Post-MVP - Device Compatibility Checks
 
-- [ ] Low priority: test touch layout and the complete rescue loop on a larger tablet such as an iPad
+- [~] Contain the complete 16:9 canvas inside older 4:3 iPad landscape viewports
+- [x] Add an automated 1024x768 layout check that keeps the Cannon button fully visible
+- [ ] Confirm the containment fix on the reported physical iPad
+- [ ] Complete the full touch rescue loop on a larger tablet such as an iPad
 
 ---
 

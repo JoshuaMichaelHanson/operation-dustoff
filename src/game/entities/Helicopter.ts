@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { HELICOPTER, MISSILE } from '../constants';
+import { BOMB, HELICOPTER, MISSILE } from '../constants';
 import type { PlayerInput } from '../input/PlayerInput';
 import { Health } from '../logic/health';
 import { getDamageSmokeProfile } from '../logic/damageSmoke';
@@ -25,10 +25,17 @@ export interface MissileLaunch {
   direction: -1 | 1;
 }
 
+export interface BombDrop {
+  x: number;
+  y: number;
+  helicopterVelocityX: number;
+}
+
 export class Helicopter extends Phaser.Physics.Arcade.Sprite {
   private facing: -1 | 1 = 1;
   private lastCannonShotAt = Number.NEGATIVE_INFINITY;
   private lastMissileShotAt = Number.NEGATIVE_INFINITY;
+  private lastBombDropAt = Number.NEGATIVE_INFINITY;
   private nextSmokeAt = 0;
   private landed = false;
   private readonly passengers = new PassengerManifest(
@@ -100,6 +107,25 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
       x: this.x + this.facing * 52,
       y: this.y - 4,
       direction: this.facing,
+    };
+  }
+
+  isBombReady(time: number): boolean {
+    return time - this.lastBombDropAt >= BOMB.cooldownMs;
+  }
+
+  tryDropBomb(time: number): BombDrop | null {
+    const dropPressed = this.controls.consumeBombPress();
+    if (!this.active || !dropPressed || !this.isBombReady(time)) {
+      return null;
+    }
+
+    this.lastBombDropAt = time;
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    return {
+      x: this.x,
+      y: this.y + 29,
+      helicopterVelocityX: body.velocity.x,
     };
   }
 

@@ -12,12 +12,16 @@ export interface HudState {
   health: number;
   maximumHealth: number;
   lives: number;
+  levelNumber: number;
+  levelCount: number;
   isLanded: boolean;
-  tankDestroyed: boolean;
+  destroyedTanks: number;
+  totalTanks: number;
   openCamps: number;
   totalCamps: number;
   missileLocked: boolean;
   missileReady: boolean;
+  bombReady: boolean;
 }
 
 export function formatHudScore(score: number): string {
@@ -53,8 +57,8 @@ export class Hud {
         24,
         54,
         isTouchControlEnabled()
-          ? 'LEFT STICK: FLY   HOLD CANNON   TAP MISSILE'
-          : 'WASD / ARROWS: FLY   SPACE: CANNON   X: MISSILE',
+          ? 'LEFT STICK: FLY   HOLD CANNON   TAP MISSILE / BOMB'
+          : 'WASD / ARROWS: FLY   SPACE: CANNON   X: MISSILE   Z: BOMB',
         {
         color: '#91a087',
         fontFamily: 'Courier New',
@@ -90,14 +94,15 @@ export class Hud {
     this.livesText.setText(`CHOPPERS ${state.lives}`);
 
     const flightState = state.isLanded ? 'LANDED' : 'AIRBORNE';
-    const tankState = state.tankDestroyed ? 'DESTROYED' : 'ACTIVE';
+    const tankState = `${state.destroyedTanks}/${state.totalTanks}`;
     const missileState = state.missileLocked
       ? state.missileReady
         ? '   MISSILE LOCK'
         : '   MISSILE RELOAD'
       : '';
+    const bombState = state.bombReady ? '   BOMB READY' : '   BOMB RELOAD';
     this.statusText.setText(
-      `${flightState}   TANK ${tankState}   CAMPS ${state.openCamps}/${state.totalCamps}${missileState}`,
+      `L${state.levelNumber}/${state.levelCount}   ${flightState}   TANKS ${tankState}   CAMPS ${state.openCamps}/${state.totalCamps}${missileState}${bombState}`,
     );
   }
 

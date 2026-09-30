@@ -4,5 +4,9 @@ coverage/
 playwright-report/
 test-results/
 .idea/
+.agent-memory/memory.db
+.agent-memory/memory.db-shm
+.agent-memory/memory.db-wal
+.agent-memory/*.tmp
 *.log
 .DS_Store

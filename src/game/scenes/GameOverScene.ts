@@ -2,17 +2,20 @@ import Phaser from 'phaser';
 
 import { GAME_HEIGHT, GAME_WIDTH } from '../constants';
 import { isTouchControlEnabled } from '../input/touchInput';
+import { getLevelConfig, getLevelIndex } from '../levels/levelConfig';
 
 interface GameOverData {
   rescued?: number;
   score?: number;
   reason?: string;
+  levelIndex?: number;
 }
 
 export class GameOverScene extends Phaser.Scene {
   private rescued = 0;
   private score = 0;
   private reason = 'ALL HELICOPTERS LOST';
+  private levelIndex = 0;
 
   constructor() {
     super('GameOverScene');
@@ -22,6 +25,7 @@ export class GameOverScene extends Phaser.Scene {
     this.rescued = data.rescued ?? 0;
     this.score = data.score ?? 0;
     this.reason = data.reason ?? 'ALL HELICOPTERS LOST';
+    this.levelIndex = getLevelIndex(data.levelIndex ?? 0);
   }
 
   create(): void {
@@ -35,6 +39,19 @@ export class GameOverScene extends Phaser.Scene {
         fontSize: '52px',
         fontStyle: 'bold',
       })
+      .setOrigin(0.5);
+
+    this.add
+      .text(
+        GAME_WIDTH / 2,
+        GAME_HEIGHT * 0.27,
+        `MISSION ${this.levelIndex + 1}: ${getLevelConfig(this.levelIndex).name}`,
+        {
+          color: '#91a087',
+          fontFamily: 'Courier New',
+          fontSize: '18px',
+        },
+      )
       .setOrigin(0.5);
 
     this.add
@@ -86,7 +103,7 @@ export class GameOverScene extends Phaser.Scene {
     });
 
     const restart = (): void => {
-      this.scene.start('GameScene');
+      this.scene.start('GameScene', { levelIndex: this.levelIndex });
     };
     restartText.once('pointerdown', restart);
     this.input.keyboard?.once('keydown-ENTER', restart);

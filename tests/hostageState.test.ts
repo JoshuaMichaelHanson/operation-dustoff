@@ -106,6 +106,7 @@ describe('hostage state transitions', () => {
 describe('hostage boarding rules', () => {
   const safeBoardingSituation = {
     helicopterLanded: true,
+    hasClearGroundPath: true,
     distanceToHelicopter: 80,
     boardingRadius: 190,
     passengerCount: 2,
@@ -130,6 +131,15 @@ describe('hostage boarding rules', () => {
       canBeginBoarding({
         ...safeBoardingSituation,
         distanceToHelicopter: safeBoardingSituation.boardingRadius + 1,
+      }),
+    ).toBe(false);
+  });
+
+  it('does not approach a landed helicopter across solid terrain', () => {
+    expect(
+      canBeginBoarding({
+        ...safeBoardingSituation,
+        hasClearGroundPath: false,
       }),
     ).toBe(false);
   });

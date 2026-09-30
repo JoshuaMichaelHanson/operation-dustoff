@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { JET, WORLD_WIDTH } from '../constants';
+import { JET } from '../constants';
 import {
   getJetAttackVelocity,
   getJetSpawnX,
@@ -22,10 +22,11 @@ export class Jet extends Phaser.Physics.Arcade.Sprite {
     scene: Phaser.Scene,
     private readonly direction: JetDirection,
     altitude: number,
+    private readonly worldWidth: number,
   ) {
     super(
       scene,
-      getJetSpawnX(direction, WORLD_WIDTH, JET.spawnMargin),
+      getJetSpawnX(direction, worldWidth, JET.spawnMargin),
       altitude,
       'jet',
     );
@@ -55,7 +56,7 @@ export class Jet extends Phaser.Physics.Arcade.Sprite {
       isJetPastWorldBounds(
         this.x,
         this.direction,
-        WORLD_WIDTH,
+        this.worldWidth,
         JET.spawnMargin,
       )
     ) {

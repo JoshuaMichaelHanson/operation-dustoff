@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 
 import { GAME_HEIGHT, GAME_TITLE, GAME_WIDTH } from '../constants';
 import { isTouchControlEnabled } from '../input/touchInput';
+import { LEVELS } from '../levels/levelConfig';
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -11,6 +12,7 @@ export class TitleScene extends Phaser.Scene {
   create(): void {
     const centerX = GAME_WIDTH / 2;
     const touchEnabled = isTouchControlEnabled();
+    let selectedLevelIndex = 0;
 
     this.cameras.main.setBackgroundColor('#101810');
     this.createBackdrop();
@@ -67,8 +69,8 @@ export class TitleScene extends Phaser.Scene {
         centerX,
         501,
         touchEnabled
-          ? 'LEFT STICK  FLIGHT     HOLD CANNON     TAP MISSILE'
-          : 'WASD / ARROWS  FLIGHT     SPACE  CANNON     X  LOCK-ON MISSILE',
+          ? 'LEFT STICK  FLIGHT   HOLD CANNON   TAP MISSILE / BOMB'
+          : 'WASD / ARROWS  FLIGHT   SPACE  CANNON   X  MISSILE   Z  BOMB',
         {
           color: '#91a087',
           fontFamily: 'Courier New',
@@ -78,11 +80,58 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(5);
 
-    this.add
-      .text(centerX, 539, 'MISSION: RECOVER 20 HOSTAGES FROM ENEMY TERRITORY', {
+    const missionText = this.add
+      .text(centerX, 539, '', {
         color: '#c7b96a',
         fontFamily: 'Courier New',
-        fontSize: '17px',
+        fontSize: '19px',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+      .setDepth(5);
+
+    const selectLevel = (change: number): void => {
+      selectedLevelIndex =
+        (selectedLevelIndex + change + LEVELS.length) % LEVELS.length;
+      const level = LEVELS[selectedLevelIndex]!;
+      missionText.setText(
+        `MISSION ${selectedLevelIndex + 1}/${LEVELS.length}: ${level.name}  •  ${level.difficultyLabel}  •  RESCUE ${level.rescueTarget}`,
+      );
+    };
+
+    const previousLevel = this.add
+      .text(centerX - 465, 539, '◀', {
+        color: '#f3d45a',
+        fontFamily: 'Courier New',
+        fontSize: '32px',
+        padding: { x: 12, y: 8 },
+      })
+      .setOrigin(0.5)
+      .setDepth(5)
+      .setInteractive({ useHandCursor: true });
+    const nextLevel = this.add
+      .text(centerX + 465, 539, '▶', {
+        color: '#f3d45a',
+        fontFamily: 'Courier New',
+        fontSize: '32px',
+        padding: { x: 12, y: 8 },
+      })
+      .setOrigin(0.5)
+      .setDepth(5)
+      .setInteractive({ useHandCursor: true });
+    previousLevel.on('pointerdown', () => selectLevel(-1));
+    nextLevel.on('pointerdown', () => selectLevel(1));
+    this.input.keyboard?.on('keydown-LEFT', () => selectLevel(-1));
+    this.input.keyboard?.on('keydown-RIGHT', () => selectLevel(1));
+    selectLevel(0);
+
+    this.add
+      .text(centerX, 575, touchEnabled
+        ? 'TAP ARROWS TO SELECT MISSION'
+        : 'LEFT / RIGHT: SELECT MISSION', {
+        color: '#91a087',
+        fontFamily: 'Courier New',
+        fontSize: '15px',
       })
       .setOrigin(0.5)
       .setDepth(5);
@@ -90,7 +139,7 @@ export class TitleScene extends Phaser.Scene {
     const startText = this.add
       .text(
         centerX,
-        618,
+        640,
         touchEnabled
           ? '▶  TAP TO DEPLOY  ◀'
           : '▶  PRESS ENTER TO DEPLOY  ◀',
@@ -116,7 +165,7 @@ export class TitleScene extends Phaser.Scene {
     });
 
     const deploy = (): void => {
-      this.scene.start('GameScene');
+      this.scene.start('GameScene', { levelIndex: selectedLevelIndex });
     };
     startText.once('pointerdown', deploy);
     this.input.keyboard?.once('keydown-ENTER', deploy);

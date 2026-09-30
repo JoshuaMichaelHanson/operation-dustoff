@@ -8,6 +8,10 @@ import {
   HostageUpdateEvent,
   isHostageTransitionAllowed,
 } from '../logic/hostageState';
+import {
+  isGroundPathClear,
+  type HorizontalObstacle,
+} from '../logic/hostageRally';
 import type { Helicopter } from './Helicopter';
 
 export class Hostage extends Phaser.GameObjects.Sprite {
@@ -20,6 +24,7 @@ export class Hostage extends Phaser.GameObjects.Sprite {
     x: number,
     private readonly rallyX: number,
     releaseDelayMs: number,
+    private readonly groundObstacles: readonly HorizontalObstacle[] = [],
   ) {
     super(scene, x, GROUND_Y, 'hostage');
 
@@ -144,6 +149,12 @@ export class Hostage extends Phaser.GameObjects.Sprite {
   private canApproach(helicopter: Helicopter): boolean {
     return canBeginBoarding({
       helicopterLanded: helicopter.isLanded,
+      hasClearGroundPath: isGroundPathClear(
+        this.x,
+        helicopter.x,
+        this.groundObstacles,
+        8,
+      ),
       distanceToHelicopter: Math.abs(this.x - helicopter.x),
       boardingRadius: HOSTAGE.boardingRadius,
       passengerCount: helicopter.passengerCount,

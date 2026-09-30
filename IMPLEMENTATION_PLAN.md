@@ -268,7 +268,8 @@ Implement mobile play as a thin input and presentation layer over the existing g
 3. Add right-side hold Cannon and press Missile controls with multitouch support.
 4. Make scene start and restart prompts tappable.
 5. Preserve the current helicopter physics and weapon cooldown rules.
-6. Fit the game to the dynamic mobile viewport and request landscape orientation
+6. Fit one complete 16:9 game frame inside the dynamic viewport and safe-area content
+   rectangle, using letterboxing on 4:3 tablets, and request landscape orientation
    through a portrait overlay rather than browser permission APIs.
 7. Validate pure input rules automatically, then perform final feel testing on a
    physical phone.
@@ -292,3 +293,37 @@ end-to-end suite:
 
 Do not expose scene internals, global test state, shortcuts, or test-only gameplay behavior
 in the production bundle. The driver should exercise the same controls and rules as a player.
+
+# Post-MVP Multiple-Level Slice
+
+Build authored progression as one extension of the existing rescue loop:
+
+1. Move mission-specific positions, targets, jet timing, palettes, and obstacles into
+   three compact level definitions.
+2. Keep one `GameScene`; select a level by index rather than duplicating scene logic.
+3. Add title-screen mission selection for focused keyboard and touch testing.
+4. Carry score and surviving helicopters into the next mission after victory.
+5. Increase difficulty through longer routes, more tanks, more frequent jets, a larger
+   final rescue target, and solid terrain in the flight path.
+6. Use stepped visible rectangles for ridges so Arcade Physics collision exactly matches
+   their silhouette, including projectile blocking.
+7. Generate hostage rally points on a ground-reachable side of each ridge, collide
+   hostages with ridge bodies, and reject boarding approaches across blocked paths.
+8. Author day, dusk, and night palettes with readable HUD, objectives, landing lights,
+   units, projectiles, and obstacle edges.
+9. Stop for gameplay acceptance before adding SF passengers, trucks, infantry combat,
+   or BFS/DFS ground navigation as later vertical slices.
+
+# Post-MVP Bomb Slice
+
+Add the smallest air-to-ground vertical slice needed by Highland Pass:
+
+1. Bind `Z` and a third touch action to an independently cooled bomb drop.
+2. Launch below the helicopter with partial horizontal momentum and Arcade gravity.
+3. Stop the bomb on the ground, rescue-base surface, or authored solid terrain.
+4. Resolve one compact blast against tanks, camps, and exposed hostages.
+5. Make one accurate bomb destroy a tank and two accurate bombs open a camp without
+   changing cannon damage, tank health, helicopter pitch, or ridge geometry.
+6. Add pure launch/blast/input tests and a Playwright Highland Pass drop route.
+7. Stop for manual timing, aiming, effect, and touch-layout acceptance before marking
+   the Post-MVP Bomb checklist complete.

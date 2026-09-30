@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-import { MISSILE, WORLD_HEIGHT, WORLD_WIDTH } from '../constants';
+import { MISSILE, WORLD_HEIGHT } from '../constants';
 import { getHomingMissileVelocity } from '../logic/missileGuidance';
 import type { Jet } from './Jet';
 
@@ -14,6 +14,7 @@ export class HomingMissile extends Phaser.Physics.Arcade.Sprite {
     direction: -1 | 1,
     private readonly target: Jet,
     private readonly launchedAt: number,
+    private readonly worldWidth: number,
   ) {
     super(scene, x, y, 'missile');
 
@@ -36,7 +37,7 @@ export class HomingMissile extends Phaser.Physics.Arcade.Sprite {
     if (
       time - this.launchedAt >= MISSILE.lifetimeMs ||
       this.x < -MISSILE.worldMargin ||
-      this.x > WORLD_WIDTH + MISSILE.worldMargin ||
+      this.x > this.worldWidth + MISSILE.worldMargin ||
       this.y < -MISSILE.worldMargin ||
       this.y > WORLD_HEIGHT + MISSILE.worldMargin
     ) {

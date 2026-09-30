@@ -864,3 +864,139 @@ under the ignored `test-results/gameplay` directory, and any warning, console er
 uncaught page error fails the run. The verified camp screenshot shows `CAMPS 1/3` and four
 released hostages. The suite uses no scene globals, debug shortcuts, or test-only behavior
 in the production bundle; manual play remains the final feel and visual-quality gate.
+
+## 2026-09-29 - Three-Mission Progression Candidate
+
+Decision:
+Build the first multiple-level pass as three authored `LevelConfig` records consumed by
+the existing `GameScene`. Green Valley preserves the accepted original level, Highland
+Pass adds a dusk highland route, and Black Ridge adds a longer veteran night mission.
+
+Reason:
+Level data keeps the project small while allowing each mission to increase route length,
+tank count, jet frequency, terrain pressure, and rescue requirements. Reusing one scene
+avoids a map engine or duplicated gameplay code. Direct title-screen selection makes the
+harder missions practical to test, while normal victory still advances through the
+campaign and carries score plus surviving helicopters.
+
+Important implementation detail:
+Green Valley has one tank, three camps, no solid obstacles, and the existing 20-hostage
+target. Highland Pass has two tanks, three camps, three solid ridges, and a 12-second jet
+interval. Black Ridge has three tanks, four camps, three taller ridges, a 24-hostage
+target, a nine-second jet interval, stars, darker terrain, camp beacons, and landing-pad
+lights. Ridges are five visible Arcade rectangles, so the helicopter and all projectile
+types collide with the exact stepped silhouette. Three Playwright routes pass and retain
+dusk/night screenshots with empty browser console reports; 88 pure tests and the build
+also pass. Multiple Levels, terrain, and environment items remain in progress pending
+manual gameplay acceptance. SF riders, reinforcement trucks, infantry combat, and custom
+BFS/DFS navigation remain later vertical slices rather than part of this candidate.
+
+## 2026-09-29 - Highland Pass Air-to-Ground Bomb Candidate
+
+Decision:
+Add an original-style gravity bomb as the air-to-ground answer to the armored tank behind
+Highland Pass's first ridge. Keep the accepted cannon damage, tank health, helicopter
+pitch, and solid-terrain geometry unchanged.
+
+Reason:
+The ridge makes the Level 2 tank impractical to hit with the forward cannon, but reducing
+the tank or terrain challenge would remove the intended difficulty. A vertically dropped
+weapon creates a distinct positioning challenge and gives the touch/keyboard loadout a
+clear anti-ground role alongside the existing anti-air missile.
+
+Important implementation detail:
+`Z` and the touch Bomb button drop below the helicopter on a 1.2-second cooldown. The
+bomb inherits 55% of horizontal velocity, accelerates downward, and detonates with a
+96-pixel blast against the ground, rescue deck, solid ridges, tanks, camps, or exposed
+hostages. One accurate hit destroys a full-health tank; two open a camp; blast-friendly
+fire can kill released hostages. Phaser physics groups reapply their defaults when an
+existing body is added, so the bombs group must explicitly set `allowGravity: true` and
+`gravityY`; relying only on the Bomb constructor caused drops to hang in midair.
+
+Validation:
+All 94 pure tests pass, including bomb momentum, blast-boundary, captive-release, and
+touch-action cases.
+All five production-build Playwright routes pass with empty console reports. The focused
+Highland Pass screenshot shows 100 points and `TANKS 1/2` after a real held-`Z` drop, and
+the forced-touch screenshot shows distinct Bomb, Missile, and Cannon controls without
+overlap. The Bomb backlog item remains in progress until manual aiming, timing, blast,
+and mobile-button placement are accepted.
+
+Follow-up fix:
+Bomb damage now snapshots the exposed hostages inside the blast before resolving camp
+damage. Opening a camp can therefore spawn its captives after that snapshot without the
+same explosion immediately killing them. Hostages who were already exposed before the
+drop remain valid blast targets.
+
+## 2026-09-29 - Older iPad Canvas Containment Candidate
+
+Problem:
+On an older iPad in landscape, most of the game was playable but the right edge was
+cropped far enough that only a sliver of the Cannon button remained available.
+
+Decision:
+Calculate one contained game size from the usable `main` content rectangle after its
+safe-area padding is applied. Publish that paired width and height to CSS, then refresh
+Phaser immediately, on the next animation frame, and after Safari's viewport settles.
+
+Reason:
+The previous CSS calculated width and height independently from visual-viewport values
+while the parent also applied safe-area padding. On a 4:3 tablet those constraints could
+disagree, allowing Safari to crop or distort the frame. A single minimum scale preserves
+the 16:9 game and intentionally letterboxes unused tablet space.
+
+Important implementation detail:
+Pure layout logic now covers 4:3, height-limited, native-size, and empty viewports. A
+1024x768 forced-touch Playwright check asserts that the whole canvas and calculated
+Cannon edge remain on-screen; its screenshot shows the complete stick, Bomb, Missile,
+and Cannon controls. Physical-iPad confirmation and a complete tablet rescue loop remain
+open before the device-compatibility checklist is complete.
+
+## 2026-09-29 - Hostage Routes Respect Solid Ridges
+
+Problem:
+Hostages used direct horizontal movement while harder-level ridges only collided with the
+helicopter and projectiles. Some alternating rally points were authored inside the wide
+base of a nearby ridge, and hostages could also approach a landed helicopter through a
+ridge.
+
+Decision:
+Generate each camp's seven rally positions against the authored horizontal obstacle
+footprints. Preserve the accepted alternating formation on open terrain, but relocate a
+blocked slot to the nearest distinct position whose complete camp-to-rally path is clear.
+Also collide hostage bodies with every visible ridge step and require a clear ground path
+before entering or continuing the boarding run.
+
+Reason:
+Terrain should apply consistently to all ground movement. Safe rally generation prevents
+the normal release animation from entering terrain, while collision plus the boarding
+path rule handles player-created cases where the helicopter lands on the wrong side.
+This remains a small deterministic rule and does not introduce the later BFS/DFS ground
+navigation system.
+
+Validation:
+Pure tests preserve the original open-terrain formation, cover ridge relocation near a
+world edge, verify every generated camp path is clear, and reject boarding across solid
+terrain. The focused Highland Pass browser route opens Camp 1 with two bombs and reports
+all seven hostages alive with no console errors. Manual acceptance should verify the
+visible rally formation and opposite-side waiting behavior during normal play.
+
+## 2026-09-29 - Bombs, Night Mission, and Three-Mission Progression Accepted
+
+Decision:
+Accept the bomb vertical slice, Black Ridge night presentation, and the existing
+three-mission campaign as complete. Future missions should be added as feature-driven
+vertical slices rather than as cosmetic or content-volume expansions.
+
+Reason:
+The current Green Valley, Highland Pass, and Black Ridge progression already proves
+mission selection, campaign advancement, retry behavior, carried run state, authored
+terrain, day/dusk/night presentation, and increasing combat pressure. Bomb timing,
+aiming, blast behavior, friendly-fire risk, and touch placement are also accepted for
+the current release and no longer need to remain open for the PR or web deployment.
+
+Important implementation detail:
+Additional missions remain Post-MVP work and should introduce one focused mechanic such
+as rockets, AA guns, SAM launchers, difficulty rules, or SF ground combat. Keep them in
+the existing `LevelConfig` structure, preserve earlier missions, and add pure coverage,
+a focused gameplay route, and manual acceptance for each mission-specific feature.

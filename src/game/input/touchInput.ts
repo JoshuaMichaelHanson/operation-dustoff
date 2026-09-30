@@ -16,6 +16,7 @@ export class TouchInputState {
   vertical: DigitalDirection = 0;
   cannonDown = false;
   private missileQueued = false;
+  private bombQueued = false;
 
   setDirection(direction: DigitalStickDirection): void {
     this.horizontal = direction.horizontal;
@@ -32,11 +33,22 @@ export class TouchInputState {
     return queued;
   }
 
+  queueBomb(): void {
+    this.bombQueued = true;
+  }
+
+  consumeBomb(): boolean {
+    const queued = this.bombQueued;
+    this.bombQueued = false;
+    return queued;
+  }
+
   reset(): void {
     this.horizontal = 0;
     this.vertical = 0;
     this.cannonDown = false;
     this.missileQueued = false;
+    this.bombQueued = false;
   }
 }
 

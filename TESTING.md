@@ -128,7 +128,7 @@ detection.
 
 For desktop preview, append `?touch=1` to the game URL to render the touch controls
 without emulating a phone. This override is for layout and pointer smoke testing; final
-acceptance still requires a physical phone in landscape orientation.
+acceptance still requires physical devices in landscape orientation.
 
 Manual mobile checks:
 
@@ -140,6 +140,8 @@ Manual mobile checks:
 6. Launch a locked Missile and confirm the reload/lock label changes.
 7. Land near hostages, board, return, unload, and verify precision remains practical.
 8. Reach victory or game over and restart by touch.
+9. On a 4:3 tablet, confirm the entire game is letterboxed inside the screen and the
+   complete Cannon button remains visible and tappable.
 
 ## Automated Gameplay Smoke Driver
 
@@ -156,7 +158,16 @@ and keyboard-up calls so flight and weapon input persist across real Phaser fram
 Current routes:
 
 1. Take off diagonally and hold the cannon while continuing forward flight.
-2. Fly to Camp 1, brake, descend, destroy the camp, and wait for released hostages.
+2. Select Highland Pass and Black Ridge, fly toward their first solid ridges, and retain
+   a screenshot of each environment and HUD configuration.
+3. Fly to Camp 1, brake, descend, destroy the camp, and wait for released hostages.
+4. Select Highland Pass, cross its first ridge, drop a bomb over the armored tank, and
+   retain a screenshot showing the score and tank objective update.
+5. Force the touch layout and retain a screenshot containing the Bomb action button.
+6. Resize to an older-iPad 1024x768 landscape viewport and assert that the canvas and
+   Cannon button remain fully inside the viewport before retaining a screenshot.
+7. Open the first Highland Pass camp with bombs and retain a checkpoint showing all
+   seven living hostages assigned to terrain-safe rally positions.
 
 Each route retains a checkpoint PNG and `browser-console.json` under
 `test-results/gameplay/`. The console report includes warnings, errors, and uncaught page
@@ -166,6 +177,42 @@ Git because it is regenerated on every run.
 The driver requires a local Chrome installation. It does not add browser binaries or
 automation hooks to the production bundle. Review the screenshots after route changes,
 and continue to use manual playtesting for control feel and visual quality.
+
+## Bombs
+
+Pure tests protect downward launch speed, inherited horizontal momentum, inclusive blast
+edges, out-of-range targets, and one-shot touch press consumption.
+
+Manual bomb checks:
+
+1. Select Highland Pass and fly above the first armored tank behind the ridge.
+2. Drop with `Z`; confirm the bomb falls rather than hanging in place and carries some
+   helicopter momentum.
+3. Confirm one accurate hit destroys the tank, awards 100 points, and updates `TANKS`.
+4. Confirm nearby misses can still damage through the blast while distant misses do not.
+5. Confirm a ridge or the rescue-base deck stops and detonates a bomb.
+6. Hit a prison camp twice and confirm hostages release only after the second hit and
+   survive the camp-opening explosion.
+7. Drop near released hostages and confirm exposed hostages can be killed.
+8. On touch, confirm Bomb is reachable, taps once per press, and reports reload/ready.
+
+## Multiple Levels
+
+Pure tests protect mission order, increasing difficulty rank, rescue supply, objective
+bounds, solid-terrain placement, invalid selection clamping, and final-level progression.
+
+Manual multi-level checks:
+
+1. Select each mission from the title screen with keyboard and touch arrows.
+2. Confirm the rescue target, camp count, tank count, palette, clouds, and HUD identity.
+3. Fly over and around every solid ridge; verify its visible steps match collision.
+4. Fire player and enemy projectiles into ridges and verify they stop.
+5. Open camps next to ridges and verify hostages rally without entering terrain.
+6. Land on the opposite side of a ridge and verify hostages wait rather than crossing it;
+   land on their side and verify boarding still works.
+7. Rescue enough hostages to advance and confirm score and helicopters carry forward.
+8. Lose a mission and confirm redeploy retries that mission rather than another level.
+9. Confirm the final victory screen reports campaign completion.
 
 ---
 
