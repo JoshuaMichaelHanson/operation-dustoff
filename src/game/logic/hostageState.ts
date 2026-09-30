@@ -75,6 +75,7 @@ export function canHostageBeCrushed(
 
 export interface BoardingSituation {
   helicopterLanded: boolean;
+  hasClearGroundPath: boolean;
   distanceToHelicopter: number;
   boardingRadius: number;
   passengerCount: number;
@@ -84,6 +85,7 @@ export interface BoardingSituation {
 export function canBeginBoarding(situation: BoardingSituation): boolean {
   return (
     situation.helicopterLanded &&
+    situation.hasClearGroundPath &&
     situation.distanceToHelicopter <= situation.boardingRadius &&
     situation.passengerCount < situation.passengerCapacity
   );

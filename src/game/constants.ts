@@ -67,6 +67,18 @@ export const MISSILE = {
   damage: 3,
 } as const;
 
+export const BOMB = {
+  cooldownMs: 1200,
+  gravity: 520,
+  initialDownwardSpeed: 70,
+  horizontalCarry: 0.55,
+  blastRadius: 96,
+  tankDamage: 4,
+  campDamage: 3,
+  lifetimeMs: 5000,
+  worldMargin: 80,
+} as const;
+
 export const PLAYER = {
   startingLives: 3,
   respawnX: 280,

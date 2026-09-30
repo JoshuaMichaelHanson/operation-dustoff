@@ -60,6 +60,18 @@ describe('touch input state', () => {
     expect(input.consumeMissile()).toBe(true);
     expect(input.consumeMissile()).toBe(false);
   });
+
+  it('consumes a bomb press exactly once and clears it on reset', () => {
+    const input = new TouchInputState();
+    input.queueBomb();
+
+    expect(input.consumeBomb()).toBe(true);
+    expect(input.consumeBomb()).toBe(false);
+
+    input.queueBomb();
+    input.reset();
+    expect(input.consumeBomb()).toBe(false);
+  });
 });
 
 describe('touch capability detection', () => {

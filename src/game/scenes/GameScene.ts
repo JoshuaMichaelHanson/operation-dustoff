@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import {
+  BOMB,
   CAMERA,
   GAME_HEIGHT,
   GAME_WIDTH,
@@ -14,9 +15,9 @@ import {
   RESCUE_BASE,
   TANK,
   WORLD_HEIGHT,
-  WORLD_WIDTH,
 } from '../constants';
 import { AudioManager } from '../audio/AudioManager';
+import { Bomb } from '../entities/Bomb';
 import { Helicopter } from '../entities/Helicopter';
 import { HomingMissile } from '../entities/HomingMissile';
 import { Hostage } from '../entities/Hostage';
@@ -32,23 +33,34 @@ import {
 } from '../input/touchInput';
 import { getCannonVelocity } from '../logic/cannonAim';
 import {
+  getTargetsWithinBombBlast,
+  isWithinBombBlast,
+} from '../logic/bombBehavior';
+import {
   canHostageBeCrushed,
   HostageState,
   HostageUpdateEvent,
 } from '../logic/hostageState';
+import { getHostageRallyPositions } from '../logic/hostageRally';
 import {
   hasPassengerUnloadSpacing,
   shouldEndFailedRescue,
   shouldOpenRescueDoor,
 } from '../logic/rescueRules';
 import { canLockMissileTarget } from '../logic/missileGuidance';
+import {
+  getLevelConfig,
+  getLevelIndex,
+  LEVELS,
+  type LevelConfig,
+} from '../levels/levelConfig';
 import { GameState } from '../state/GameState';
 import { Hud } from '../ui/Hud';
 import { TouchControls } from '../ui/TouchControls';
 
 export class GameScene extends Phaser.Scene {
   private helicopter!: Helicopter;
-  private tank!: Tank;
+  private tanks: Tank[] = [];
   private prisonCamps: PrisonCamp[] = [];
   private rescueBase!: RescueBase;
   private hostages: Hostage[] = [];
@@ -56,6 +68,8 @@ export class GameScene extends Phaser.Scene {
   private enemyRounds!: Phaser.Physics.Arcade.Group;
   private jets!: Phaser.Physics.Arcade.Group;
   private missiles!: Phaser.Physics.Arcade.Group;
+  private bombs!: Phaser.Physics.Arcade.Group;
+  private flightObstacleBodies: Phaser.GameObjects.Rectangle[] = [];
   private hud!: Hud;
   private targetText!: Phaser.GameObjects.Text;
   private gameState!: GameState;
@@ -63,38 +77,61 @@ export class GameScene extends Phaser.Scene {
   private playerInput!: PlayerInput;
   private touchInput!: TouchInputState;
   private touchControls: TouchControls | null = null;
-  private targetDestroyed = false;
+  private destroyedTankCount = 0;
   private nextPassengerUnloadAt = 0;
   private playerDestroyed = false;
   private nextJetSpawnAt = 0;
   private jetSpawnCount = 0;
+  private levelIndex = 0;
+  private level!: LevelConfig;
+  private initialScore = 0;
+  private initialLives: number | undefined;
 
   constructor() {
     super('GameScene');
   }
 
+  init(data: {
+    levelIndex?: number;
+    score?: number;
+    lives?: number;
+  }): void {
+    this.levelIndex = getLevelIndex(data.levelIndex ?? 0);
+    this.level = getLevelConfig(this.levelIndex);
+    this.initialScore = data.score ?? 0;
+    this.initialLives = data.lives;
+  }
+
   create(): void {
     this.hostages = [];
     this.prisonCamps = [];
-    this.targetDestroyed = false;
+    this.tanks = [];
+    this.flightObstacleBodies = [];
+    this.destroyedTankCount = 0;
     this.nextPassengerUnloadAt = 0;
     this.playerDestroyed = false;
     this.jetSpawnCount = 0;
-    this.gameState = new GameState();
-    this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+    this.gameState = new GameState(this.level.rescueTarget, {
+      score: this.initialScore,
+      lives: this.initialLives,
+    });
+    this.physics.world.setBounds(0, 0, this.level.worldWidth, WORLD_HEIGHT);
     this.createBattlefield();
 
     const ground = this.add.rectangle(
-      WORLD_WIDTH / 2,
+      this.level.worldWidth / 2,
       GROUND_Y + (WORLD_HEIGHT - GROUND_Y) / 2,
-      WORLD_WIDTH,
+      this.level.worldWidth,
       WORLD_HEIGHT - GROUND_Y,
-      0x334a2e,
+      this.level.environment.skyBands[3],
     ).setDepth(-5);
     this.physics.add.existing(ground, true);
     this.createGroundArt();
 
     this.rescueBase = new RescueBase(this);
+    if (this.level.environment.night) {
+      this.createNightMissionLights();
+    }
     this.touchInput = new TouchInputState();
     this.playerInput = new PlayerInput(this, this.touchInput);
     this.helicopter = new Helicopter(
@@ -110,8 +147,10 @@ export class GameScene extends Phaser.Scene {
       this.touchControls = null;
       this.touchInput.reset();
     });
-    this.tank = new Tank(this, 1500, GROUND_Y - 21);
-    this.prisonCamps = PRISON_CAMP.positions.map(
+    this.tanks = this.level.tankPositions.map(
+      (x) => new Tank(this, x, GROUND_Y - 21),
+    );
+    this.prisonCamps = this.level.campPositions.map(
       (x) => new PrisonCamp(this, x, GROUND_Y - 36),
     );
     this.cannonRounds = this.physics.add.group({
@@ -124,32 +163,58 @@ export class GameScene extends Phaser.Scene {
     });
     this.jets = this.physics.add.group({ allowGravity: false });
     this.missiles = this.physics.add.group({ allowGravity: false });
-    this.nextJetSpawnAt = this.time.now + JET.initialSpawnDelayMs;
+    this.bombs = this.physics.add.group({
+      allowGravity: true,
+      gravityY: BOMB.gravity,
+    });
+    this.nextJetSpawnAt =
+      this.time.now + this.level.jetInitialSpawnDelayMs;
 
     this.physics.add.collider(this.helicopter, ground);
+    this.physics.add.collider(ground, this.bombs, (_ground, bombObject) => {
+      this.detonateBomb(bombObject as Bomb);
+    });
     this.physics.add.collider(
       this.helicopter,
       this.rescueBase.landingSurface,
     );
-    this.physics.add.overlap(
-      this.tank,
-      this.cannonRounds,
-      (tankObject, roundObject) => {
-        const target = tankObject as Tank;
-        const round = roundObject as Phaser.Physics.Arcade.Image;
-        const targetX = target.x;
-        const targetY = target.y;
-        round.disableBody(true, true);
-
-        if (target.active && target.takeDamage()) {
-          this.targetDestroyed = true;
-          this.gameState.awardScore(TANK.scoreValue);
-          this.showScoreAward(targetX, targetY - 34, TANK.scoreValue);
-          this.showGroundExplosion(targetX, targetY);
-          this.updateObjectiveText();
-        }
+    this.physics.add.collider(
+      this.rescueBase.landingSurface,
+      this.bombs,
+      (_surface, bombObject) => {
+        this.detonateBomb(bombObject as Bomb);
       },
     );
+    this.createFlightObstacles();
+    for (const tank of this.tanks) {
+      this.physics.add.overlap(
+        tank,
+        this.cannonRounds,
+        (tankObject, roundObject) => {
+          const target = tankObject as Tank;
+          const round = roundObject as Phaser.Physics.Arcade.Image;
+          const targetX = target.x;
+          const targetY = target.y;
+          round.disableBody(true, true);
+
+          if (target.active && target.takeDamage()) {
+            this.destroyedTankCount += 1;
+            this.gameState.awardScore(TANK.scoreValue);
+            this.showScoreAward(targetX, targetY - 34, TANK.scoreValue);
+            this.showGroundExplosion(targetX, targetY);
+            this.updateObjectiveText();
+          }
+        },
+      );
+      this.physics.add.overlap(
+        tank,
+        this.bombs,
+        (_tankObject, bombObject) => {
+          const bomb = bombObject as Bomb;
+          this.detonateBomb(bomb);
+        },
+      );
+    }
     for (const prisonCamp of this.prisonCamps) {
       this.physics.add.overlap(
         prisonCamp,
@@ -166,6 +231,14 @@ export class GameScene extends Phaser.Scene {
             this.releaseHostages(camp);
             this.updateObjectiveText();
           }
+        },
+      );
+      this.physics.add.overlap(
+        prisonCamp,
+        this.bombs,
+        (_campObject, bombObject) => {
+          const bomb = bombObject as Bomb;
+          this.detonateBomb(bomb);
         },
       );
     }
@@ -259,14 +332,27 @@ export class GameScene extends Phaser.Scene {
       );
     }
 
-    if (!this.playerDestroyed) {
-      const enemyShot = this.tank.tryFire(
+    this.touchControls?.setBombStatus(this.helicopter.isBombReady(time));
+    const bombDrop = this.helicopter.tryDropBomb(time);
+    if (bombDrop) {
+      this.dropBomb(
+        bombDrop.x,
+        bombDrop.y,
+        bombDrop.helicopterVelocityX,
         time,
-        this.helicopter.x,
-        this.helicopter.y,
       );
-      if (enemyShot) {
-        this.fireEnemyRound(enemyShot);
+    }
+
+    if (!this.playerDestroyed) {
+      for (const tank of this.tanks) {
+        const enemyShot = tank.tryFire(
+          time,
+          this.helicopter.x,
+          this.helicopter.y,
+        );
+        if (enemyShot) {
+          this.fireEnemyRound(enemyShot);
+        }
       }
     }
 
@@ -285,6 +371,9 @@ export class GameScene extends Phaser.Scene {
     }
     for (const child of [...this.missiles.getChildren()]) {
       (child as HomingMissile).update(time, delta);
+    }
+    for (const child of [...this.bombs.getChildren()]) {
+      (child as Bomb).update(time);
     }
 
     let hostageStateChanged = false;
@@ -321,6 +410,7 @@ export class GameScene extends Phaser.Scene {
         rescued: this.gameState.rescued,
         score: this.gameState.score,
         reason: 'RESCUE TARGET LOST',
+        levelIndex: this.levelIndex,
       });
       return;
     }
@@ -335,12 +425,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createBattlefield(): void {
-    const skyBands = [
-      { y: 90, height: 180, color: 0x17241f },
-      { y: 270, height: 180, color: 0x1d2d25 },
-      { y: 450, height: 180, color: 0x25372b },
-      { y: 630, height: 180, color: 0x304331 },
-    ];
+    const skyBands = this.level.environment.skyBands.map((color, index) => ({
+      y: 90 + index * 180,
+      height: 180,
+      color,
+    }));
     for (const band of skyBands) {
       this.add
         .rectangle(
@@ -354,40 +443,47 @@ export class GameScene extends Phaser.Scene {
         .setDepth(-30);
     }
 
+    if (this.level.environment.night) {
+      this.createNightSkyDetails();
+    }
     this.createClouds();
 
-    for (let x = -1024; x <= WORLD_WIDTH + 1024; x += 512) {
+    for (let x = -1024; x <= this.level.worldWidth + 1024; x += 512) {
       this.add
         .image(x, GROUND_Y - 110, 'distant-mountains')
         .setOrigin(0, 1)
         .setScrollFactor(0.08, 0.28)
+        .setTint(this.level.environment.distantMountainTint)
         .setAlpha(0.7)
         .setDepth(-27);
     }
 
-    for (let x = -640; x <= WORLD_WIDTH + 960; x += 320) {
+    for (let x = -640; x <= this.level.worldWidth + 960; x += 320) {
       this.add
         .image(x, GROUND_Y - 130, 'background-ridge')
         .setOrigin(0, 1)
         .setScrollFactor(0.18, 0.35)
-        .setTint(0x4a5838)
+        .setTint(this.level.environment.farRidgeTint)
         .setAlpha(0.55)
         .setDepth(-25);
     }
-    for (let x = -320; x <= WORLD_WIDTH + 640; x += 320) {
+    for (let x = -320; x <= this.level.worldWidth + 640; x += 320) {
       this.add
         .image(x, GROUND_Y - 48, 'background-ridge')
         .setOrigin(0, 1)
         .setScrollFactor(0.42, 0.65)
+        .setTint(this.level.environment.nearRidgeTint)
         .setDepth(-20);
     }
 
-    this.add.text(1385, GROUND_Y - 82, 'ARMORED TARGET', {
-      color: '#c7b96a',
-      fontFamily: 'Courier New',
-      fontSize: '18px',
+    this.level.tankPositions.forEach((tankX, index) => {
+      this.add.text(tankX, GROUND_Y - 82, `ARMORED ${index + 1}`, {
+        color: '#c7b96a',
+        fontFamily: 'Courier New',
+        fontSize: '18px',
+      }).setOrigin(0.5, 0);
     });
-    PRISON_CAMP.positions.forEach((campX, index) => {
+    this.level.campPositions.forEach((campX, index) => {
       this.add
         .text(campX, GROUND_Y - 110, `CAMP ${index + 1}`, {
           color: '#c7b96a',
@@ -400,9 +496,12 @@ export class GameScene extends Phaser.Scene {
 
   private createClouds(): void {
     let x = Phaser.Math.Between(-160, 120);
+    const [minimumSpacing, maximumSpacing] =
+      this.level.environment.cloudSpacing;
+    const [minimumAlpha, maximumAlpha] = this.level.environment.cloudAlpha;
 
-    while (x < WORLD_WIDTH + 400) {
-      x += Phaser.Math.Between(380, 620);
+    while (x < this.level.worldWidth + 400) {
+      x += Phaser.Math.Between(minimumSpacing, maximumSpacing);
       const frame = Phaser.Math.Between(0, 2);
       const scale = Phaser.Math.FloatBetween(1.5, 2.35);
 
@@ -410,27 +509,118 @@ export class GameScene extends Phaser.Scene {
         .image(x, Phaser.Math.Between(190, 440), 'clouds', frame)
         .setScale(scale)
         .setScrollFactor(0.1 + frame * 0.025, 0.2)
-        .setAlpha(Phaser.Math.FloatBetween(0.2, 0.34))
+        .setAlpha(Phaser.Math.FloatBetween(minimumAlpha, maximumAlpha))
         .setDepth(-29);
+    }
+  }
+
+  private createNightSkyDetails(): void {
+    for (let index = 0; index < 34; index += 1) {
+      const x = (index * 197 + 71) % GAME_WIDTH;
+      const y = 104 + ((index * 83) % 390);
+      const radius = index % 5 === 0 ? 2 : 1;
+      this.add
+        .circle(x, y, radius, index % 3 === 0 ? 0x9fc7c5 : 0xd6dec3, 0.65)
+        .setScrollFactor(0)
+        .setDepth(-28);
+    }
+  }
+
+  private createNightMissionLights(): void {
+    this.add
+      .ellipse(
+        RESCUE_BASE.centerX,
+        RESCUE_BASE.surfaceY - 8,
+        RESCUE_BASE.landingZoneWidth + 90,
+        105,
+        0x8fe388,
+        0.08,
+      )
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(-1);
+
+    const landingLeft =
+      RESCUE_BASE.centerX - RESCUE_BASE.landingZoneWidth / 2;
+    const landingRight =
+      RESCUE_BASE.centerX + RESCUE_BASE.landingZoneWidth / 2;
+    for (const x of [landingLeft, landingRight]) {
+      this.add
+        .circle(x, RESCUE_BASE.surfaceY - 5, 5, 0x8fe388, 0.95)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDepth(2);
+    }
+
+    for (const x of this.level.campPositions) {
+      this.add
+        .circle(x, GROUND_Y - 92, 4, 0xe46b56, 0.85)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDepth(2);
     }
   }
 
   private createGroundArt(): void {
     const tileSize = 64;
-    const tileCount = Math.ceil(WORLD_WIDTH / tileSize);
+    const tileCount = Math.ceil(this.level.worldWidth / tileSize);
 
     for (let index = 0; index < tileCount; index += 1) {
       const frame = (index * 3 + Math.floor(index / 5)) % 4;
       this.add
         .image(index * tileSize, GROUND_Y, 'ground-tiles', frame)
         .setOrigin(0, 0)
+        .setTint(this.level.environment.groundTint)
         .setDepth(-3);
+    }
+  }
+
+  private createFlightObstacles(): void {
+    const stepCount = 5;
+
+    for (const obstacle of this.level.flightObstacles) {
+      const stepHeight = obstacle.height / stepCount;
+      for (let step = 0; step < stepCount; step += 1) {
+        const width = obstacle.width * (1 - step * 0.14);
+        const body = this.add
+          .rectangle(
+            obstacle.x,
+            GROUND_Y - stepHeight * (step + 0.5),
+            width,
+            stepHeight + 1,
+            this.level.environment.obstacleColor,
+          )
+          .setStrokeStyle(2, this.level.environment.obstacleEdgeColor, 0.9)
+          .setDepth(-2);
+        this.physics.add.existing(body, true);
+        this.flightObstacleBodies.push(body);
+        this.physics.add.collider(this.helicopter, body);
+        this.physics.add.collider(body, this.cannonRounds, (_ridge, round) => {
+          (round as Phaser.Physics.Arcade.Image).disableBody(true, true);
+        });
+        this.physics.add.collider(body, this.enemyRounds, (_ridge, round) => {
+          (round as Phaser.Physics.Arcade.Image).disableBody(true, true);
+        });
+        this.physics.add.collider(body, this.missiles, (_ridge, missile) => {
+          (missile as HomingMissile).destroy();
+        });
+        this.physics.add.collider(body, this.bombs, (_ridge, bombObject) => {
+          this.detonateBomb(bombObject as Bomb);
+        });
+      }
+
+      this.add
+        .text(obstacle.x, GROUND_Y - obstacle.height - 26, 'SOLID RIDGE', {
+          color: this.level.environment.night ? '#9fc7c5' : '#d6dec3',
+          fontFamily: 'Courier New',
+          fontSize: '14px',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5, 1)
+        .setDepth(-1);
     }
   }
 
   private configureCamera(): void {
     const camera = this.cameras.main;
-    camera.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+    camera.setBounds(0, 0, this.level.worldWidth, WORLD_HEIGHT);
     camera.startFollow(
       this.helicopter,
       true,
@@ -452,7 +642,7 @@ export class GameScene extends Phaser.Scene {
       .text(
         GAME_WIDTH / 2,
         GAME_HEIGHT - 38,
-        'DESTROY THE TANK AND PRISON CAMPS',
+        `L${this.levelIndex + 1}: ${this.level.name} — DESTROY TANKS AND CAMPS`,
         {
           backgroundColor: '#243128',
           color: '#d6dec3',
@@ -479,12 +669,16 @@ export class GameScene extends Phaser.Scene {
       health: this.helicopter.health,
       maximumHealth: HELICOPTER.maximumHealth,
       lives: this.gameState.lives,
+      levelNumber: this.levelIndex + 1,
+      levelCount: LEVELS.length,
       isLanded: this.helicopter.isLanded,
-      tankDestroyed: this.targetDestroyed,
+      destroyedTanks: this.destroyedTankCount,
+      totalTanks: this.tanks.length,
       openCamps: openCampCount,
       totalCamps: this.prisonCamps.length,
       missileLocked: this.getMissileLockTarget() !== null,
       missileReady: this.helicopter.isMissileReady(this.time.now),
+      bombReady: this.helicopter.isBombReady(this.time.now),
     });
   }
 
@@ -520,6 +714,91 @@ export class GameScene extends Phaser.Scene {
     this.audioManager.playCannon();
   }
 
+  private dropBomb(
+    x: number,
+    y: number,
+    helicopterVelocityX: number,
+    time: number,
+  ): void {
+    const bomb = new Bomb(
+      this,
+      x,
+      y,
+      helicopterVelocityX,
+      time,
+      this.level.worldWidth,
+    );
+    this.bombs.add(bomb);
+    this.showWeaponFlash(x, y, 0xc7b96a, 7);
+  }
+
+  private detonateBomb(bomb: Bomb): void {
+    if (!bomb.active) {
+      return;
+    }
+
+    const x = bomb.x;
+    const y = bomb.y;
+    bomb.destroy();
+    this.showGroundExplosion(x, y);
+    this.damageBombTargets(x, y);
+  }
+
+  private damageBombTargets(x: number, y: number): void {
+    let objectiveChanged = false;
+    const exposedHostagesInBlast = getTargetsWithinBombBlast(
+      this.hostages.filter((hostage) => hostage.active),
+      x,
+      y,
+      BOMB.blastRadius,
+    );
+
+    for (const tank of this.tanks) {
+      if (
+        !tank.active ||
+        !isWithinBombBlast(x, y, tank.x, tank.y, BOMB.blastRadius)
+      ) {
+        continue;
+      }
+
+      const targetX = tank.x;
+      const targetY = tank.y;
+      if (tank.takeDamage(BOMB.tankDamage)) {
+        this.destroyedTankCount += 1;
+        this.gameState.awardScore(TANK.scoreValue);
+        this.showScoreAward(targetX, targetY - 34, TANK.scoreValue);
+        objectiveChanged = true;
+      }
+    }
+
+    for (const camp of this.prisonCamps) {
+      if (
+        !camp.active ||
+        !isWithinBombBlast(x, y, camp.x, camp.y, BOMB.blastRadius)
+      ) {
+        continue;
+      }
+
+      if (camp.takeDamage(BOMB.campDamage)) {
+        this.releaseHostages(camp);
+        objectiveChanged = true;
+      }
+    }
+
+    for (const hostage of exposedHostagesInBlast) {
+      if (!hostage.active || !hostage.kill()) {
+        continue;
+      }
+
+      this.showHostageDeathFeedback(hostage, hostage.x, hostage.y);
+      objectiveChanged = true;
+    }
+
+    if (objectiveChanged) {
+      this.updateObjectiveText();
+    }
+  }
+
   private updateRotorAudio(): void {
     const body = this.helicopter.body as Phaser.Physics.Arcade.Body;
     const horizontalRatio =
@@ -549,6 +828,7 @@ export class GameScene extends Phaser.Scene {
       direction,
       target,
       time,
+      this.level.worldWidth,
     );
     this.missiles.add(missile);
     this.showWeaponFlash(x, y, 0x9fc7c5, 14);
@@ -621,10 +901,10 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const jet = new Jet(this, direction, altitude);
+    const jet = new Jet(this, direction, altitude, this.level.worldWidth);
     this.jets.add(jet);
     this.jetSpawnCount += 1;
-    this.nextJetSpawnAt = time + JET.spawnIntervalMs;
+    this.nextJetSpawnAt = time + this.level.jetSpawnIntervalMs;
   }
 
   private recycleOffscreenProjectiles(
@@ -635,7 +915,7 @@ export class GameScene extends Phaser.Scene {
       if (
         round.active &&
         (round.x < -32 ||
-          round.x > WORLD_WIDTH + 32 ||
+          round.x > this.level.worldWidth + 32 ||
           round.y < -32 ||
           round.y > WORLD_HEIGHT + 32)
       ) {
@@ -675,6 +955,7 @@ export class GameScene extends Phaser.Scene {
     this.disableProjectiles(this.cannonRounds);
     this.disableProjectiles(this.enemyRounds);
     this.destroyProjectiles(this.missiles);
+    this.destroyProjectiles(this.bombs);
     this.showHelicopterExplosion(explosionX, explosionY);
 
     this.targetText.setText(
@@ -690,6 +971,7 @@ export class GameScene extends Phaser.Scene {
           rescued: this.gameState.rescued,
           score: this.gameState.score,
           reason: 'ALL HELICOPTERS LOST',
+          levelIndex: this.levelIndex,
         });
       });
       return;
@@ -824,20 +1106,27 @@ export class GameScene extends Phaser.Scene {
   }
 
   private releaseHostages(prisonCamp: PrisonCamp): void {
-    for (let index = 0; index < PRISON_CAMP.hostageCount; index += 1) {
-      const direction = index % 2 === 0 ? -1 : 1;
-      const row = Math.floor(index / 2);
-      const rallyX =
-        prisonCamp.x +
-        direction * (HOSTAGE.rallyDistance + row * HOSTAGE.rallySpacing);
+    const rallyPositions = getHostageRallyPositions(
+      prisonCamp.x,
+      PRISON_CAMP.hostageCount,
+      this.level.flightObstacles,
+      this.level.worldWidth,
+      HOSTAGE.rallyDistance,
+      HOSTAGE.rallySpacing,
+    );
 
+    for (let index = 0; index < PRISON_CAMP.hostageCount; index += 1) {
       const hostage = new Hostage(
         this,
         prisonCamp.x,
-        rallyX,
+        rallyPositions[index] ?? prisonCamp.x,
         index * HOSTAGE.releaseDelayMs,
+        this.level.flightObstacles,
       );
       this.hostages.push(hostage);
+      for (const obstacleBody of this.flightObstacleBodies) {
+        this.physics.add.collider(hostage, obstacleBody);
+      }
       this.physics.add.overlap(
         hostage,
         this.cannonRounds,
@@ -853,6 +1142,14 @@ export class GameScene extends Phaser.Scene {
           round.disableBody(true, true);
           this.showHostageDeathFeedback(target, targetX, targetY);
           this.updateObjectiveText();
+        },
+      );
+      this.physics.add.overlap(
+        hostage,
+        this.bombs,
+        (_hostageObject, bombObject) => {
+          const bomb = bombObject as Bomb;
+          this.detonateBomb(bomb);
         },
       );
       this.physics.add.overlap(
@@ -1060,6 +1357,7 @@ export class GameScene extends Phaser.Scene {
       (camp) => camp.isOpen,
     ).length;
     const closedCampCount = this.prisonCamps.length - openCampCount;
+    const remainingTanks = this.tanks.length - this.destroyedTankCount;
 
     if (disembarking || unloadingAtBase) {
       this.targetText.setText(
@@ -1077,9 +1375,9 @@ export class GameScene extends Phaser.Scene {
 
     if (passengers > 0 && hostagesAtCamp === 0) {
       this.targetText.setText(
-        this.targetDestroyed
+        remainingTanks === 0
           ? 'HOSTAGES ABOARD — RETURN TO BASE'
-          : 'HOSTAGES ABOARD — DESTROY THE TANK',
+          : `HOSTAGES ABOARD — DESTROY ${remainingTanks} ${remainingTanks === 1 ? 'TANK' : 'TANKS'}`,
       );
       this.targetText.setColor('#8fe388');
       return;
@@ -1103,9 +1401,9 @@ export class GameScene extends Phaser.Scene {
 
     const campInstruction = `${closedCampCount} PRISON ${closedCampCount === 1 ? 'CAMP' : 'CAMPS'}`;
     this.targetText.setText(
-      this.targetDestroyed
+      remainingTanks === 0
         ? `DESTROY ${campInstruction}`
-        : `DESTROY THE TANK AND ${campInstruction}`,
+        : `DESTROY ${remainingTanks} ${remainingTanks === 1 ? 'TANK' : 'TANKS'} AND ${campInstruction}`,
     );
     this.targetText.setColor('#f3d45a');
   }
@@ -1128,6 +1426,7 @@ export class GameScene extends Phaser.Scene {
       rescued: this.gameState.rescued,
       score: this.gameState.score,
       lives: this.gameState.lives,
+      levelIndex: this.levelIndex,
     });
   }
 }

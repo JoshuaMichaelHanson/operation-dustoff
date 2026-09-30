@@ -24,6 +24,17 @@ describe('victory condition', () => {
     expect(gameState.score).toBe(300);
   });
 
+  it('carries score and remaining helicopters into the next mission', () => {
+    const gameState = new GameState(7, { score: 900, lives: 2 });
+
+    expect(gameState.score).toBe(900);
+    expect(gameState.lives).toBe(2);
+    expect(gameState.rescued).toBe(0);
+
+    gameState.recordRescue(1);
+    expect(gameState.score).toBe(1000);
+  });
+
   it('provides enough camp hostages to reach the mission target', () => {
     const availableHostages =
       PRISON_CAMP.positions.length * PRISON_CAMP.hostageCount;
