@@ -18,6 +18,7 @@ export class Hostage extends Phaser.GameObjects.Sprite {
   private hostageState = HostageState.Captive;
   private releaseDelayRemainingMs: number;
   private rescueTargetX: number | null = null;
+  private coverRemainingMs = 0;
 
   constructor(
     scene: Phaser.Scene,
@@ -41,6 +42,23 @@ export class Hostage extends Phaser.GameObjects.Sprite {
 
   get currentState(): HostageState {
     return this.hostageState;
+  }
+
+  takeCover(durationMs: number): boolean {
+    if (![
+      HostageState.RunningOut,
+      HostageState.Waiting,
+      HostageState.RunningToHelicopter,
+      HostageState.TakingCover,
+    ].includes(this.hostageState)) {
+      return false;
+    }
+
+    this.coverRemainingMs = Math.max(this.coverRemainingMs, durationMs);
+    if (this.hostageState !== HostageState.TakingCover) {
+      this.transitionTo(HostageState.TakingCover);
+    }
+    return true;
   }
 
   kill(): boolean {
@@ -138,6 +156,13 @@ export class Hostage extends Phaser.GameObjects.Sprite {
         }
         return null;
 
+      case HostageState.TakingCover:
+        this.coverRemainingMs -= deltaMs;
+        if (this.coverRemainingMs <= 0) {
+          this.transitionTo(HostageState.Waiting);
+        }
+        return null;
+
       case HostageState.Captive:
       case HostageState.Aboard:
       case HostageState.Rescued:
@@ -188,6 +213,18 @@ export class Hostage extends Phaser.GameObjects.Sprite {
     }
 
     this.hostageState = nextState;
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    if (nextState === HostageState.TakingCover) {
+      body.setSize(12, 10);
+      body.setOffset(4, 20);
+      this.setScale(1, 0.48);
+      this.setTint(0xf3d45a);
+    } else {
+      body.setSize(12, 26);
+      body.setOffset(4, 4);
+      this.setScale(1);
+      this.clearTint();
+    }
 
     switch (nextState) {
       case HostageState.RunningToHelicopter:
@@ -208,6 +245,7 @@ export class Hostage extends Phaser.GameObjects.Sprite {
         break;
 
       case HostageState.Captive:
+      case HostageState.TakingCover:
         break;
     }
   }

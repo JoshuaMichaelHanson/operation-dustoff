@@ -26,6 +26,14 @@ export function calculateRescueScore(
   return rescuedHostages * scorePerHostage;
 }
 
+export function calculateFullLoadBonus(
+  passengerCount: number,
+  capacity: number,
+  bonus: number,
+): number {
+  return capacity > 0 && passengerCount === capacity ? bonus : 0;
+}
+
 export function hasPassengerUnloadSpacing(
   helicopterX: number,
   disembarkingHostageXs: readonly number[],

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { RESCUE_BASE, TANK } from '../src/game/constants';
+import { HOSTAGE, PLAYER, RESCUE_BASE, TANK } from '../src/game/constants';
 import {
   hasPassengerUnloadSpacing,
   isSafeRescueLanding,
@@ -130,6 +130,31 @@ describe('failed rescue detection', () => {
     expect(
       shouldEndFailedRescue({ ...exhaustedMission, closedCampCount: 1 }),
     ).toBe(false);
+  });
+
+  it('keeps a near-win mission active while crash survivors regroup', () => {
+    const states = [
+      ...Array<HostageState>(23).fill(HostageState.Rescued),
+      ...Array<HostageState>(4).fill(HostageState.Dead),
+    ];
+    const situation = {
+      rescued: 23,
+      rescueTarget: 24,
+      closedCampCount: 0,
+      hostageStates: [...states, HostageState.Aboard],
+    };
+
+    expect(shouldEndFailedRescue(situation)).toBe(false);
+    expect(shouldEndFailedRescue({
+      ...situation,
+      hostageStates: [...states, HostageState.Waiting],
+    })).toBe(false);
+    expect(shouldEndFailedRescue({
+      ...situation,
+      hostageStates: [...states, HostageState.Dead],
+    })).toBe(true);
+    expect(HOSTAGE.crashRegroupDelayMs).toBeLessThan(PLAYER.gameOverDelayMs);
+    expect(HOSTAGE.crashRegroupDelayMs).toBeLessThan(PLAYER.respawnDelayMs);
   });
 
   it('does not fail a mission that has reached its rescue target', () => {

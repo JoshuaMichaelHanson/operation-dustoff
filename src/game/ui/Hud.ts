@@ -22,6 +22,8 @@ export interface HudState {
   missileLocked: boolean;
   missileReady: boolean;
   bombReady: boolean;
+  intel: string;
+  threatWarning: string;
 }
 
 export function formatHudScore(score: number): string {
@@ -35,6 +37,7 @@ export class Hud {
   private readonly healthText: Phaser.GameObjects.Text;
   private readonly livesText: Phaser.GameObjects.Text;
   private readonly statusText: Phaser.GameObjects.Text;
+  private readonly intelText: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     scene.add
@@ -78,6 +81,16 @@ export class Hud {
       .setOrigin(1, 0)
       .setScrollFactor(0)
       .setDepth(1001);
+
+    scene.add.rectangle(GAME_WIDTH / 2, 101, GAME_WIDTH, 30, 0x11150f, 0.78)
+      .setScrollFactor(0)
+      .setDepth(1000);
+    this.intelText = scene.add.text(GAME_WIDTH / 2, 90, '', {
+      color: '#d6dec3',
+      fontFamily: 'Courier New',
+      fontSize: '15px',
+      fontStyle: 'bold',
+    }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(1001);
   }
 
   update(state: HudState): void {
@@ -104,6 +117,8 @@ export class Hud {
     this.statusText.setText(
       `L${state.levelNumber}/${state.levelCount}   ${flightState}   TANKS ${tankState}   CAMPS ${state.openCamps}/${state.totalCamps}${missileState}${bombState}`,
     );
+    this.intelText.setText(state.threatWarning || state.intel);
+    this.intelText.setColor(state.threatWarning ? '#ff7b62' : '#d6dec3');
   }
 
   private createMetric(
