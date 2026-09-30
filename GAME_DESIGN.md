@@ -96,7 +96,8 @@ A / Left Arrow    move left
 D / Right Arrow   move right
 
 Space             fire cannon
-X                 bomb / secondary weapon
+X                 fire locked air-to-air missile
+Z                 drop bomb
 P or Escape       pause
 ```
 
@@ -124,8 +125,11 @@ Touch layout:
 - left thumb: eight-way virtual stick
 - right thumb: hold Cannon for continuous fire
 - right thumb: tap Missile to launch when locked and ready
+- right thumb: tap Bomb to drop an air-to-ground explosive
 - tappable deploy and redeploy prompts
 - landscape play with a portrait rotate-device prompt
+- contain the complete 16:9 game inside the visual viewport and device safe areas;
+  letterboxing is expected on 4:3 tablets
 - keyboard controls remain available and unchanged
 
 ### Health
@@ -204,6 +208,11 @@ A hostage may board only when:
 - helicopter is within boarding radius
 - helicopter has passenger capacity
 - hostage is alive
+- no solid ridge blocks the ground route between hostage and helicopter
+
+Released hostages receive rally points reachable from their camp without crossing solid
+terrain. If the helicopter lands on the opposite side of a ridge, hostages wait instead
+of walking through or into it.
 
 ### Rescue
 
@@ -260,17 +269,33 @@ Properties:
 - horizontal projectile
 - destroys tanks/camps after several hits
 
-### Bomb / Rocket
+### Air-to-Air Missile
 
-Secondary weapon.
+The lock-on missile is the anti-jet secondary weapon. It launches with `X`, requires a
+valid target in front of the helicopter, and has its own reload time.
+
+### Bomb
+
+The bomb is the terrain-safe air-to-ground weapon for armored targets that cannot be
+reached cleanly by the forward cannon.
 
 Properties:
 
-- slower rate
-- higher damage
-- downward or forward/downward trajectory
+- launches with `Z` or the touch Bomb button
+- drops under gravity while retaining part of the helicopter's horizontal momentum
+- has a 1.2-second reload and a small arcade blast radius
+- destroys a full-health tank in one accurate drop
+- opens a camp in two accurate drops
+- detonates against ground, base, solid ridges, tanks, camps, or exposed hostages
+- can kill exposed hostages within its blast, preserving friendly-fire risk
+- does not hurt captive hostages released by that same camp-opening explosion
 
-If secondary weapon delays MVP, postpone it.
+The bomb complements the cannon; it does not reduce tank health or make the Level 2
+ridge easier to bypass.
+
+### Rocket
+
+A forward/downward unguided rocket remains a separate possible Post-MVP weapon.
 
 ---
 
@@ -424,6 +449,27 @@ Support authored day, dusk, and night themes when multiple levels are introduced
 Night environments need readable landing-pad, base, projectile, unit, and objective
 lighting. These are level themes, not a simulated real-time day/night cycle, and must
 never reduce the clarity of collision boundaries or gameplay silhouettes.
+
+### Authored Mission Progression (Post-MVP)
+
+The first campaign pass contains three selectable missions:
+
+1. **Green Valley — Standard:** the accepted original battlefield with one tank,
+   three camps, sparse clouds, and no solid flight-path terrain.
+2. **Highland Pass — Hard:** a longer dusk route with two tanks, denser clouds,
+   faster jet reinforcement, and three solid stepped ridges.
+3. **Black Ridge — Veteran:** a longer night rescue with three tanks, four camps,
+   a 24-hostage target, frequent jets, solid high ridges, stars, and landing lights.
+
+Starting at Green Valley advances through all three missions after each victory. Score
+and surviving helicopters carry forward; failure retries the current mission as a new
+run. The title screen also allows direct mission selection so later missions can be
+tested without completing the full campaign first.
+
+Solid terrain must use collision silhouettes that match its visible stepped shape.
+Projectiles stop on the same geometry. Later SF soldiers, trucks, hostile infantry,
+and BFS/DFS ground navigation build on these harder levels but are not required for
+the first multi-level slice.
 
 ---
 

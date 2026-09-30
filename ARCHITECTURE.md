@@ -141,6 +141,16 @@ Owns:
 
 - landing/rescue zone geometry
 
+### Bomb
+
+Owns:
+
+- gravity-driven flight and inherited horizontal launch velocity
+- lifetime and world-bound cleanup
+
+`GameScene` owns blast resolution so tank scoring, camp release, hostage deaths, and
+objective updates remain in the same explicit gameplay flow as the other weapons.
+
 ---
 
 ## Systems
@@ -228,6 +238,8 @@ player bullet <-> camp
 player bullet <-> jet
 enemy projectile <-> helicopter
 player projectile <-> hostage
+bomb <-> ground / base / solid ridge / ground target
+hostage <-> solid ridge
 ```
 
 Use overlap checks for:
@@ -277,6 +289,18 @@ export const GAMEPLAY = {
 ```
 
 This keeps balancing changes cheap.
+
+### Authored Levels
+
+Keep mission differences in a small `LevelConfig` data module consumed by the existing
+`GameScene`. Level data owns world length, rescue target, camp and tank positions, jet
+timing, solid flight obstacles, and environment colors. Do not create one scene class
+per level or a general map engine.
+
+`TitleScene` chooses a level index, `GameScene` runs that configuration, and
+`VictoryScene` advances to the next index while carrying score and remaining lives.
+Visual terrain bodies are created directly from the authored obstacle rectangles so
+collision bounds remain readable.
 
 ---
 

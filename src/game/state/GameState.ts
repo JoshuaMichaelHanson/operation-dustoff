@@ -3,10 +3,19 @@ import { calculateRescueScore } from '../logic/rescueRules';
 
 export class GameState {
   private rescuedHostages = 0;
-  private currentScore = 0;
-  private remainingLives: number = PLAYER.startingLives;
+  private currentScore: number;
+  private remainingLives: number;
 
-  constructor(private readonly target: number = MISSION.rescueTarget) {}
+  constructor(
+    private readonly target: number = MISSION.rescueTarget,
+    initial?: { score?: number; lives?: number },
+  ) {
+    this.currentScore = Math.max(0, initial?.score ?? 0);
+    this.remainingLives = Math.max(
+      1,
+      Math.min(PLAYER.startingLives, initial?.lives ?? PLAYER.startingLives),
+    );
+  }
 
   get rescued(): number {
     return this.rescuedHostages;
