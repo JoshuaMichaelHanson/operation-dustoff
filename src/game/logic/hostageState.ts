@@ -3,6 +3,7 @@ export enum HostageState {
   RunningOut = 'RUNNING_OUT',
   Waiting = 'WAITING',
   RunningToHelicopter = 'RUNNING_TO_HELICOPTER',
+  TakingCover = 'TAKING_COVER',
   Aboard = 'ABOARD',
   RunningToBase = 'RUNNING_TO_BASE',
   Rescued = 'RESCUED',
@@ -16,16 +17,19 @@ export enum HostageUpdateEvent {
 
 const allowedTransitions: Record<HostageState, readonly HostageState[]> = {
   [HostageState.Captive]: [HostageState.RunningOut],
-  [HostageState.RunningOut]: [HostageState.Waiting, HostageState.Dead],
+  [HostageState.RunningOut]: [HostageState.Waiting, HostageState.TakingCover, HostageState.Dead],
   [HostageState.Waiting]: [
     HostageState.RunningToHelicopter,
+    HostageState.TakingCover,
     HostageState.Dead,
   ],
   [HostageState.RunningToHelicopter]: [
     HostageState.Waiting,
     HostageState.Aboard,
+    HostageState.TakingCover,
     HostageState.Dead,
   ],
+  [HostageState.TakingCover]: [HostageState.Waiting, HostageState.Dead],
   [HostageState.Aboard]: [HostageState.Waiting, HostageState.RunningToBase],
   [HostageState.RunningToBase]: [HostageState.Rescued, HostageState.Dead],
   [HostageState.Rescued]: [],
@@ -44,6 +48,7 @@ export function canHostageBeKilled(state: HostageState): boolean {
     HostageState.RunningOut,
     HostageState.Waiting,
     HostageState.RunningToHelicopter,
+    HostageState.TakingCover,
     HostageState.RunningToBase,
   ].includes(state);
 }
@@ -63,6 +68,7 @@ export function canHostageBeCrushed(
     HostageState.RunningOut,
     HostageState.Waiting,
     HostageState.RunningToHelicopter,
+    HostageState.TakingCover,
   ].includes(situation.hostageState);
 
   return (

@@ -107,6 +107,8 @@ export const HOSTAGE = {
   releaseDelayMs: 140,
   unloadIntervalMs: 250,
   unloadSpacing: 56,
+  coverDurationMs: 2300,
+  crashRegroupDelayMs: 650,
 } as const;
 
 export const RESCUE_BASE = {
@@ -118,4 +120,5 @@ export const RESCUE_BASE = {
   spriteHeight: 160,
   surfaceY: GROUND_Y - 32,
   scorePerHostage: 100,
+  fullLoadBonus: 500,
 } as const;

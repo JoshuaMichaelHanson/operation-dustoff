@@ -85,6 +85,34 @@ async function startGame(page: Page, levelIndex = 0): Promise<void> {
   await page.waitForTimeout(500);
 }
 
+async function holdTouch(
+  page: Page,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  durationMs: number,
+): Promise<void> {
+  const session = await page.context().newCDPSession(page);
+  await session.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x: startX, y: startY, id: 1 }],
+  });
+  await session.send('Input.dispatchTouchEvent', {
+    type: 'touchMove',
+    touchPoints: [{ x: endX, y: endY, id: 1 }],
+  });
+  try {
+    await page.waitForTimeout(durationMs);
+  } finally {
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchEnd',
+      touchPoints: [],
+    });
+    await session.detach();
+  }
+}
+
 test('holds flight and cannon input across gameplay frames', async ({ page }, testInfo) => {
   const issues = captureBrowserIssues(page);
 
@@ -246,4 +274,70 @@ test('flies to the first camp, destroys it, and observes released hostages', asy
   await attachConsoleReport(testInfo, issues);
 
   expect(issues).toEqual([]);
+});
+
+test('flies a keyboard pickup and return route without browser errors', async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(60_000);
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page);
+  await page.keyboard.down('ArrowRight');
+  try {
+    for (let segment = 0; segment < 7; segment += 1) {
+      await page.keyboard.down('ArrowUp');
+      await page.waitForTimeout(260);
+      await page.keyboard.up('ArrowUp');
+      await page.waitForTimeout(840);
+    }
+  } finally {
+    await page.keyboard.up('ArrowRight');
+  }
+  await holdKeys(page, ['ArrowLeft'], 450);
+  await holdKeys(page, ['ArrowDown'], 1_500);
+  await holdKeys(page, ['Space'], 1_600);
+  await page.waitForTimeout(4_000);
+  await attachScreenshot(page, testInfo, 'keyboard-pickup');
+
+  await holdKeys(page, ['ArrowUp', 'ArrowLeft'], 7_000);
+  await holdKeys(page, ['ArrowDown'], 4_500);
+  await page.waitForTimeout(3_000);
+  await attachScreenshot(page, testInfo, 'keyboard-base-return');
+  await attachConsoleReport(testInfo, issues);
+  expect(issues).toEqual([]);
+});
+
+test('touch controls drive a pickup and return route without browser errors', async ({
+  browser,
+}, testInfo) => {
+  test.setTimeout(90_000);
+  const context = await browser.newContext({
+    hasTouch: true,
+    viewport: { width: 1280, height: 720 },
+  });
+  const page = await context.newPage();
+  const issues = captureBrowserIssues(page);
+  await page.goto('http://127.0.0.1:4173/?touch=1');
+  await expect(page.locator('#game canvas')).toBeVisible();
+  await page.touchscreen.tap(640, 640);
+  await page.waitForTimeout(500);
+
+  for (let segment = 0; segment < 7; segment += 1) {
+    await holdTouch(page, 145, 585, 210, 520, 260);
+    await holdTouch(page, 145, 585, 220, 585, 840);
+  }
+  await holdTouch(page, 145, 585, 70, 585, 450);
+  await holdTouch(page, 145, 585, 145, 660, 1_500);
+  await holdTouch(page, 1_160, 590, 1_160, 590, 1_600);
+  await page.waitForTimeout(4_000);
+  await attachScreenshot(page, testInfo, 'touch-pickup');
+
+  await holdTouch(page, 145, 585, 80, 520, 7_000);
+  await holdTouch(page, 145, 585, 145, 660, 4_500);
+  await page.waitForTimeout(5_000);
+  await attachScreenshot(page, testInfo, 'touch-base-return');
+  await attachConsoleReport(testInfo, issues);
+  expect(issues).toEqual([]);
+  await context.close();
 });

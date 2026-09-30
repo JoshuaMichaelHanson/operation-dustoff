@@ -1000,3 +1000,58 @@ Additional missions remain Post-MVP work and should introduce one focused mechan
 as rockets, AA guns, SAM launchers, difficulty rules, or SF ground combat. Keep them in
 the existing `LevelConfig` structure, preserve earlier missions, and add pure coverage,
 a focused gameplay route, and manual acceptance for each mission-specific feature.
+
+## 2026-09-29 - Post-MVP Gameplay Priority
+
+Decision:
+Prioritize rescue tension and reward first, air defenses in a feature-driven mission
+second, and SF ground combat third. Reassess the backlog after those phases rather than
+committing to every deferred system now.
+
+Reason:
+The game is reported playable on desktop, phone, and tablet with three missions.
+The strongest near-term improvement is to make opening a camp, protecting released
+hostages, filling a passenger load, and returning home more consequential. AA and SAM
+threats then add flight and attack decisions. SF deployment and truck-borne infantry
+are the largest dependent system and belong after those smaller slices are accepted.
+
+Important implementation detail:
+The new compact battlefield-intel suggestion is intended to make long routes and
+incoming threats legible without adding a full map. Start hostage targeting only on
+harder missions with telegraphed attacks and a defensive response. Treat AA and SAM
+as separate playtest gates. The user's tablet report accepts basic canvas containment
+and controls, while a complete touch rescue-loop check remains open.
+
+## 2026-09-29 - Phase 1 Rescue Pressure Implementation
+
+Highland Pass and Black Ridge now periodically telegraph one tank or jet attack on a
+released POW near the visible play area. The warning lasts 1.6 seconds; the POW ducks
+after 0.7 seconds, pauses for 2.3 seconds, then resumes the normal waiting/boarding
+flow. Enemy rounds hurt POWs only when they were fired as a telegraphed hostage attack,
+so Green Valley and ordinary helicopter-targeted shots retain their old behavior.
+Destroying the attacker or boarding the target cancels the lock. Threats are spaced
+10 seconds on Highland Pass and 7.5 seconds on Black Ridge.
+
+A full 8-passenger manifest arms a one-time 500-point bonus, paid and shown when the
+first passenger starts unloading at base. Destruction cancels the pending bonus.
+The fixed intel strip points to the nearest unopened camp, exposed POWs, and the
+base, replacing the strip temporarily with an incoming POW-fire warning.
+
+Verification: 107 Vitest tests, production build, and nine browser smoke routes
+passed without browser errors. A keyboard browser route scored one rescue. A touch-control browser route
+opened a camp and boarded one POW but lost its helicopter before scoring; complete
+touch-trip, full-load gameplay acceptance, and harder-mission balance remain open.
+
+## 2026-09-29 - Crash Survivor Regrouping Cue
+
+Passengers still aboard a destroyed helicopter continue to survive and return to their
+original camp rally points, preserving the rescue supply on hard missions. The return
+now waits 650 ms and a fixed on-screen notice reports how many POWs survived and where
+they are regrouping. During the delay they remain in the Aboard state, so a nearly won
+mission cannot mistake them for lost hostages. Already-disembarking or rescued POWs are
+unchanged. The delay is shorter than both the game-over and respawn delays, including
+on the final helicopter. A focused failed-rescue test covers the 23/24 case before and
+after regrouping.
+
+Validation: 108 Vitest tests and the production build passed. The focused keyboard
+pickup-and-return browser route passed with no captured console or page errors.
