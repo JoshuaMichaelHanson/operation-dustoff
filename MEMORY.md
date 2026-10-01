@@ -1129,3 +1129,52 @@ The new Post-MVP Mobile and Tablet Playtesting section holds the complete touch 
 trip, full-load and POW-pressure checks, AA/SAM active-versus-destroyed trips, Turn
 button reachability, and a full iPad-class rescue loop. No gameplay code changed in
 this backlog update.
+
+## 2026-10-01 - Phase 3 Ground Combat Candidate
+
+Dustline Hold is a sixth selectable mission that teaches ground combat on open terrain.
+Two SF soldiers automatically board external helicopter seats at base. A landed `G`
+press or SF touch button deploys them near a camp or reboards them when nearby. They
+guard released POWs and engage hostile infantry. Opening the first camp summons one
+reinforcement truck with three soldiers; it unloads, then retreats. Hostile soldiers
+threaten exposed POWs when SF are absent. Both teams use deterministic movement,
+combat timing, hit cover, and dead-state cleanup. The open route does not require a
+waypoint or BFS/DFS graph; reserve that for a ground-obstacle mission.
+
+`GroundCombatModel` owns the small state machine and emits shot, death, and POW-hit
+events. `GroundCombat` draws the silhouettes and tracers. `GameScene` handles player
+weapon hits, hostage deaths, score awards, and objective/HUD feedback. Player weapons
+target hostile ground units and the truck, so clearing a camp after deploying SF does
+not accidentally wipe out the new team; hostile infantry can still hurt SF. SF
+survive a helicopter crash by deploying at the crash position. Earlier missions
+retain their existing enemy and control behavior.
+
+Validation: 126 Vitest tests and the production build pass. All 13 browser gameplay
+routes passed after the targeting fix without captured console errors; the focused
+route was rerun after the final placement adjustment. Dustline Hold screenshots
+show two SF deployed, the truck attack cleared with zero hostiles left, POWs boarding,
+and five survivors unloaded for `5/14 RESCUED`. A full manual victory trip and real
+phone/tablet control feel remain acceptance checks before closing Phase 3.
+
+## 2026-10-01 - SF Visual Readability
+
+The first ground-combat placeholders looked too similar to released POWs. Ground units
+now have pixel-style helmets, visible faces, armor plates, packs, boots, and rifles
+that face their current target. The two deployed allies carry a compact teal `SF`
+marker; hostile infantry remain rust-colored. Rifle fire briefly flashes at the
+muzzle. The truck warning names the SF defense once they are deployed instead of
+continuing to instruct the player to deploy them.
+
+The focused Dustline Hold browser route shows both SF distinguishable beside Camp 1
+and during the truck assault, with POW boarding and rescue still working. All 126
+logic tests and the production build pass; no new gameplay rules or assets were added.
+
+## 2026-10-01 - Phase 3 Accepted for PR
+
+The user reports that Dustline Hold gameplay feels good and accepts the clearer SF
+soldier art. Mark the Phase 3 feature-driven mission complete for the upcoming PR.
+The earlier browser route verified deployment, truck defense, POW boarding, and a
+five-person rescue unload; the full 14-person victory trip has not been manually
+verified. Keep that trip and physical phone/tablet SF-control checks as explicit
+follow-up playtests in `BACKLOG.md`. Reassess and plan the next phases after the PR.
+This acceptance update changes documentation only.

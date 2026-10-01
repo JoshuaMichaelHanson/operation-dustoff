@@ -39,7 +39,7 @@ export class Hud {
   private readonly statusText: Phaser.GameObjects.Text;
   private readonly intelText: Phaser.GameObjects.Text;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, groundCombatEnabled = false) {
     scene.add
       .rectangle(GAME_WIDTH / 2, 43, GAME_WIDTH, 86, 0x11150f, 0.92)
       .setScrollFactor(0)
@@ -60,8 +60,12 @@ export class Hud {
         24,
         54,
         isTouchControlEnabled()
-          ? 'LEFT STICK: FLY   TAP TURN   CANNON / MISSILE / BOMB'
-          : 'WASD / ARROWS: FLY   F: TURN   SPACE: CANNON   X: MISSILE   Z: BOMB',
+          ? groundCombatEnabled
+            ? 'LEFT STICK: FLY   TAP SF / TURN / CANNON / MISSILE / BOMB'
+            : 'LEFT STICK: FLY   TAP TURN   CANNON / MISSILE / BOMB'
+          : groundCombatEnabled
+            ? 'WASD / ARROWS: FLY   F: TURN   G: SF   SPACE: CANNON   X: MISSILE   Z: BOMB'
+            : 'WASD / ARROWS: FLY   F: TURN   SPACE: CANNON   X: MISSILE   Z: BOMB',
         {
         color: '#91a087',
         fontFamily: 'Courier New',

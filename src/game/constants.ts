@@ -143,6 +143,24 @@ export const HOSTAGE = {
   crashRegroupDelayMs: 650,
 } as const;
 
+export const GROUND_COMBAT = {
+  sfSeats: 2,
+  soldierSpeed: 75,
+  soldierRange: 260,
+  soldierFireCooldownMs: 1050,
+  hostileFireCooldownMs: 1700,
+  soldierHealth: 2,
+  hostileHealth: 2,
+  coverMs: 850,
+  truckSpeed: 105,
+  truckHealth: 4,
+  truckSpawnDelayMs: 1200,
+  truckUnloadIntervalMs: 650,
+  truckSoldiers: 3,
+  truckScore: 150,
+  hostileScore: 50,
+} as const;
+
 export const RESCUE_BASE = {
   centerX: 390,
   landingZoneWidth: 380,
