@@ -19,6 +19,8 @@ export class TouchControls {
   private readonly missileText: Phaser.GameObjects.Text;
   private readonly bombButton: Phaser.GameObjects.Arc;
   private readonly bombText: Phaser.GameObjects.Text;
+  private readonly turnButton: Phaser.GameObjects.Arc;
+  private readonly turnText: Phaser.GameObjects.Text;
   private stickPointer: Phaser.Input.Pointer | null = null;
   private readonly cannonPointers = new Set<Phaser.Input.Pointer>();
 
@@ -89,6 +91,22 @@ export class TouchControls {
       .zone(GAME_WIDTH - 445, GAME_HEIGHT - 105, 116, 116)
       .setInteractive();
 
+    this.turnButton = scene.add
+      .circle(GAME_WIDTH - 590, GAME_HEIGHT - 105, 48, 0x334653, 0.76)
+      .setStrokeStyle(3, 0x9fc7c5, 0.9);
+    this.turnText = scene.add
+      .text(GAME_WIDTH - 590, GAME_HEIGHT - 105, 'TURN\nLEFT', {
+        align: 'center',
+        color: '#d6dec3',
+        fontFamily: 'Courier New',
+        fontSize: '15px',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
+    const turnZone = scene.add
+      .zone(GAME_WIDTH - 590, GAME_HEIGHT - 105, 110, 110)
+      .setInteractive();
+
     this.objects.push(
       stickBase,
       stickCrossHorizontal,
@@ -104,6 +122,9 @@ export class TouchControls {
       this.bombButton,
       this.bombText,
       bombZone,
+      this.turnButton,
+      this.turnText,
+      turnZone,
     );
     for (const object of this.objects) {
       const displayObject = object as Phaser.GameObjects.GameObject & {
@@ -122,6 +143,7 @@ export class TouchControls {
     cannonZone.on('pointerupoutside', this.handlePointerUp);
     missileZone.on('pointerdown', this.handleMissileDown);
     bombZone.on('pointerdown', this.handleBombDown);
+    turnZone.on('pointerdown', this.handleTurnDown);
     scene.input.on('pointermove', this.handlePointerMove);
     scene.input.on('pointerup', this.handlePointerUp);
     scene.input.on('gameout', this.reset);
@@ -173,6 +195,10 @@ export class TouchControls {
     this.bombText.setColor('#91886d').setText('BOMB\nRELOAD');
   }
 
+  setFacingDirection(direction: -1 | 1): void {
+    this.turnText.setText(direction === 1 ? 'TURN\nLEFT' : 'TURN\nRIGHT');
+  }
+
   destroy(): void {
     this.reset();
     this.scene.input.off('pointermove', this.handlePointerMove);
@@ -211,6 +237,16 @@ export class TouchControls {
     this.inputState.queueBomb();
     this.scene.tweens.add({
       targets: this.bombButton,
+      scale: 0.88,
+      duration: 70,
+      yoyo: true,
+    });
+  };
+
+  private readonly handleTurnDown = (): void => {
+    this.inputState.queueTurn();
+    this.scene.tweens.add({
+      targets: this.turnButton,
       scale: 0.88,
       duration: 70,
       yoyo: true,

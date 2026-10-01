@@ -98,6 +98,9 @@ export class BootScene extends Phaser.Scene {
     this.createMissileTexture();
     this.createBombTexture();
     this.createEnemyRoundTexture();
+    this.createAaGunTexture();
+    this.createSamLauncherTexture();
+    this.createSamMissileTexture();
     this.scene.start('TitleScene');
   }
 
@@ -138,6 +141,56 @@ export class BootScene extends Phaser.Scene {
     graphics.fillStyle(0xe46b56);
     graphics.fillCircle(5, 5, 5);
     graphics.generateTexture('enemy-round', 10, 10);
+    graphics.destroy();
+  }
+
+  private createAaGunTexture(): void {
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0x222b2a);
+    graphics.fillRect(5, 33, 70, 15);
+    graphics.fillStyle(0x71805d);
+    graphics.fillRect(9, 37, 62, 8);
+    graphics.fillStyle(0x3c4940);
+    graphics.fillRect(19, 21, 42, 15);
+    graphics.fillStyle(0xc7b96a);
+    graphics.fillCircle(40, 24, 10);
+    graphics.fillStyle(0x1b2525);
+    graphics.fillRect(35, 6, 8, 20);
+    graphics.fillStyle(0xe46b56);
+    graphics.fillCircle(40, 7, 4);
+    graphics.generateTexture('aa-gun', 80, 50);
+    graphics.destroy();
+  }
+
+  private createSamLauncherTexture(): void {
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0x24322e);
+    graphics.fillRect(4, 34, 72, 15);
+    graphics.fillStyle(0x879578);
+    graphics.fillRect(9, 38, 62, 6);
+    graphics.fillStyle(0x455c4d);
+    graphics.fillRect(20, 24, 42, 13);
+    graphics.fillStyle(0xd5c78d);
+    graphics.fillRect(33, 8, 14, 24);
+    graphics.fillStyle(0xffcd6c);
+    graphics.fillTriangle(33, 8, 40, 0, 47, 8);
+    graphics.fillStyle(0x151e1b);
+    graphics.fillRect(13, 47, 14, 3);
+    graphics.fillRect(53, 47, 14, 3);
+    graphics.generateTexture('sam-launcher', 80, 50);
+    graphics.destroy();
+  }
+
+  private createSamMissileTexture(): void {
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0xffcd6c);
+    graphics.fillRect(3, 3, 21, 7);
+    graphics.fillStyle(0xff795e);
+    graphics.fillTriangle(23, 2, 31, 6, 23, 11);
+    graphics.fillStyle(0x514638);
+    graphics.fillTriangle(2, 2, 11, 2, 2, 0);
+    graphics.fillTriangle(2, 11, 11, 11, 2, 13);
+    graphics.generateTexture('sam-missile', 32, 14);
     graphics.destroy();
   }
 

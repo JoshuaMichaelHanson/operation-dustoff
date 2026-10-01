@@ -72,6 +72,18 @@ describe('touch input state', () => {
     input.reset();
     expect(input.consumeBomb()).toBe(false);
   });
+
+  it('turns once per tap and clears an interrupted turn', () => {
+    const input = new TouchInputState();
+    input.setDirection({ horizontal: -1, vertical: 0 });
+    input.queueTurn();
+    expect(input.consumeTurn()).toBe(true);
+    expect(input.consumeTurn()).toBe(false);
+    expect(input.horizontal).toBe(-1);
+    input.queueTurn();
+    input.reset();
+    expect(input.consumeTurn()).toBe(false);
+  });
 });
 
 describe('touch capability detection', () => {

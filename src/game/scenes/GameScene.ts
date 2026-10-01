@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 import {
+  AA_GUN,
   BOMB,
   CAMERA,
   GAME_HEIGHT,
@@ -13,10 +14,12 @@ import {
   PLAYER,
   PRISON_CAMP,
   RESCUE_BASE,
+  SAM,
   TANK,
   WORLD_HEIGHT,
 } from '../constants';
 import { AudioManager } from '../audio/AudioManager';
+import { AaGun } from '../entities/AaGun';
 import { Bomb } from '../entities/Bomb';
 import { Helicopter } from '../entities/Helicopter';
 import { HomingMissile } from '../entities/HomingMissile';
@@ -25,6 +28,8 @@ import type { EnemyShot } from '../entities/EnemyShot';
 import { Jet } from '../entities/Jet';
 import { PrisonCamp } from '../entities/PrisonCamp';
 import { RescueBase } from '../entities/RescueBase';
+import { SamLauncher } from '../entities/SamLauncher';
+import { SamMissile } from '../entities/SamMissile';
 import { Tank } from '../entities/Tank';
 import { PlayerInput } from '../input/PlayerInput';
 import {
@@ -80,6 +85,8 @@ interface PendingHostageThreat {
 export class GameScene extends Phaser.Scene {
   private helicopter!: Helicopter;
   private tanks: Tank[] = [];
+  private aaGuns: AaGun[] = [];
+  private samLaunchers: SamLauncher[] = [];
   private prisonCamps: PrisonCamp[] = [];
   private rescueBase!: RescueBase;
   private hostages: Hostage[] = [];
@@ -87,6 +94,7 @@ export class GameScene extends Phaser.Scene {
   private enemyRounds!: Phaser.Physics.Arcade.Group;
   private jets!: Phaser.Physics.Arcade.Group;
   private missiles!: Phaser.Physics.Arcade.Group;
+  private samMissiles!: Phaser.Physics.Arcade.Group;
   private bombs!: Phaser.Physics.Arcade.Group;
   private flightObstacleBodies: Phaser.GameObjects.Rectangle[] = [];
   private hud!: Hud;
@@ -128,6 +136,8 @@ export class GameScene extends Phaser.Scene {
     this.hostages = [];
     this.prisonCamps = [];
     this.tanks = [];
+    this.aaGuns = [];
+    this.samLaunchers = [];
     this.flightObstacleBodies = [];
     this.destroyedTankCount = 0;
     this.nextPassengerUnloadAt = 0;
@@ -175,6 +185,12 @@ export class GameScene extends Phaser.Scene {
     this.tanks = this.level.tankPositions.map(
       (x) => new Tank(this, x, GROUND_Y - 21),
     );
+    this.aaGuns = this.level.aaPositions.map(
+      (x) => new AaGun(this, x, GROUND_Y - 26, this.level.flightObstacles),
+    );
+    this.samLaunchers = this.level.samPositions.map(
+      (x) => new SamLauncher(this, x, GROUND_Y - 26, this.level.flightObstacles),
+    );
     this.prisonCamps = this.level.campPositions.map(
       (x) => new PrisonCamp(this, x, GROUND_Y - 36),
     );
@@ -188,6 +204,7 @@ export class GameScene extends Phaser.Scene {
     });
     this.jets = this.physics.add.group({ allowGravity: false });
     this.missiles = this.physics.add.group({ allowGravity: false });
+    this.samMissiles = this.physics.add.group({ allowGravity: false });
     this.bombs = this.physics.add.group({
       allowGravity: true,
       gravityY: BOMB.gravity,
@@ -198,6 +215,9 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.helicopter, ground);
     this.physics.add.collider(ground, this.bombs, (_ground, bombObject) => {
       this.detonateBomb(bombObject as Bomb);
+    });
+    this.physics.add.collider(ground, this.samMissiles, (_ground, missile) => {
+      (missile as SamMissile).destroy();
     });
     this.physics.add.collider(
       this.helicopter,
@@ -239,6 +259,42 @@ export class GameScene extends Phaser.Scene {
           this.detonateBomb(bomb);
         },
       );
+    }
+    for (const aaGun of this.aaGuns) {
+      this.physics.add.overlap(
+        aaGun,
+        this.cannonRounds,
+        (gunObject, roundObject) => {
+          const gun = gunObject as AaGun;
+          const round = roundObject as Phaser.Physics.Arcade.Image;
+          const targetX = gun.x;
+          const targetY = gun.y;
+          round.disableBody(true, true);
+          if (gun.takeDamage()) {
+            this.awardAaDestruction(targetX, targetY);
+          }
+        },
+      );
+      this.physics.add.overlap(
+        aaGun,
+        this.bombs,
+        (_gunObject, bombObject) => {
+          this.detonateBomb(bombObject as Bomb);
+        },
+      );
+    }
+    for (const launcher of this.samLaunchers) {
+      this.physics.add.overlap(launcher, this.cannonRounds, (launcherObject, roundObject) => {
+        const target = launcherObject as SamLauncher;
+        const round = roundObject as Phaser.Physics.Arcade.Image;
+        const x = target.x;
+        const y = target.y;
+        round.disableBody(true, true);
+        if (target.takeDamage()) this.awardSamDestruction(x, y);
+      });
+      this.physics.add.overlap(launcher, this.bombs, (_launcher, bombObject) => {
+        this.detonateBomb(bombObject as Bomb);
+      });
     }
     for (const prisonCamp of this.prisonCamps) {
       this.physics.add.overlap(
@@ -316,6 +372,16 @@ export class GameScene extends Phaser.Scene {
         }
       },
     );
+    this.physics.add.collider(this.rescueBase.landingSurface, this.samMissiles,
+      (_surface, missile) => (missile as SamMissile).destroy());
+    this.physics.add.overlap(this.helicopter, this.samMissiles,
+      (helicopterObject, missileObject) => {
+        const helicopter = helicopterObject as Helicopter;
+        (missileObject as SamMissile).destroy();
+        if (!this.playerDestroyed && helicopter.takeDamage(SAM.missileDamage)) {
+          this.destroyHelicopter();
+        }
+      });
 
     this.configureCamera();
     this.createFlightDisplay();
@@ -328,13 +394,14 @@ export class GameScene extends Phaser.Scene {
   update(time: number, delta: number): void {
     this.touchControls?.update();
     const shot = this.helicopter.update(time);
+    this.touchControls?.setFacingDirection(this.helicopter.facingDirection);
     this.updateRotorAudio();
     if (shot) {
       this.fireCannon(
         shot.x,
         shot.y,
         shot.direction,
-        shot.downwardAngleRadians,
+        shot.aimAngleRadians,
       );
     }
 
@@ -383,6 +450,23 @@ export class GameScene extends Phaser.Scene {
           this.fireEnemyRound(enemyShot);
         }
       }
+      for (const aaGun of this.aaGuns) {
+        const enemyShot = aaGun.update(time, this.helicopter);
+        if (enemyShot) {
+          this.fireEnemyRound(enemyShot);
+          this.showWeaponFlash(enemyShot.x, enemyShot.y, 0xff7b62, 7);
+        }
+      }
+      for (const launcher of this.samLaunchers) {
+        const lockedPosition = launcher.update(time, this.helicopter);
+        if (lockedPosition) {
+          const missile = new SamMissile(this, launcher.x, launcher.y - 20,
+            lockedPosition, this.helicopter, time, this.level.worldWidth);
+          this.samMissiles.add(missile);
+          launcher.trackMissile(missile);
+          this.showWeaponFlash(missile.x, missile.y, 0xffcd6c, 12);
+        }
+      }
     }
 
     this.trySpawnJet(time);
@@ -400,6 +484,9 @@ export class GameScene extends Phaser.Scene {
     }
     for (const child of [...this.missiles.getChildren()]) {
       (child as HomingMissile).update(time, delta);
+    }
+    for (const child of [...this.samMissiles.getChildren()]) {
+      (child as SamMissile).update(time, delta);
     }
     for (const child of [...this.bombs.getChildren()]) {
       (child as Bomb).update(time);
@@ -513,6 +600,22 @@ export class GameScene extends Phaser.Scene {
         color: '#c7b96a',
         fontFamily: 'Courier New',
         fontSize: '18px',
+      }).setOrigin(0.5, 0);
+    });
+    this.level.aaPositions.forEach((gunX, index) => {
+      this.add.text(gunX, GROUND_Y - 100, `FLAK ${index + 1}`, {
+        color: '#ffb978',
+        fontFamily: 'Courier New',
+        fontSize: '18px',
+        fontStyle: 'bold',
+      }).setOrigin(0.5, 0);
+    });
+    this.level.samPositions.forEach((launcherX, index) => {
+      this.add.text(launcherX, GROUND_Y - 100, `SAM ${index + 1}`, {
+        color: '#ffcd6c',
+        fontFamily: 'Courier New',
+        fontSize: '18px',
+        fontStyle: 'bold',
       }).setOrigin(0.5, 0);
     });
     this.level.campPositions.forEach((campX, index) => {
@@ -633,6 +736,9 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.collider(body, this.missiles, (_ridge, missile) => {
           (missile as HomingMissile).destroy();
         });
+        this.physics.add.collider(body, this.samMissiles, (_ridge, missile) => {
+          (missile as SamMissile).destroy();
+        });
         this.physics.add.collider(body, this.bombs, (_ridge, bombObject) => {
           this.detonateBomb(bombObject as Bomb);
         });
@@ -674,7 +780,11 @@ export class GameScene extends Phaser.Scene {
       .text(
         GAME_WIDTH / 2,
         GAME_HEIGHT - 38,
-        `L${this.levelIndex + 1}: ${this.level.name} — DESTROY TANKS AND CAMPS`,
+        `L${this.levelIndex + 1}: ${this.level.name} — ${this.level.samPositions.length > 0
+          ? 'FLY LOW TO BREAK SAM LOCK OR BOMB THE LAUNCHER'
+          : this.level.aaPositions.length > 0
+          ? 'FLY LOW OR BOMB THE AA GUN'
+          : 'DESTROY TANKS AND CAMPS'}`,
         {
           backgroundColor: '#243128',
           color: '#d6dec3',
@@ -723,6 +833,19 @@ export class GameScene extends Phaser.Scene {
           this.helicopter.x,
           this.prisonCamps.filter((camp) => !camp.isOpen).map((camp) => camp.x),
         )),
+        ...(this.level.aaPositions.length > 0
+          ? [formatIntelCue('AA', this.helicopter.x, nearestX(
+            this.helicopter.x,
+            this.aaGuns.filter((gun) => gun.active).map((gun) => gun.x),
+          ))]
+          : []),
+        ...(this.level.samPositions.length > 0
+          ? [formatIntelCue('SAM', this.helicopter.x, nearestX(
+            this.helicopter.x,
+            this.samLaunchers.filter((launcher) => launcher.active)
+              .map((launcher) => launcher.x),
+          ))]
+          : []),
       ].join('    •    '),
       threatWarning: this.pendingHostageThreat
         ? `INCOMING ${formatIntelCue(
@@ -730,7 +853,20 @@ export class GameScene extends Phaser.Scene {
           this.helicopter.x,
           this.pendingHostageThreat.source.x,
         )} FIRE ON ${formatIntelCue('POW', this.helicopter.x, this.pendingHostageThreat.target.x)}`
-        : '',
+        : this.aaGuns.some((gun) => gun.isWarning)
+          ? `AA AIMING ${formatIntelCue('GUN', this.helicopter.x, nearestX(
+            this.helicopter.x,
+            this.aaGuns.filter((gun) => gun.isWarning).map((gun) => gun.x),
+          ))} — FLY LOW OR BOMB IT`
+          : this.samLaunchers.some((launcher) => launcher.isWarning)
+            ? `SAM LOCK ${formatIntelCue('LAUNCHER', this.helicopter.x, nearestX(
+              this.helicopter.x,
+              this.samLaunchers.filter((launcher) => launcher.isWarning)
+                .map((launcher) => launcher.x),
+            ))} — DIVE LOW OR TAKE COVER`
+          : this.samMissiles.countActive(true) > 0
+            ? 'SAM MISSILE INBOUND — DIVE LOW OR EVADE'
+          : '',
     });
   }
 
@@ -738,7 +874,7 @@ export class GameScene extends Phaser.Scene {
     x: number,
     y: number,
     direction: -1 | 1,
-    downwardAngleRadians: number,
+    aimAngleRadians: number,
   ): void {
     const round = this.cannonRounds.get(
       x,
@@ -753,13 +889,13 @@ export class GameScene extends Phaser.Scene {
     const velocity = getCannonVelocity(
       direction,
       HELICOPTER.cannonRoundSpeed,
-      downwardAngleRadians,
+      aimAngleRadians,
     );
 
     round
       .enableBody(true, x, y, true, true)
       .setFlipX(direction < 0)
-      .setRotation(direction * downwardAngleRadians)
+      .setRotation(direction * aimAngleRadians)
       .setVelocity(velocity.x, velocity.y);
 
     this.showWeaponFlash(x, y, 0xffe27a, 8);
@@ -820,6 +956,30 @@ export class GameScene extends Phaser.Scene {
         this.gameState.awardScore(TANK.scoreValue);
         this.showScoreAward(targetX, targetY - 34, TANK.scoreValue);
         objectiveChanged = true;
+      }
+    }
+
+    for (const aaGun of this.aaGuns) {
+      if (!aaGun.active ||
+        !isWithinBombBlast(x, y, aaGun.x, aaGun.y, BOMB.blastRadius)) {
+        continue;
+      }
+
+      const targetX = aaGun.x;
+      const targetY = aaGun.y;
+      if (aaGun.takeDamage(AA_GUN.bombDamage)) {
+        this.awardAaDestruction(targetX, targetY, false);
+      }
+    }
+    for (const launcher of this.samLaunchers) {
+      if (!launcher.active ||
+        !isWithinBombBlast(x, y, launcher.x, launcher.y, BOMB.blastRadius)) {
+        continue;
+      }
+      const targetX = launcher.x;
+      const targetY = launcher.y;
+      if (launcher.takeDamage(SAM.bombDamage)) {
+        this.awardSamDestruction(targetX, targetY, false);
       }
     }
 
@@ -1093,6 +1253,14 @@ export class GameScene extends Phaser.Scene {
   private destroyHelicopter(): void {
     this.playerDestroyed = true;
     this.clearHostageThreat(this.time.now);
+    for (const aaGun of this.aaGuns) {
+      if (aaGun.active) {
+        aaGun.cancelAttack(this.time.now);
+      }
+    }
+    for (const launcher of this.samLaunchers) {
+      if (launcher.active) launcher.cancelAttack(this.time.now);
+    }
     this.fullLoadBonusReady = false;
     const explosionX = this.helicopter.x;
     const explosionY = this.helicopter.y;
@@ -1117,6 +1285,7 @@ export class GameScene extends Phaser.Scene {
     this.disableProjectiles(this.cannonRounds);
     this.disableProjectiles(this.enemyRounds);
     this.destroyProjectiles(this.missiles);
+    this.destroyProjectiles(this.samMissiles);
     this.destroyProjectiles(this.bombs);
     this.showHelicopterExplosion(explosionX, explosionY);
 
@@ -1247,6 +1416,26 @@ export class GameScene extends Phaser.Scene {
     this.gameState.awardScore(JET.scoreValue);
     this.showScoreAward(x, y - 28, JET.scoreValue);
     this.showJetExplosion(x, y);
+  }
+
+  private awardAaDestruction(
+    x: number,
+    y: number,
+    showExplosion = true,
+  ): void {
+    this.gameState.awardScore(AA_GUN.scoreValue);
+    this.showScoreAward(x, y - 36, AA_GUN.scoreValue, 'AA DOWN');
+    if (showExplosion) {
+      this.showGroundExplosion(x, y);
+    }
+    this.updateObjectiveText();
+  }
+
+  private awardSamDestruction(x: number, y: number, showExplosion = true): void {
+    this.gameState.awardScore(SAM.scoreValue);
+    this.showScoreAward(x, y - 36, SAM.scoreValue, 'SAM DOWN');
+    if (showExplosion) this.showGroundExplosion(x, y);
+    this.updateObjectiveText();
   }
 
   private showWeaponFlash(
@@ -1594,6 +1783,8 @@ export class GameScene extends Phaser.Scene {
     ).length;
     const closedCampCount = this.prisonCamps.length - openCampCount;
     const remainingTanks = this.tanks.length - this.destroyedTankCount;
+    const remainingAa = this.aaGuns.filter((gun) => gun.active).length;
+    const remainingSam = this.samLaunchers.filter((launcher) => launcher.active).length;
 
     if (disembarking || unloadingAtBase) {
       this.targetText.setText(
@@ -1639,7 +1830,11 @@ export class GameScene extends Phaser.Scene {
 
     const campInstruction = `${closedCampCount} PRISON ${closedCampCount === 1 ? 'CAMP' : 'CAMPS'}`;
     this.targetText.setText(
-      remainingTanks === 0
+      remainingSam > 0
+        ? `SAM ACTIVE — FLY LOW OR BOMB IT   OPEN ${campInstruction}`
+        : remainingAa > 0
+        ? `AA GUN ACTIVE — FLY LOW OR BOMB IT   OPEN ${campInstruction}`
+        : remainingTanks === 0
         ? `DESTROY ${campInstruction}`
         : `DESTROY ${remainingTanks} ${remainingTanks === 1 ? 'TANK' : 'TANKS'} AND ${campInstruction}`,
     );

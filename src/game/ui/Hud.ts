@@ -60,8 +60,8 @@ export class Hud {
         24,
         54,
         isTouchControlEnabled()
-          ? 'LEFT STICK: FLY   HOLD CANNON   TAP MISSILE / BOMB'
-          : 'WASD / ARROWS: FLY   SPACE: CANNON   X: MISSILE   Z: BOMB',
+          ? 'LEFT STICK: FLY   TAP TURN   CANNON / MISSILE / BOMB'
+          : 'WASD / ARROWS: FLY   F: TURN   SPACE: CANNON   X: MISSILE   Z: BOMB',
         {
         color: '#91a087',
         fontFamily: 'Courier New',

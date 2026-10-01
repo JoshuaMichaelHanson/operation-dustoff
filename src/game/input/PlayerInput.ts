@@ -16,6 +16,7 @@ export class PlayerInput {
   private readonly fireKey?: Phaser.Input.Keyboard.Key;
   private readonly missileKey?: Phaser.Input.Keyboard.Key;
   private readonly bombKey?: Phaser.Input.Keyboard.Key;
+  private readonly turnKey?: Phaser.Input.Keyboard.Key;
 
   constructor(
     scene: Phaser.Scene,
@@ -36,6 +37,7 @@ export class PlayerInput {
     this.fireKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.missileKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
     this.bombKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+    this.turnKey = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F);
     keyboard.addCapture([
       Phaser.Input.Keyboard.KeyCodes.UP,
       Phaser.Input.Keyboard.KeyCodes.DOWN,
@@ -44,6 +46,7 @@ export class PlayerInput {
       Phaser.Input.Keyboard.KeyCodes.SPACE,
       Phaser.Input.Keyboard.KeyCodes.X,
       Phaser.Input.Keyboard.KeyCodes.Z,
+      Phaser.Input.Keyboard.KeyCodes.F,
     ]);
   }
 
@@ -90,6 +93,14 @@ export class PlayerInput {
       ? Phaser.Input.Keyboard.JustDown(this.bombKey)
       : false;
     const touchPressed = this.touch.consumeBomb();
+    return keyboardPressed || touchPressed;
+  }
+
+  consumeTurnPress(): boolean {
+    const keyboardPressed = this.turnKey
+      ? Phaser.Input.Keyboard.JustDown(this.turnKey)
+      : false;
+    const touchPressed = this.touch.consumeTurn();
     return keyboardPressed || touchPressed;
   }
 }

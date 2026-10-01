@@ -160,6 +160,40 @@ test('drops a bomb over the Highland Pass ridge to destroy its armored tank', as
   expect(issues).toEqual([]);
 });
 
+test('fires the cannon while retreating and after turning', async ({ page }, testInfo) => {
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page);
+  await holdKeys(page, ['ArrowUp', 'ArrowRight'], 850);
+  await holdKeys(page, ['ArrowLeft', 'Space'], 750);
+  await attachScreenshot(page, testInfo, 'backward-cannon-fire');
+  await page.keyboard.press('f');
+  await holdKeys(page, ['ArrowLeft', 'Space'], 450);
+  await attachScreenshot(page, testInfo, 'turned-cannon-fire');
+  await attachConsoleReport(testInfo, issues);
+
+  expect(issues).toEqual([]);
+});
+
+test('approaches the Copper Gorge AA gun and drops a bomb without browser errors', async ({
+  page,
+}, testInfo) => {
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page, 3);
+  await holdKeys(page, ['ArrowUp', 'ArrowRight'], 3_000);
+  await holdKeys(page, ['ArrowRight'], 2_200);
+  await holdKeys(page, ['ArrowLeft'], 600);
+  await attachScreenshot(page, testInfo, 'level-4-aa-approach');
+  await holdKeys(page, ['z'], 120);
+  await page.waitForTimeout(1_800);
+
+  await attachScreenshot(page, testInfo, 'level-4-aa-bomb');
+  await attachConsoleReport(testInfo, issues);
+
+  expect(issues).toEqual([]);
+});
+
 test('renders the bomb action in the forced touch layout', async ({
   page,
 }, testInfo) => {
@@ -171,6 +205,29 @@ test('renders the bomb action in the forced touch layout', async ({
   await page.waitForTimeout(500);
 
   await attachScreenshot(page, testInfo, 'touch-bomb-control');
+  await page.mouse.click(690, 615);
+  await page.waitForTimeout(120);
+  await attachScreenshot(page, testInfo, 'touch-turn-control');
+  await attachConsoleReport(testInfo, issues);
+
+  expect(issues).toEqual([]);
+});
+
+test('approaches the Sable Reach SAM and drops a bomb without browser errors', async ({
+  page,
+}, testInfo) => {
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page, 4);
+  await holdKeys(page, ['ArrowUp', 'ArrowRight'], 3_000);
+  await attachScreenshot(page, testInfo, 'level-5-sam-warning');
+  await holdKeys(page, ['ArrowRight'], 2_350);
+  await holdKeys(page, ['ArrowLeft'], 600);
+  await attachScreenshot(page, testInfo, 'level-5-sam-approach');
+  await holdKeys(page, ['z'], 120);
+  await page.waitForTimeout(1_800);
+
+  await attachScreenshot(page, testInfo, 'level-5-sam-bomb');
   await attachConsoleReport(testInfo, issues);
 
   expect(issues).toEqual([]);

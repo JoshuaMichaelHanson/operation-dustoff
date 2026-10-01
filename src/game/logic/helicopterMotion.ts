@@ -8,6 +8,22 @@ export interface LandingSample {
 
 export type ControlDirection = -1 | 0 | 1;
 
+export function getFlightAttitude(
+  velocityX: number,
+  facing: -1 | 1,
+): { rotationRadians: number; cannonAngleRadians: number } {
+  const speedRatio = Math.min(
+    Math.abs(velocityX) / HELICOPTER.maximumHorizontalSpeed,
+    1,
+  );
+  const rotationRadians =
+    Math.sign(velocityX) * speedRatio * HELICOPTER.maximumForwardPitchRadians;
+  return {
+    rotationRadians,
+    cannonAngleRadians: facing * rotationRadians,
+  };
+}
+
 export function getHorizontalControlAcceleration(
   inputDirection: ControlDirection,
   velocityX: number,

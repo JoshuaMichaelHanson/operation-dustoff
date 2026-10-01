@@ -3,12 +3,34 @@ import { describe, expect, it } from 'vitest';
 import { HELICOPTER } from '../src/game/constants';
 import {
   getHorizontalControlAcceleration,
+  getFlightAttitude,
   getHorizontalDrag,
   getVerticalControlAcceleration,
   isSafeLanding,
 } from '../src/game/logic/helicopterMotion';
 
 describe('helicopter flight controls', () => {
+  it('keeps forward pitch downward and backward pitch upward for either facing', () => {
+    const halfSpeed = HELICOPTER.maximumHorizontalSpeed / 2;
+    const halfPitch = HELICOPTER.maximumForwardPitchRadians / 2;
+    expect(getFlightAttitude(halfSpeed, 1)).toEqual({
+      rotationRadians: halfPitch,
+      cannonAngleRadians: halfPitch,
+    });
+    expect(getFlightAttitude(-halfSpeed, 1)).toEqual({
+      rotationRadians: -halfPitch,
+      cannonAngleRadians: -halfPitch,
+    });
+    expect(getFlightAttitude(-halfSpeed, -1)).toEqual({
+      rotationRadians: -halfPitch,
+      cannonAngleRadians: halfPitch,
+    });
+    expect(getFlightAttitude(halfSpeed, -1)).toEqual({
+      rotationRadians: halfPitch,
+      cannonAngleRadians: -halfPitch,
+    });
+  });
+
   it('uses gentle acceleration when building horizontal speed', () => {
     expect(getHorizontalControlAcceleration(1, 80)).toBe(
       HELICOPTER.horizontalAcceleration,
