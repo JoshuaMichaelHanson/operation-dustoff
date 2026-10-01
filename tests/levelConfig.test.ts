@@ -10,8 +10,8 @@ import {
 
 describe('level configuration', () => {
   it('adds separate AA and SAM missions after the original campaign', () => {
-    expect(LEVELS).toHaveLength(5);
-    expect(LEVELS.map((level) => level.difficultyRank)).toEqual([1, 2, 3, 4, 5]);
+    expect(LEVELS).toHaveLength(6);
+    expect(LEVELS.map((level) => level.difficultyRank)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(LEVELS[1]!.tankPositions.length).toBeGreaterThan(
       LEVELS[0]!.tankPositions.length,
     );
@@ -26,6 +26,9 @@ describe('level configuration', () => {
     expect(LEVELS[4]!.samPositions).toHaveLength(1);
     expect(LEVELS[4]!.aaPositions).toHaveLength(0);
     expect(LEVELS[4]!.tankPositions).toHaveLength(0);
+    expect(LEVELS.slice(0, 5).every((level) => !level.groundCombat)).toBe(true);
+    expect(LEVELS[5]!.groundCombat).toBe(true);
+    expect(LEVELS[5]!.tankPositions).toHaveLength(0);
   });
 
   it('provides enough hostages and keeps objectives inside each world', () => {
@@ -41,9 +44,10 @@ describe('level configuration', () => {
     }
   });
 
-  it('introduces visible flight-path obstacles only on harder missions', () => {
+  it('uses ridges on the air-defense missions and open ground for the SF fight', () => {
     expect(LEVELS[0]!.flightObstacles).toHaveLength(0);
-    for (const level of LEVELS.slice(1)) {
+    expect(LEVELS[5]!.flightObstacles).toHaveLength(0);
+    for (const level of LEVELS.slice(1, 5)) {
       expect(level.flightObstacles.length).toBeGreaterThan(0);
       for (const obstacle of level.flightObstacles) {
         expect(obstacle.height).toBeGreaterThan(0);
@@ -62,6 +66,7 @@ describe('level configuration', () => {
     expect(getNextLevelIndex(0)).toBe(1);
     expect(getNextLevelIndex(2)).toBe(3);
     expect(getNextLevelIndex(3)).toBe(4);
+    expect(getNextLevelIndex(4)).toBe(5);
     expect(getNextLevelIndex(LEVELS.length - 1)).toBeNull();
   });
 });

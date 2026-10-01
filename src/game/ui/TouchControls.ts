@@ -21,12 +21,15 @@ export class TouchControls {
   private readonly bombText: Phaser.GameObjects.Text;
   private readonly turnButton: Phaser.GameObjects.Arc;
   private readonly turnText: Phaser.GameObjects.Text;
+  private readonly sfButton?: Phaser.GameObjects.Arc;
+  private readonly sfText?: Phaser.GameObjects.Text;
   private stickPointer: Phaser.Input.Pointer | null = null;
   private readonly cannonPointers = new Set<Phaser.Input.Pointer>();
 
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly inputState: TouchInputState,
+    groundCombatEnabled = false,
   ) {
     scene.input.addPointer(3);
 
@@ -106,6 +109,26 @@ export class TouchControls {
     const turnZone = scene.add
       .zone(GAME_WIDTH - 590, GAME_HEIGHT - 105, 110, 110)
       .setInteractive();
+
+    if (groundCombatEnabled) {
+      this.sfButton = scene.add
+        .circle(GAME_WIDTH - 760, GAME_HEIGHT - 105, 48, 0x285448, 0.8)
+        .setStrokeStyle(3, 0x87ddd0, 0.9);
+      this.sfText = scene.add.text(
+        GAME_WIDTH - 760, GAME_HEIGHT - 105, 'SF\n2 SEATS', {
+          align: 'center',
+          color: '#c5edcd',
+          fontFamily: 'Courier New',
+          fontSize: '15px',
+          fontStyle: 'bold',
+        },
+      ).setOrigin(0.5);
+      const sfZone = scene.add
+        .zone(GAME_WIDTH - 760, GAME_HEIGHT - 105, 110, 110)
+        .setInteractive();
+      this.objects.push(this.sfButton, this.sfText, sfZone);
+      sfZone.on('pointerdown', this.handleSfDown);
+    }
 
     this.objects.push(
       stickBase,
@@ -199,6 +222,10 @@ export class TouchControls {
     this.turnText.setText(direction === 1 ? 'TURN\nLEFT' : 'TURN\nRIGHT');
   }
 
+  setSfStatus(label: string): void {
+    this.sfText?.setText(label);
+  }
+
   destroy(): void {
     this.reset();
     this.scene.input.off('pointermove', this.handlePointerMove);
@@ -251,6 +278,18 @@ export class TouchControls {
       duration: 70,
       yoyo: true,
     });
+  };
+
+  private readonly handleSfDown = (): void => {
+    this.inputState.queueSf();
+    if (this.sfButton) {
+      this.scene.tweens.add({
+        targets: this.sfButton,
+        scale: 0.88,
+        duration: 70,
+        yoyo: true,
+      });
+    }
   };
 
   private readonly handlePointerMove = (pointer: Phaser.Input.Pointer): void => {

@@ -132,6 +132,14 @@ leave the muzzle on that angle. Tap `F` or Turn once to face the other way witho
 changing horizontal momentum, then verify forward fire and missile lock use the
 new facing. Repeat on touch with the stick held.
 
+Ground-combat checks on Dustline Hold: confirm two SF ride the external seats, land
+by Camp 1, open it, then press `G` or tap SF while still landed. The HUD should change
+from two aboard to two on the ground. Watch the truck unload three hostile soldiers;
+deployed SF should defend the exposed POWs and remain visible while the fight resolves.
+Board survivors, return to base, and complete the 14-person rescue target. Also try
+the camp without deploying SF to confirm that the truck is a real threat. Verify
+the SF touch button is reachable and is hidden on missions without ground combat.
+
 Pure tests should cover the virtual-stick dead zone, cardinal and diagonal direction
 selection, held Cannon state, one-shot Missile consumption, and touch capability
 detection.
@@ -178,6 +186,9 @@ Current routes:
    Cannon button remain fully inside the viewport before retaining a screenshot.
 7. Open the first Highland Pass camp with bombs and retain a checkpoint showing all
    seven living hostages assigned to terrain-safe rally positions.
+8. Select Dustline Hold, transport and deploy both SF soldiers, open Camp 1, and
+   retain checkpoints for the truck attack, the distinct SF and hostile silhouettes
+   during combat, POW boarding, the first rescue unload, and browser errors.
 
 Each route retains a checkpoint PNG and `browser-console.json` under
 `test-results/gameplay/`. The console report includes warnings, errors, and uncaught page

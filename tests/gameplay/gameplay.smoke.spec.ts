@@ -233,6 +233,47 @@ test('approaches the Sable Reach SAM and drops a bomb without browser errors', a
   expect(issues).toEqual([]);
 });
 
+test('carries SF to Dustline Hold and defends a released POW camp', async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(60_000);
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page, 5);
+  await attachScreenshot(page, testInfo, 'level-6-sf-aboard');
+  await page.keyboard.down('ArrowRight');
+  try {
+    for (let segment = 0; segment < 5; segment += 1) {
+      await page.keyboard.down('ArrowUp');
+      await page.waitForTimeout(260);
+      await page.keyboard.up('ArrowUp');
+      await page.waitForTimeout(840);
+    }
+  } finally {
+    await page.keyboard.up('ArrowRight');
+  }
+  await holdKeys(page, ['ArrowLeft'], 450);
+  await holdKeys(page, ['ArrowDown'], 1_500);
+  await holdKeys(page, ['g'], 180);
+  await page.waitForTimeout(250);
+  await attachScreenshot(page, testInfo, 'level-6-sf-deployed');
+  await holdKeys(page, ['Space'], 1_600);
+  await page.waitForTimeout(500);
+  await attachScreenshot(page, testInfo, 'level-6-camp-open');
+  await page.waitForTimeout(5_000);
+  await attachScreenshot(page, testInfo, 'level-6-truck-assault');
+  await page.waitForTimeout(3_000);
+  await attachScreenshot(page, testInfo, 'level-6-sf-ground-defense');
+  await page.waitForTimeout(2_000);
+  await holdKeys(page, ['ArrowUp', 'ArrowLeft'], 5_000);
+  await holdKeys(page, ['ArrowDown'], 4_000);
+  await page.waitForTimeout(5_500);
+  await attachScreenshot(page, testInfo, 'level-6-survivors-rescued');
+  await attachConsoleReport(testInfo, issues);
+
+  expect(issues).toEqual([]);
+});
+
 test('keeps the full touch layout inside an older iPad viewport', async ({
   page,
 }, testInfo) => {
