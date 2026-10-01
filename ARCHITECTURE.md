@@ -294,8 +294,15 @@ This keeps balancing changes cheap.
 
 Keep mission differences in a small `LevelConfig` data module consumed by the existing
 `GameScene`. Level data owns world length, rescue target, camp and tank positions, jet
-timing, AA and SAM positions, solid flight obstacles, and environment colors. Do not create one scene class
+timing, AA and SAM positions, the ground-combat flag, solid flight obstacles, and environment colors. Do not create one scene class
 per level or a general map engine.
+
+The sixth mission creates a small `GroundCombat` system from its level flag.
+`GroundCombatModel` owns deterministic SF, truck, and hostile-unit state; the system
+draws silhouettes and short combat tracers. `GameScene` passes released POW positions
+and weapon hits into the model, then applies POW deaths and score events through the
+existing game state. The first ground-combat mission uses open terrain, so movement
+needs no waypoint graph yet.
 
 `TitleScene` chooses a level index, `GameScene` runs that configuration, and
 `VictoryScene` advances to the next index while carrying score and remaining lives.

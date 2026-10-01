@@ -99,6 +99,7 @@ F                 turn helicopter around
 Space             fire cannon
 X                 fire locked air-to-air missile
 Z                 drop bomb
+G                 deploy or reboard SF (when landed)
 P or Escape       pause
 ```
 
@@ -134,6 +135,7 @@ Touch layout:
 - right thumb: tap Missile to launch when locked and ready
 - right thumb: tap Bomb to drop an air-to-ground explosive
 - right thumb: tap Turn to reverse the helicopter's facing
+- right thumb: tap SF to deploy or reboard the team while landed
 - tappable deploy and redeploy prompts
 - landscape play with a portrait rotate-device prompt
 - contain the complete 16:9 game inside the visual viewport and device safe areas;
@@ -460,7 +462,7 @@ never reduce the clarity of collision boundaries or gameplay silhouettes.
 
 ### Authored Mission Progression (Post-MVP)
 
-The campaign currently contains four selectable missions:
+The campaign currently contains six selectable missions:
 
 1. **Green Valley — Standard:** the accepted original battlefield with one tank,
    three camps, sparse clouds, and no solid flight-path terrain.
@@ -475,16 +477,21 @@ The campaign currently contains four selectable missions:
    onto high aircraft before launching a single turning missile. Low flight breaks
    lock and guidance; a bomb or sustained cannon fire destroys the launcher. Three
    camps, no tanks, and slower jets keep the missile decision central.
+6. **Dustline Hold — Ground Defense:** two SF soldiers ride external helicopter seats.
+   Land by a camp and press `G` or tap SF to deploy them. Opening the first camp
+   summons one reinforcement truck with three hostile infantry; deployed SF engage
+   the squad while hostages run and board. The open ground route keeps the new
+   ground combat readable before terrain navigation is added.
 
-Starting at Green Valley advances through all five missions after each victory. Score
+Starting at Green Valley advances through all six missions after each victory. Score
 and surviving helicopters carry forward; failure retries the current mission as a new
 run. The title screen also allows direct mission selection so later missions can be
 tested without completing the full campaign first.
 
 Solid terrain must use collision silhouettes that match its visible stepped shape.
-Projectiles stop on the same geometry. Later SF soldiers, trucks, hostile infantry,
-and BFS/DFS ground navigation build on these harder levels but are not required for
-the first multi-level slice.
+Projectiles stop on the same geometry. Dustline Hold introduces SF, a truck, and
+hostile infantry on open ground. Grid or waypoint navigation remains available for a
+later mission with ground obstacles that require routing.
 
 ---
 

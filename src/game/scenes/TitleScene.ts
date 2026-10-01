@@ -64,7 +64,7 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(5);
 
-    this.add
+    const controlsText = this.add
       .text(
         centerX,
         501,
@@ -94,6 +94,13 @@ export class TitleScene extends Phaser.Scene {
       selectedLevelIndex =
         (selectedLevelIndex + change + LEVELS.length) % LEVELS.length;
       const level = LEVELS[selectedLevelIndex]!;
+      controlsText.setText(level.groundCombat
+        ? touchEnabled
+          ? 'LEFT STICK FLIGHT   TAP SF / TURN / CANNON / MISSILE / BOMB'
+          : 'WASD / ARROWS FLIGHT   F TURN   G SF   SPACE CANNON   X MISSILE   Z BOMB'
+        : touchEnabled
+          ? 'LEFT STICK  FLIGHT   TAP TURN   CANNON / MISSILE / BOMB'
+          : 'WASD / ARROWS  FLIGHT   F  TURN   SPACE  CANNON   X  MISSILE   Z  BOMB');
       missionText.setText(
         `MISSION ${selectedLevelIndex + 1}/${LEVELS.length}: ${level.name}  •  ${level.difficultyLabel}  •  RESCUE ${level.rescueTarget}`,
       );

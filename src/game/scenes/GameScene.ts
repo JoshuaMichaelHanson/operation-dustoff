@@ -7,6 +7,7 @@ import {
   GAME_HEIGHT,
   GAME_WIDTH,
   GROUND_Y,
+  GROUND_COMBAT,
   HELICOPTER,
   HOSTAGE,
   JET,
@@ -73,6 +74,8 @@ import {
 import { GameState } from '../state/GameState';
 import { Hud } from '../ui/Hud';
 import { TouchControls } from '../ui/TouchControls';
+import { GroundCombat } from '../systems/GroundCombat';
+import type { GroundCombatEvent } from '../logic/groundCombat';
 
 interface PendingHostageThreat {
   source: Tank | Jet;
@@ -116,6 +119,7 @@ export class GameScene extends Phaser.Scene {
   private pendingHostageThreat: PendingHostageThreat | null = null;
   private nextHostageThreatAt = Number.POSITIVE_INFINITY;
   private fullLoadBonusReady = false;
+  private groundCombat: GroundCombat | null = null;
 
   constructor() {
     super('GameScene');
@@ -146,6 +150,7 @@ export class GameScene extends Phaser.Scene {
     this.pendingHostageThreat = null;
     this.nextHostageThreatAt = Number.POSITIVE_INFINITY;
     this.fullLoadBonusReady = false;
+    this.groundCombat = null;
     this.gameState = new GameState(this.level.rescueTarget, {
       score: this.initialScore,
       lives: this.initialLives,
@@ -181,6 +186,7 @@ export class GameScene extends Phaser.Scene {
       this.touchControls?.destroy();
       this.touchControls = null;
       this.touchInput.reset();
+      this.groundCombat?.destroy();
     });
     this.tanks = this.level.tankPositions.map(
       (x) => new Tank(this, x, GROUND_Y - 21),
@@ -194,6 +200,9 @@ export class GameScene extends Phaser.Scene {
     this.prisonCamps = this.level.campPositions.map(
       (x) => new PrisonCamp(this, x, GROUND_Y - 36),
     );
+    this.groundCombat = this.level.groundCombat
+      ? new GroundCombat(this, this.level.worldWidth, this.level.flightObstacles)
+      : null;
     this.cannonRounds = this.physics.add.group({
       allowGravity: false,
       maxSize: 32,
@@ -386,7 +395,7 @@ export class GameScene extends Phaser.Scene {
     this.configureCamera();
     this.createFlightDisplay();
     this.touchControls = isTouchControlEnabled()
-      ? new TouchControls(this, this.touchInput)
+      ? new TouchControls(this, this.touchInput, !!this.groundCombat)
       : null;
     this.updateHud();
   }
@@ -395,6 +404,16 @@ export class GameScene extends Phaser.Scene {
     this.touchControls?.update();
     const shot = this.helicopter.update(time);
     this.touchControls?.setFacingDirection(this.helicopter.facingDirection);
+    if (this.playerInput.consumeSfPress() && this.groundCombat &&
+      !this.playerDestroyed &&
+      this.groundCombat.commandSf(this.helicopter, time)) {
+      this.updateObjectiveText();
+    }
+    if (this.groundCombat) {
+      this.touchControls?.setSfStatus(
+        this.groundCombat.actionLabel(this.helicopter),
+      );
+    }
     this.updateRotorAudio();
     if (shot) {
       this.fireCannon(
@@ -490,6 +509,17 @@ export class GameScene extends Phaser.Scene {
     }
     for (const child of [...this.bombs.getChildren()]) {
       (child as Bomb).update(time);
+    }
+
+    if (this.groundCombat) {
+      const pows = this.hostages.flatMap((hostage, id) =>
+        [HostageState.RunningOut, HostageState.Waiting,
+          HostageState.RunningToHelicopter].includes(hostage.currentState)
+          ? [{ id, x: hostage.x }] : []);
+      this.handleGroundCombatEvents(this.groundCombat.update(
+        this, time, delta, this.helicopter, pows,
+      ));
+      this.updateGroundCombatWeapons(time);
     }
 
     let hostageStateChanged = false;
@@ -774,7 +804,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createFlightDisplay(): void {
-    this.hud = new Hud(this);
+    this.hud = new Hud(this, !!this.groundCombat);
 
     this.targetText = this.add
       .text(
@@ -782,6 +812,8 @@ export class GameScene extends Phaser.Scene {
         GAME_HEIGHT - 38,
         `L${this.levelIndex + 1}: ${this.level.name} — ${this.level.samPositions.length > 0
           ? 'FLY LOW TO BREAK SAM LOCK OR BOMB THE LAUNCHER'
+          : this.groundCombat
+          ? 'CARRY SF TO A CAMP — LAND AND PRESS G TO DEPLOY'
           : this.level.aaPositions.length > 0
           ? 'FLY LOW OR BOMB THE AA GUN'
           : 'DESTROY TANKS AND CAMPS'}`,
@@ -846,6 +878,10 @@ export class GameScene extends Phaser.Scene {
               .map((launcher) => launcher.x),
           ))]
           : []),
+        ...(this.groundCombat
+          ? [`SF ${this.groundCombat.sfAboard} ABOARD / ${this.groundCombat.sfDeployed} GROUND`,
+            `HOSTILES ${this.groundCombat.hostileAlive}`]
+          : []),
       ].join('    •    '),
       threatWarning: this.pendingHostageThreat
         ? `INCOMING ${formatIntelCue(
@@ -866,6 +902,13 @@ export class GameScene extends Phaser.Scene {
             ))} — DIVE LOW OR TAKE COVER`
           : this.samMissiles.countActive(true) > 0
             ? 'SAM MISSILE INBOUND — DIVE LOW OR EVADE'
+          : this.groundCombat && this.groundCombat.truckX !== null
+            ? `REINFORCEMENT TRUCK ${formatIntelCue('INBOUND',
+              this.helicopter.x, this.groundCombat.truckX)} — ${this.groundCombat.sfDeployed > 0
+              ? 'SF DEFENDING POWS' : 'DEPLOY SF'}`
+          : this.groundCombat && this.groundCombat.hostileAlive > 0
+            ? `HOSTILE INFANTRY ${this.groundCombat.hostileAlive} — ${this.groundCombat.sfDeployed > 0
+              ? 'SF ENGAGING' : 'DEFEND POWS'}`
           : '',
     });
   }
@@ -940,6 +983,12 @@ export class GameScene extends Phaser.Scene {
       y,
       BOMB.blastRadius,
     );
+    if (this.groundCombat) {
+      const groundHit = this.groundCombat.damageAt(
+        this, x, y, BOMB.tankDamage, BOMB.blastRadius, this.time.now,
+      );
+      this.handleGroundCombatEvents(groundHit.events);
+    }
 
     for (const tank of this.tanks) {
       if (
@@ -1009,6 +1058,52 @@ export class GameScene extends Phaser.Scene {
     if (objectiveChanged) {
       this.updateObjectiveText();
     }
+  }
+
+  private updateGroundCombatWeapons(time: number): void {
+    if (!this.groundCombat) return;
+    for (const child of [...this.cannonRounds.getChildren()]) {
+      const round = child as Phaser.Physics.Arcade.Image;
+      if (!round.active || round.y < GROUND_Y - 60) continue;
+      const result = this.groundCombat.damageAt(
+        this, round.x, round.y, 1, 0, time,
+      );
+      if (result.hit) {
+        round.disableBody(true, true);
+        this.handleGroundCombatEvents(result.events);
+      }
+    }
+  }
+
+  private handleGroundCombatEvents(events: readonly GroundCombatEvent[]): void {
+    let objectiveChanged = false;
+    for (const event of events) {
+      if (event.type === 'powHit') {
+        const hostage = this.hostages[event.powId];
+        if (hostage?.kill()) {
+          this.showHostageDeathFeedback(hostage, hostage.x, hostage.y);
+          objectiveChanged = true;
+        }
+      } else if (event.type === 'hostileKilled') {
+        this.gameState.awardScore(GROUND_COMBAT.hostileScore);
+        this.showScoreAward(event.x, GROUND_Y - 45,
+          GROUND_COMBAT.hostileScore, 'HOSTILE DOWN');
+        objectiveChanged = true;
+      } else if (event.type === 'truckDestroyed') {
+        this.gameState.awardScore(GROUND_COMBAT.truckScore);
+        this.showScoreAward(event.x, GROUND_Y - 70,
+          GROUND_COMBAT.truckScore, 'TRUCK DOWN');
+        this.showGroundExplosion(event.x, GROUND_Y - 25);
+        objectiveChanged = true;
+      } else if (event.type === 'sfKilled') {
+        this.showScoreAward(event.x, GROUND_Y - 45, 0, 'SF LOST');
+        objectiveChanged = true;
+      } else if (event.type === 'truckArrived' ||
+        event.type === 'hostilesUnloaded') {
+        objectiveChanged = true;
+      }
+    }
+    if (objectiveChanged) this.updateObjectiveText();
   }
 
   private updateRotorAudio(): void {
@@ -1264,6 +1359,7 @@ export class GameScene extends Phaser.Scene {
     this.fullLoadBonusReady = false;
     const explosionX = this.helicopter.x;
     const explosionY = this.helicopter.y;
+    this.groundCombat?.onHelicopterDestroyed(explosionX);
     const lostPassengers = this.helicopter.disableAfterDestruction();
 
     const regroupingHostages = this.hostages.filter(
@@ -1467,8 +1563,8 @@ export class GameScene extends Phaser.Scene {
     label = '',
   ): void {
     const scoreText = this.add
-      .text(x, y, `${label ? `${label} ` : ''}+${points}`, {
-        color: '#f3d45a',
+      .text(x, y, `${label}${points > 0 ? `${label ? ' ' : ''}+${points}` : ''}`, {
+        color: points > 0 ? '#f3d45a' : '#ff7b62',
         fontFamily: 'Courier New',
         fontSize: '22px',
         fontStyle: 'bold',
@@ -1592,6 +1688,7 @@ export class GameScene extends Phaser.Scene {
         },
       );
     }
+    this.groundCombat?.triggerTruck(prisonCamp.x, this.time.now);
   }
 
   private showHostageDeathFeedback(
@@ -1822,7 +1919,9 @@ export class GameScene extends Phaser.Scene {
 
     if (hostagesAtCamp > 0) {
       this.targetText.setText(
-        `${this.gameState.rescued}/${this.gameState.rescueTarget} RESCUED — LAND NEAR ${hostagesAtCamp} HOSTAGES`,
+        this.groundCombat && this.groundCombat.sfAboard > 0
+          ? `LAND NEAR ${hostagesAtCamp} POWS — PRESS G TO DEPLOY SF`
+          : `${this.gameState.rescued}/${this.gameState.rescueTarget} RESCUED — LAND NEAR ${hostagesAtCamp} HOSTAGES`,
       );
       this.targetText.setColor('#8fe388');
       return;
@@ -1830,7 +1929,9 @@ export class GameScene extends Phaser.Scene {
 
     const campInstruction = `${closedCampCount} PRISON ${closedCampCount === 1 ? 'CAMP' : 'CAMPS'}`;
     this.targetText.setText(
-      remainingSam > 0
+      this.groundCombat && this.groundCombat.sfAboard > 0
+        ? `SF ${this.groundCombat.sfAboard} ABOARD — OPEN ${campInstruction} AND DEPLOY`
+        : remainingSam > 0
         ? `SAM ACTIVE — FLY LOW OR BOMB IT   OPEN ${campInstruction}`
         : remainingAa > 0
         ? `AA GUN ACTIVE — FLY LOW OR BOMB IT   OPEN ${campInstruction}`

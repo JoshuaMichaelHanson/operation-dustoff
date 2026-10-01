@@ -84,6 +84,16 @@ describe('touch input state', () => {
     input.reset();
     expect(input.consumeTurn()).toBe(false);
   });
+
+  it('queues one SF deploy or board action and clears it on reset', () => {
+    const input = new TouchInputState();
+    input.queueSf();
+    expect(input.consumeSf()).toBe(true);
+    expect(input.consumeSf()).toBe(false);
+    input.queueSf();
+    input.reset();
+    expect(input.consumeSf()).toBe(false);
+  });
 });
 
 describe('touch capability detection', () => {

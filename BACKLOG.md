@@ -299,12 +299,20 @@ confirmation of the final difficulty balance remains a later playtest task.
 
 ### Phase 3 - Build the Ground Combat Slice
 
-- [ ] Add limited external SF seats, boarding, transport, and deployment
-- [ ] Add one reinforcement truck that unloads a small hostile infantry squad
-- [ ] Add deterministic ground-unit movement, cover, combat, and cleanup, with
+- [x] Add limited external SF seats, boarding, transport, and deployment
+- [x] Add one reinforcement truck that unloads a small hostile infantry squad
+- [x] Add deterministic ground-unit movement, cover, combat, and cleanup, with
       waypoint or grid BFS/DFS only where terrain requires routing
-- [ ] Give the SF team a useful role defending exposed hostages and loading zones
-- [ ] Introduce and manually accept the new systems in a feature-driven mission
+- [x] Give the SF team a useful role defending exposed hostages and loading zones
+- [x] Make deployed SF visibly distinct from POWs and hostile infantry
+- [x] Introduce and manually accept the new systems in a feature-driven mission
+
+Dustline Hold (mission 6) has two external SF seats, one truck carrying three hostile
+soldiers, and an open ground route so units can pursue and defend without a pathfinding
+graph. The focused browser route shows the SF team deployed, the truck attack cleared,
+POWs boarding, and five survivors unloaded at base; pure tests cover the truck,
+combat, cover, and POW protection. The user accepted the gameplay and clearer SF
+silhouettes for this PR. A full 14-person victory trip remains a follow-up playtest.
 
 Acceptance: The player can fly an SF team to a threatened camp, deploy it, protect
 hostages from one truck-borne attack, rescue the survivors, and finish the mission.
@@ -325,7 +333,7 @@ in the rescue loop.
 - [x] SAM launchers
 - [x] Night mission
 - [x] Multiple levels
-- [~] Additional feature-driven levels
+- [x] Additional feature-driven levels
 - [ ] Difficulty settings
 - [ ] Gamepad support
 - [x] Mobile controls
@@ -445,13 +453,13 @@ blocks direct fire, and an inaccurate bomb can miss or endanger released hostage
 - [~] Make mountains and hills solid flight obstacles on harder levels
 - [~] Give terrain collision shapes clear visual silhouettes and fair approach space
 - [~] Keep hostage rally points and boarding routes from crossing solid terrain
-- [ ] Add friendly Special Forces soldiers with limited external Little Bird seating
-- [ ] Let SF soldiers deploy or provide covering fire around exposed hostages and loading zones
-- [ ] Add enemy reinforcement trucks that arrive at varied locations and unload hostile soldiers
-- [ ] Give friendly and hostile ground units explicit combat, cover, escort, and cleanup states
+- [x] Add friendly Special Forces soldiers with limited external Little Bird seating
+- [x] Let SF soldiers deploy or provide covering fire around exposed hostages and loading zones
+- [~] Add enemy reinforcement trucks that arrive at varied locations and unload hostile soldiers
+- [~] Give friendly and hostile ground units explicit combat, cover, escort, and cleanup states
 - [ ] Use small deterministic waypoint or grid graphs with custom BFS/DFS navigation
 - [ ] Keep unit and vehicle limits low enough to preserve readable arcade gameplay
-- [ ] Add clear friendly/enemy silhouettes and prevent friendly units from targeting hostages
+- [x] Add clear friendly/enemy silhouettes and prevent friendly units from targeting hostages
 
 ### Acceptance
 
@@ -488,6 +496,13 @@ silhouettes. Day and night are deliberate level themes rather than a real-time c
 - [ ] Check backward cannon fire and the Turn button while holding the stick on a
       physical phone and tablet; adjust placement only if reachability is poor
 - [ ] Complete the full touch rescue loop on a larger tablet such as an iPad
+- [ ] Complete a Dustline Hold touch rescue trip with SF deployment, truck defense,
+      and the SF button on a physical phone and tablet
+
+## Post-MVP - Dustline Hold Victory Playtesting
+
+- [ ] Complete a full 14-person Dustline Hold victory trip on desktop; review SF and
+      truck balance across all three camps
 
 ---
 

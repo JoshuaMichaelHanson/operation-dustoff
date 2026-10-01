@@ -34,6 +34,7 @@ export interface LevelConfig {
   tankPositions: readonly number[];
   aaPositions: readonly number[];
   samPositions: readonly number[];
+  groundCombat?: boolean;
   jetInitialSpawnDelayMs: number;
   jetSpawnIntervalMs: number;
   flightObstacles: readonly FlightObstacleConfig[];
@@ -186,6 +187,34 @@ export const LEVELS: readonly LevelConfig[] = [
       obstacleColor: 0x67715b,
       obstacleEdgeColor: 0xc7c395,
       cloudAlpha: [0.13, 0.24],
+      cloudSpacing: [400, 680],
+      night: false,
+    },
+  },
+  {
+    id: 'dustline-hold',
+    name: 'DUSTLINE HOLD',
+    difficultyLabel: 'GROUND DEFENSE',
+    difficultyRank: 6,
+    worldWidth: 3600,
+    rescueTarget: 14,
+    campPositions: [1700, 2450, 3200],
+    tankPositions: [],
+    aaPositions: [],
+    samPositions: [],
+    groundCombat: true,
+    jetInitialSpawnDelayMs: 60000,
+    jetSpawnIntervalMs: 30000,
+    flightObstacles: [],
+    environment: {
+      skyBands: [0x253238, 0x3d5050, 0x797561, 0xa89a70],
+      distantMountainTint: 0xc0ae83,
+      farRidgeTint: 0x6b7560,
+      nearRidgeTint: 0x7b8163,
+      groundTint: 0xb2a477,
+      obstacleColor: 0x6b7557,
+      obstacleEdgeColor: 0xd3c292,
+      cloudAlpha: [0.1, 0.2],
       cloudSpacing: [400, 680],
       night: false,
     },
