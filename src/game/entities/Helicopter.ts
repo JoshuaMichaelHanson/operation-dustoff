@@ -5,18 +5,20 @@ import type { PlayerInput } from '../input/PlayerInput';
 import { Health } from '../logic/health';
 import { getDamageSmokeProfile } from '../logic/damageSmoke';
 import {
+  getFlightAttitude,
   getHorizontalControlAcceleration,
   getHorizontalDrag,
   getVerticalControlAcceleration,
   isSafeLanding,
 } from '../logic/helicopterMotion';
+import { getCannonMuzzlePosition } from '../logic/cannonAim';
 import { PassengerManifest } from '../logic/passengerManifest';
 
 export interface CannonShot {
   x: number;
   y: number;
   direction: -1 | 1;
-  downwardAngleRadians: number;
+  aimAngleRadians: number;
 }
 
 export interface MissileLaunch {
@@ -167,8 +169,10 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     this.healthState.reset();
     this.nextSmokeAt = 0;
     this.landed = false;
+    this.facing = 1;
     this.clearTint();
     this.setActive(true).setVisible(true).setPosition(x, y).setRotation(0);
+    this.setFlipX(false);
     body.enable = true;
     body.reset(x, y);
     body.setVelocity(0, 0);
@@ -185,10 +189,10 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     body.setAccelerationX(0);
     body.setAccelerationY(0);
 
-    const horizontalInput = this.controls.horizontalDirection;
-    if (horizontalInput !== 0) {
-      this.facing = horizontalInput;
+    if (this.controls.consumeTurnPress()) {
+      this.facing = this.facing === 1 ? -1 : 1;
     }
+    const horizontalInput = this.controls.horizontalDirection;
     const touchingGround = body.blocked.down || body.touching.down;
     body.setDragX(getHorizontalDrag(touchingGround, horizontalInput));
     body.setAccelerationX(
@@ -198,16 +202,10 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     const verticalInput = this.controls.verticalDirection;
     body.setAccelerationY(getVerticalControlAcceleration(verticalInput));
 
-    const forwardSpeedRatio = Phaser.Math.Clamp(
-      Math.abs(body.velocity.x) / HELICOPTER.maximumHorizontalSpeed,
-      0,
-      1,
-    );
-    const downwardAngleRadians =
-      forwardSpeedRatio * HELICOPTER.maximumForwardPitchRadians;
+    const attitude = getFlightAttitude(body.velocity.x, this.facing);
 
     this.setFlipX(this.facing < 0);
-    this.setRotation(this.facing * downwardAngleRadians);
+    this.setRotation(attitude.rotationRadians);
     this.updateDamageSmoke(time);
 
     this.landed = isSafeLanding({
@@ -221,11 +219,14 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
       time - this.lastCannonShotAt >= HELICOPTER.cannonCooldownMs
     ) {
       this.lastCannonShotAt = time;
+      const muzzle = getCannonMuzzlePosition(
+        this.x, this.y, this.facing, attitude.rotationRadians,
+      );
       return {
-        x: this.x + this.facing * 53,
-        y: this.y + 2,
+        x: muzzle.x,
+        y: muzzle.y,
         direction: this.facing,
-        downwardAngleRadians,
+        aimAngleRadians: attitude.cannonAngleRadians,
       };
     }
 

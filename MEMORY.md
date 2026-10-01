@@ -1055,3 +1055,77 @@ after regrouping.
 
 Validation: 108 Vitest tests and the production build passed. The focused keyboard
 pickup-and-return browser route passed with no captured console or page errors.
+
+## 2026-09-30 - Copper Gorge AA Vertical Slice
+
+Copper Gorge is mission 4. It introduces one destructible AA gun beyond the first
+ridge, with one distant tank and slower jets so the new air-defense decision dominates
+the route. The gun only tracks an exposed helicopter within range and above a minimum
+height; it cannot aim directly overhead or through solid ridge bounds. It shows a
+flashing aim cue and dotted sight line for 1.3 seconds, then fires a three-round burst
+at the last warned position. Diving low cancels the warning; a direct bomb destroys
+the gun and awards 150 points. Cannon fire also works.
+
+The AA logic is a small pure state machine for deterministic tests; the Phaser entity
+only handles physics, art, and the visible warning. Earlier missions remain unchanged.
+SAM stays unimplemented until keyboard and touch rescue-trip playtesting establishes
+that AA is fair and enjoyable. All 113 unit tests, the production build, and all 10
+browser smoke routes passed without captured browser errors. Manual AA acceptance is
+still open.
+
+## 2026-09-30 - Sable Reach SAM Candidate
+
+Sable Reach is mission 5, a separate SAM-focused route. One launcher beyond the first
+ridge warns for 1.6 seconds before firing one guided missile. A dive below the tracking
+altitude or ridge cover cancels acquisition; diving after launch stops guidance. The
+missile turns at a limited rate, expires after 4.2 seconds, and collides with solid
+terrain. One accurate bomb or four cannon hits destroy the launcher for 200 points.
+The mission has no tanks and slower jets so the new threat drives the approach choice.
+
+`SamAttack` keeps lock and cooldown timing in pure logic. `SamLauncher` owns the visible
+warning, while `SamMissile` uses the existing bounded-turn guidance helper and Phaser
+collision. SAM positions remain in `LevelConfig` and earlier missions are unchanged.
+Validation: 117 Vitest tests, the production build, and all 11 browser routes pass.
+The focused browser screenshots show the HUD lock warning and reticle, an inbound
+missile, and 200 points after the launcher is bombed, with no browser console errors.
+Manual keyboard and touch rescue trips are still needed before accepting this slice.
+
+## 2026-09-30 - Backward Flight and Turn Control Candidate
+
+Horizontal steering now changes velocity without automatically changing helicopter
+facing. `F` and a dedicated touch Turn button flip facing once per press, so the
+player can retreat while the cannon and air-to-air lock stay pointed at a jet. The
+Turn button sits to the left of Bomb and shows which direction a tap will face.
+
+Pitch follows signed horizontal velocity: forward flight noses down, backward
+flight noses up. Cannon projectiles use that signed pitch and spawn from a muzzle
+position rotated with the helicopter, keeping the shot visually aligned. Respawning
+restores a predictable right-facing helicopter. The original acceleration, drag,
+landing limits, and weapon damage remain unchanged.
+
+Validation: 120 Vitest tests, a production build, and all 12 gameplay browser routes
+pass without captured browser errors. Focused screenshots show backward cannon fire,
+the post-turn firing direction, and the touch button changing from `TURN LEFT` to
+`TURN RIGHT`; existing camp release and boarding screenshots remain correct. Manual
+keyboard and phone/tablet feel checks are still needed before accepting the slice.
+
+## 2026-09-30 - Phase 1 and Phase 2 Accepted for PR
+
+Decision:
+Close the rescue-pressure and air-defense phases. Keep physical phone/tablet rescue
+trips and control-feel checks as a separate later backlog entry rather than holding
+these implemented phases open. Backward flight implementation is also marked complete;
+its physical-device feel check moves to that same entry.
+
+Reason:
+The user accepted the Phase 1 and Phase 2 feature slices for the upcoming PR and
+plans to start Phase 3 afterward. The 120 pure tests, production build, and 12 browser
+routes passed in the preceding implementation pass. The later playtest entry preserves
+the unresolved real-device balance and reachability checks without misrepresenting
+them as already performed.
+
+Important implementation detail:
+The new Post-MVP Mobile and Tablet Playtesting section holds the complete touch rescue
+trip, full-load and POW-pressure checks, AA/SAM active-versus-destroyed trips, Turn
+button reachability, and a full iPad-class rescue loop. No gameplay code changed in
+this backlog update.

@@ -42,6 +42,38 @@ export const TANK = {
   scoreValue: 100,
 } as const;
 
+export const AA_GUN = {
+  health: 4,
+  bombDamage: 4,
+  scoreValue: 150,
+  range: 840,
+  minimumTargetRise: 95,
+  overheadBlindSpot: 130,
+  warningMs: 1300,
+  burstCount: 3,
+  burstSpacingMs: 220,
+  cooldownMs: 3700,
+  cancelCooldownMs: 1300,
+  projectileSpeed: 350,
+  projectileDamage: 12,
+} as const;
+
+export const SAM = {
+  health: 4,
+  bombDamage: 4,
+  scoreValue: 200,
+  range: 920,
+  minimumTargetRise: 135,
+  warningMs: 1600,
+  cooldownMs: 5200,
+  cancelCooldownMs: 1200,
+  missileSpeed: 285,
+  missileTurnRadiansPerSecond: 1.55,
+  missileLifetimeMs: 4200,
+  missileDamage: 30,
+  worldMargin: 80,
+} as const;
+
 export const JET = {
   health: 3,
   speed: 320,
