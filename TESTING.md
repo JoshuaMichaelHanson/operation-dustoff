@@ -122,6 +122,16 @@ Do not automate the entire game.
 
 ## Mobile Controls
 
+The Turn button is a one-shot action like Missile and Bomb. Verify it remains
+reachable next to those actions on phone and tablet, and that it changes facing
+while the stick remains held.
+
+Backward-flight checks: steer opposite the current facing while firing; the
+helicopter should fly backward with a slight nose-up pitch and cannon rounds should
+leave the muzzle on that angle. Tap `F` or Turn once to face the other way without
+changing horizontal momentum, then verify forward fire and missile lock use the
+new facing. Repeat on touch with the stick held.
+
 Pure tests should cover the virtual-stick dead zone, cardinal and diagonal direction
 selection, held Cannon state, one-shot Missile consumption, and touch capability
 detection.
@@ -230,6 +240,22 @@ Manual keyboard and touch acceptance remains:
 4. Destroy it with one well-placed bomb, or sustained cannon fire; confirm score and
    objective text update.
 5. Complete a rescue trip with AA active and another after destroying it, on both
+   keyboard and touch. Confirm landing and boarding remain practical.
+
+## SAM Launcher and Sable Reach
+
+Pure tests cover clear and ridge-blocked locks, low-altitude guidance loss, the full
+warning interval, one launch per cooldown, and cancellation after a dive. The focused
+browser route enters mission 5, approaches the launcher, drops a bomb, and retains
+approach and impact checkpoints with browser-console checks.
+
+Manual keyboard and touch acceptance:
+
+1. Approach high and confirm the launcher, lock line, reticle, and HUD warning are readable.
+2. Dive low or use the first ridge before the warning ends; confirm the lock cancels.
+3. Let one missile launch, then dive or turn; confirm it can miss and terrain stops it.
+4. Destroy the launcher with a bomb or cannon; confirm 200 points and the objective update.
+5. Complete a rescue trip with the launcher active and another after destroying it on
    keyboard and touch. Confirm landing and boarding remain practical.
 
 ---

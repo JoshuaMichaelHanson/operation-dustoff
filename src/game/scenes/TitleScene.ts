@@ -69,8 +69,8 @@ export class TitleScene extends Phaser.Scene {
         centerX,
         501,
         touchEnabled
-          ? 'LEFT STICK  FLIGHT   HOLD CANNON   TAP MISSILE / BOMB'
-          : 'WASD / ARROWS  FLIGHT   SPACE  CANNON   X  MISSILE   Z  BOMB',
+          ? 'LEFT STICK  FLIGHT   TAP TURN   CANNON / MISSILE / BOMB'
+          : 'WASD / ARROWS  FLIGHT   F  TURN   SPACE  CANNON   X  MISSILE   Z  BOMB',
         {
           color: '#91a087',
           fontFamily: 'Courier New',

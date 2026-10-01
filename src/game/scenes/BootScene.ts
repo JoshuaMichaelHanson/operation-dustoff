@@ -99,6 +99,8 @@ export class BootScene extends Phaser.Scene {
     this.createBombTexture();
     this.createEnemyRoundTexture();
     this.createAaGunTexture();
+    this.createSamLauncherTexture();
+    this.createSamMissileTexture();
     this.scene.start('TitleScene');
   }
 
@@ -157,6 +159,38 @@ export class BootScene extends Phaser.Scene {
     graphics.fillStyle(0xe46b56);
     graphics.fillCircle(40, 7, 4);
     graphics.generateTexture('aa-gun', 80, 50);
+    graphics.destroy();
+  }
+
+  private createSamLauncherTexture(): void {
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0x24322e);
+    graphics.fillRect(4, 34, 72, 15);
+    graphics.fillStyle(0x879578);
+    graphics.fillRect(9, 38, 62, 6);
+    graphics.fillStyle(0x455c4d);
+    graphics.fillRect(20, 24, 42, 13);
+    graphics.fillStyle(0xd5c78d);
+    graphics.fillRect(33, 8, 14, 24);
+    graphics.fillStyle(0xffcd6c);
+    graphics.fillTriangle(33, 8, 40, 0, 47, 8);
+    graphics.fillStyle(0x151e1b);
+    graphics.fillRect(13, 47, 14, 3);
+    graphics.fillRect(53, 47, 14, 3);
+    graphics.generateTexture('sam-launcher', 80, 50);
+    graphics.destroy();
+  }
+
+  private createSamMissileTexture(): void {
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0xffcd6c);
+    graphics.fillRect(3, 3, 21, 7);
+    graphics.fillStyle(0xff795e);
+    graphics.fillTriangle(23, 2, 31, 6, 23, 11);
+    graphics.fillStyle(0x514638);
+    graphics.fillTriangle(2, 2, 11, 2, 2, 0);
+    graphics.fillTriangle(2, 11, 11, 11, 2, 13);
+    graphics.generateTexture('sam-missile', 32, 14);
     graphics.destroy();
   }
 

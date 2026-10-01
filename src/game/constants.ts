@@ -58,6 +58,22 @@ export const AA_GUN = {
   projectileDamage: 12,
 } as const;
 
+export const SAM = {
+  health: 4,
+  bombDamage: 4,
+  scoreValue: 200,
+  range: 920,
+  minimumTargetRise: 135,
+  warningMs: 1600,
+  cooldownMs: 5200,
+  cancelCooldownMs: 1200,
+  missileSpeed: 285,
+  missileTurnRadiansPerSecond: 1.55,
+  missileLifetimeMs: 4200,
+  missileDamage: 30,
+  worldMargin: 80,
+} as const;
+
 export const JET = {
   health: 3,
   speed: 320,

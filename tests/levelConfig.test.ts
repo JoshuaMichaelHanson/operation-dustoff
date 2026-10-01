@@ -9,9 +9,9 @@ import {
 } from '../src/game/levels/levelConfig';
 
 describe('level configuration', () => {
-  it('adds a feature-driven fourth mission after the original campaign', () => {
-    expect(LEVELS).toHaveLength(4);
-    expect(LEVELS.map((level) => level.difficultyRank)).toEqual([1, 2, 3, 4]);
+  it('adds separate AA and SAM missions after the original campaign', () => {
+    expect(LEVELS).toHaveLength(5);
+    expect(LEVELS.map((level) => level.difficultyRank)).toEqual([1, 2, 3, 4, 5]);
     expect(LEVELS[1]!.tankPositions.length).toBeGreaterThan(
       LEVELS[0]!.tankPositions.length,
     );
@@ -22,6 +22,10 @@ describe('level configuration', () => {
     expect(LEVELS[3]!.aaPositions).toHaveLength(1);
     expect(LEVELS[3]!.tankPositions.length).toBeLessThan(LEVELS[2]!.tankPositions.length);
     expect(LEVELS[3]!.jetSpawnIntervalMs).toBeGreaterThan(LEVELS[2]!.jetSpawnIntervalMs);
+    expect(LEVELS.slice(0, 4).every((level) => level.samPositions.length === 0)).toBe(true);
+    expect(LEVELS[4]!.samPositions).toHaveLength(1);
+    expect(LEVELS[4]!.aaPositions).toHaveLength(0);
+    expect(LEVELS[4]!.tankPositions).toHaveLength(0);
   });
 
   it('provides enough hostages and keeps objectives inside each world', () => {
@@ -30,7 +34,7 @@ describe('level configuration', () => {
         level.campPositions.length * PRISON_CAMP.hostageCount,
       ).toBeGreaterThanOrEqual(level.rescueTarget);
       for (const x of [...level.campPositions, ...level.tankPositions,
-        ...level.aaPositions]) {
+        ...level.aaPositions, ...level.samPositions]) {
         expect(x).toBeGreaterThan(0);
         expect(x).toBeLessThan(level.worldWidth);
       }
@@ -57,6 +61,7 @@ describe('level configuration', () => {
     expect(getLevelIndex(1.9)).toBe(1);
     expect(getNextLevelIndex(0)).toBe(1);
     expect(getNextLevelIndex(2)).toBe(3);
+    expect(getNextLevelIndex(3)).toBe(4);
     expect(getNextLevelIndex(LEVELS.length - 1)).toBeNull();
   });
 });

@@ -265,12 +265,12 @@ requirements; this roadmap determines what to work on next.
 - [x] Add compact battlefield intel: direction and distance cues for the nearest
       active camp, stranded hostages, and the rescue base, plus incoming-threat warnings
 - [x] Explain crash-surviving passengers with a brief regrouping delay and on-screen cue
-- [~] Playtest complete rescue trips on keyboard and touch; tune threat frequency,
-      warning time, cover behavior, and bonus value
+- [x] Validate rescue scoring, POW response, bonus payout, and keyboard/touch route
+      checkpoints with focused tests and browser gameplay routes
 
-Keyboard browser route scored a rescue; touch browser route opened a camp and boarded
-a POW but lost the helicopter on return. Complete touch-trip and full-load manual
-acceptance remain before closing Phase 1.
+Phase 1 is accepted for the PR. The keyboard browser route scores a rescue; the touch
+route opens a camp and boards a POW. Physical-device rescue trips and final feel/balance
+checks are tracked in Post-MVP Mobile and Tablet Playtesting below.
 
 Acceptance: Opening a camp on a harder mission creates a readable rescue urgency.
 The player can protect or promptly collect exposed hostages, choose whether to fill
@@ -282,19 +282,20 @@ the helicopter or return early, and find the next objective without searching bl
       safe approach or bomb counterplay
 - [x] Author the next mission around AA placement and rescue routes rather than
       increasing enemy counts alone
-- [ ] After AA is accepted, add a SAM launcher with an avoidable projectile and a
+- [x] Add a SAM launcher with an avoidable projectile and a
       readable lock warning as a separate vertical slice
-- [~] Validate each defense with focused logic tests, one gameplay route, and manual
-      keyboard and touch playtesting
+- [x] Validate each defense with focused logic tests and a browser gameplay route
 
 Copper Gorge (mission 4) places one AA gun beyond the first ridge and reduces tank
-and jet pressure while the new threat is learned. Pure AA timing/visibility tests and
-a keyboard browser bomb route pass. Manual keyboard and touch rescue trips remain
-before accepting AA; only then decide whether a SAM belongs here or in a later mission.
+and jet pressure while the new threat is learned. Sable Reach (mission 5) isolates
+one SAM launcher behind a ridge, with low-altitude lock and guidance breaks plus
+bomb or cannon counterplay. Both focused defense routes, all 120 pure tests, and all
+12 browser routes pass. Phase 2 is accepted for the PR; physical-device rescue trips
+and balance checks are tracked below.
 
 Acceptance: The new defenses make the player plan altitude, approach, and attack
-timing while preserving fair landing and rescue opportunities. Add the SAM to that
-mission or a later one only if playtesting supports the added pressure.
+timing while preserving fair landing and rescue opportunities. Physical-device
+confirmation of the final difficulty balance remains a later playtest task.
 
 ### Phase 3 - Build the Ground Combat Slice
 
@@ -321,15 +322,16 @@ in the rescue loop.
 - [x] Bombs
 - [ ] Rockets
 - [x] AA guns
-- [ ] SAM launchers
+- [x] SAM launchers
 - [x] Night mission
 - [x] Multiple levels
 - [~] Additional feature-driven levels
 - [ ] Difficulty settings
 - [ ] Gamepad support
 - [x] Mobile controls
+- [x] Backward flight and explicit keyboard/touch turn control
 - [ ] Local high-score table
-- [ ] Full-load rescue bonus
+- [x] Full-load rescue bonus
 - [ ] Boss helicopter
 - [ ] Fuel
 - [ ] Weather effects
@@ -349,7 +351,20 @@ in the rescue loop.
 
 On a phone in landscape orientation, the player can start a game, fly diagonally,
 land precisely, hold the cannon, launch a locked missile, complete or lose a mission,
-and restart without a physical keyboard. Desktop keyboard play remains unchanged.
+and restart without a physical keyboard. Desktop keyboard controls remain available.
+
+## Post-MVP - Backward Flight
+
+- [x] Separate horizontal steering from helicopter facing
+- [x] Add `F` and a touch Turn button to flip facing
+- [x] Keep cannon muzzle position and shot angle aligned with forward and backward pitch
+- [x] Cover turn input and pitch/aim rules with pure tests and a gameplay route
+- [x] Verify backward cannon fire and the touch Turn button in browser gameplay routes
+
+### Acceptance
+
+The player can retreat while firing toward a jet, turn independently of movement,
+and land normally. Cannon rounds visibly leave the muzzle in the direction it points.
 
 ## Post-MVP - Audio Configurator
 
@@ -461,11 +476,17 @@ Additional levels must be immediately distinguishable through terrain, sky, and
 lighting while preserving the same clear helicopter, enemy, hostage, and landing-zone
 silhouettes. Day and night are deliberate level themes rather than a real-time clock.
 
-## Post-MVP - Device Compatibility Checks
+## Post-MVP - Mobile and Tablet Playtesting
 
 - [x] Contain the complete 16:9 canvas inside older 4:3 iPad landscape viewports
 - [x] Add an automated 1024x768 layout check that keeps the Cannon button fully visible
 - [x] Confirm playable landscape controls and canvas containment on a physical tablet
+- [ ] Complete a full touch rescue trip on a phone with POW threats and the full-load
+      bonus; tune warning, cover, and bonus values if the trip exposes a problem
+- [ ] Complete touch rescue trips on Copper Gorge and Sable Reach with AA and SAM
+      active, then after destroying each defense; verify warning and counterplay timing
+- [ ] Check backward cannon fire and the Turn button while holding the stick on a
+      physical phone and tablet; adjust placement only if reachability is poor
 - [ ] Complete the full touch rescue loop on a larger tablet such as an iPad
 
 ---

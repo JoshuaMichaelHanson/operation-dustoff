@@ -33,6 +33,7 @@ export interface LevelConfig {
   campPositions: readonly number[];
   tankPositions: readonly number[];
   aaPositions: readonly number[];
+  samPositions: readonly number[];
   jetInitialSpawnDelayMs: number;
   jetSpawnIntervalMs: number;
   flightObstacles: readonly FlightObstacleConfig[];
@@ -50,6 +51,7 @@ export const LEVELS: readonly LevelConfig[] = [
     campPositions: PRISON_CAMP.positions,
     tankPositions: [1500],
     aaPositions: [],
+    samPositions: [],
     jetInitialSpawnDelayMs: 5000,
     jetSpawnIntervalMs: 15000,
     flightObstacles: [],
@@ -76,6 +78,7 @@ export const LEVELS: readonly LevelConfig[] = [
     campPositions: [2100, 2800, 3400],
     tankPositions: [1420, 2520],
     aaPositions: [],
+    samPositions: [],
     jetInitialSpawnDelayMs: 4000,
     jetSpawnIntervalMs: 12000,
     flightObstacles: [
@@ -106,6 +109,7 @@ export const LEVELS: readonly LevelConfig[] = [
     campPositions: [2200, 2850, 3500, 4050],
     tankPositions: [1450, 2650, 3850],
     aaPositions: [],
+    samPositions: [],
     jetInitialSpawnDelayMs: 2500,
     jetSpawnIntervalMs: 9000,
     flightObstacles: [
@@ -136,6 +140,7 @@ export const LEVELS: readonly LevelConfig[] = [
     campPositions: [2150, 2900, 3500],
     tankPositions: [3230],
     aaPositions: [1650],
+    samPositions: [],
     jetInitialSpawnDelayMs: 7000,
     jetSpawnIntervalMs: 16000,
     flightObstacles: [
@@ -152,6 +157,36 @@ export const LEVELS: readonly LevelConfig[] = [
       obstacleEdgeColor: 0xd0a875,
       cloudAlpha: [0.14, 0.27],
       cloudSpacing: [380, 640],
+      night: false,
+    },
+  },
+  {
+    id: 'sable-reach',
+    name: 'SABLE REACH',
+    difficultyLabel: 'MISSILE RUN',
+    difficultyRank: 5,
+    worldWidth: 3900,
+    rescueTarget: 18,
+    campPositions: [2150, 2900, 3550],
+    tankPositions: [],
+    aaPositions: [],
+    samPositions: [1690],
+    jetInitialSpawnDelayMs: 8000,
+    jetSpawnIntervalMs: 18000,
+    flightObstacles: [
+      { x: 1160, width: 300, height: 165 },
+      { x: 2650, width: 230, height: 130 },
+    ],
+    environment: {
+      skyBands: [0x233a3b, 0x365658, 0x69736a, 0x9b9272],
+      distantMountainTint: 0xb2aa88,
+      farRidgeTint: 0x586b61,
+      nearRidgeTint: 0x697a64,
+      groundTint: 0xa4a078,
+      obstacleColor: 0x67715b,
+      obstacleEdgeColor: 0xc7c395,
+      cloudAlpha: [0.13, 0.24],
+      cloudSpacing: [400, 680],
       night: false,
     },
   },
