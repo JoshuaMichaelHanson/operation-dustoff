@@ -32,6 +32,7 @@ export interface LevelConfig {
   rescueTarget: number;
   campPositions: readonly number[];
   tankPositions: readonly number[];
+  aaPositions: readonly number[];
   jetInitialSpawnDelayMs: number;
   jetSpawnIntervalMs: number;
   flightObstacles: readonly FlightObstacleConfig[];
@@ -48,6 +49,7 @@ export const LEVELS: readonly LevelConfig[] = [
     rescueTarget: MISSION.rescueTarget,
     campPositions: PRISON_CAMP.positions,
     tankPositions: [1500],
+    aaPositions: [],
     jetInitialSpawnDelayMs: 5000,
     jetSpawnIntervalMs: 15000,
     flightObstacles: [],
@@ -73,6 +75,7 @@ export const LEVELS: readonly LevelConfig[] = [
     rescueTarget: 20,
     campPositions: [2100, 2800, 3400],
     tankPositions: [1420, 2520],
+    aaPositions: [],
     jetInitialSpawnDelayMs: 4000,
     jetSpawnIntervalMs: 12000,
     flightObstacles: [
@@ -102,6 +105,7 @@ export const LEVELS: readonly LevelConfig[] = [
     rescueTarget: 24,
     campPositions: [2200, 2850, 3500, 4050],
     tankPositions: [1450, 2650, 3850],
+    aaPositions: [],
     jetInitialSpawnDelayMs: 2500,
     jetSpawnIntervalMs: 9000,
     flightObstacles: [
@@ -120,6 +124,35 @@ export const LEVELS: readonly LevelConfig[] = [
       cloudAlpha: [0.12, 0.22],
       cloudSpacing: [260, 430],
       night: true,
+    },
+  },
+  {
+    id: 'copper-gorge',
+    name: 'COPPER GORGE',
+    difficultyLabel: 'FLAK RUN',
+    difficultyRank: 4,
+    worldWidth: 3800,
+    rescueTarget: 18,
+    campPositions: [2150, 2900, 3500],
+    tankPositions: [3230],
+    aaPositions: [1650],
+    jetInitialSpawnDelayMs: 7000,
+    jetSpawnIntervalMs: 16000,
+    flightObstacles: [
+      { x: 1200, width: 320, height: 170 },
+      { x: 2600, width: 230, height: 135 },
+    ],
+    environment: {
+      skyBands: [0x222d30, 0x344343, 0x6a5e4e, 0x8f7254],
+      distantMountainTint: 0xb79a73,
+      farRidgeTint: 0x67523e,
+      nearRidgeTint: 0x6f5943,
+      groundTint: 0xb28a61,
+      obstacleColor: 0x71543e,
+      obstacleEdgeColor: 0xd0a875,
+      cloudAlpha: [0.14, 0.27],
+      cloudSpacing: [380, 640],
+      night: false,
     },
   },
 ] as const;

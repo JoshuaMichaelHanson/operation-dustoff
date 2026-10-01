@@ -294,7 +294,7 @@ This keeps balancing changes cheap.
 
 Keep mission differences in a small `LevelConfig` data module consumed by the existing
 `GameScene`. Level data owns world length, rescue target, camp and tank positions, jet
-timing, solid flight obstacles, and environment colors. Do not create one scene class
+timing, AA positions, solid flight obstacles, and environment colors. Do not create one scene class
 per level or a general map engine.
 
 `TitleScene` chooses a level index, `GameScene` runs that configuration, and

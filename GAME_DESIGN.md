@@ -452,7 +452,7 @@ never reduce the clarity of collision boundaries or gameplay silhouettes.
 
 ### Authored Mission Progression (Post-MVP)
 
-The first campaign pass contains three selectable missions:
+The campaign currently contains four selectable missions:
 
 1. **Green Valley — Standard:** the accepted original battlefield with one tank,
    three camps, sparse clouds, and no solid flight-path terrain.
@@ -460,8 +460,11 @@ The first campaign pass contains three selectable missions:
    faster jet reinforcement, and three solid stepped ridges.
 3. **Black Ridge — Veteran:** a longer night rescue with three tanks, four camps,
    a 24-hostage target, frequent jets, solid high ridges, stars, and landing lights.
+4. **Copper Gorge — Flak Run:** one AA gun past an initial solid ridge threatens the
+   approach to three camps. A lower rescue target, one distant tank, and slower jets
+   leave room to learn low flight, warning evasion, and bomb counterplay.
 
-Starting at Green Valley advances through all three missions after each victory. Score
+Starting at Green Valley advances through all four missions after each victory. Score
 and surviving helicopters carry forward; failure retries the current mission as a new
 run. The title screen also allows direct mission selection so later missions can be
 tested without completing the full campaign first.

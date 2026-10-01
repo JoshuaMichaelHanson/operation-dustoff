@@ -214,6 +214,24 @@ Manual multi-level checks:
 8. Lose a mission and confirm redeploy retries that mission rather than another level.
 9. Confirm the final victory screen reports campaign completion.
 
+## AA Gun and Copper Gorge
+
+Pure tests cover AA range, low-altitude and overhead blind spots, ridge blockage,
+warning cancellation, three-shot burst timing, cooldown, and projectile speed. The
+focused browser route enters mission 4, approaches the AA gun, bombs it, and captures
+both the approach and destruction result while checking for browser errors.
+
+Manual keyboard and touch acceptance remains:
+
+1. Select Copper Gorge and confirm the AA position, ridge, camps, and mission intel.
+2. Approach high: the warning and burst must be visible early enough to evade.
+3. Dive below its tracking altitude or cross directly overhead; the warning should
+   cancel or the gun should be unable to acquire a new shot.
+4. Destroy it with one well-placed bomb, or sustained cannon fire; confirm score and
+   objective text update.
+5. Complete a rescue trip with AA active and another after destroying it, on both
+   keyboard and touch. Confirm landing and boarding remain practical.
+
 ---
 
 ## Test Naming

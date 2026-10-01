@@ -98,6 +98,7 @@ export class BootScene extends Phaser.Scene {
     this.createMissileTexture();
     this.createBombTexture();
     this.createEnemyRoundTexture();
+    this.createAaGunTexture();
     this.scene.start('TitleScene');
   }
 
@@ -138,6 +139,24 @@ export class BootScene extends Phaser.Scene {
     graphics.fillStyle(0xe46b56);
     graphics.fillCircle(5, 5, 5);
     graphics.generateTexture('enemy-round', 10, 10);
+    graphics.destroy();
+  }
+
+  private createAaGunTexture(): void {
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0x222b2a);
+    graphics.fillRect(5, 33, 70, 15);
+    graphics.fillStyle(0x71805d);
+    graphics.fillRect(9, 37, 62, 8);
+    graphics.fillStyle(0x3c4940);
+    graphics.fillRect(19, 21, 42, 15);
+    graphics.fillStyle(0xc7b96a);
+    graphics.fillCircle(40, 24, 10);
+    graphics.fillStyle(0x1b2525);
+    graphics.fillRect(35, 6, 8, 20);
+    graphics.fillStyle(0xe46b56);
+    graphics.fillCircle(40, 7, 4);
+    graphics.generateTexture('aa-gun', 80, 50);
     graphics.destroy();
   }
 

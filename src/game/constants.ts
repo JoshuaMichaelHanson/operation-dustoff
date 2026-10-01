@@ -42,6 +42,22 @@ export const TANK = {
   scoreValue: 100,
 } as const;
 
+export const AA_GUN = {
+  health: 4,
+  bombDamage: 4,
+  scoreValue: 150,
+  range: 840,
+  minimumTargetRise: 95,
+  overheadBlindSpot: 130,
+  warningMs: 1300,
+  burstCount: 3,
+  burstSpacingMs: 220,
+  cooldownMs: 3700,
+  cancelCooldownMs: 1300,
+  projectileSpeed: 350,
+  projectileDamage: 12,
+} as const;
+
 export const JET = {
   health: 3,
   speed: 320,

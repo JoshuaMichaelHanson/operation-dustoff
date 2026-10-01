@@ -54,7 +54,7 @@ export class VictoryScene extends Phaser.Scene {
         GAME_WIDTH / 2,
         GAME_HEIGHT * 0.61,
         campaignComplete
-          ? 'ALL THREE RESCUE MISSIONS SECURED'
+          ? 'ALL RESCUE MISSIONS SECURED'
           : `NEXT: ${LEVELS[nextLevelIndex]!.name}  •  ${LEVELS[nextLevelIndex]!.difficultyLabel}`,
         {
           color: campaignComplete ? '#f3d45a' : '#9fc7c5',

@@ -1055,3 +1055,20 @@ after regrouping.
 
 Validation: 108 Vitest tests and the production build passed. The focused keyboard
 pickup-and-return browser route passed with no captured console or page errors.
+
+## 2026-09-30 - Copper Gorge AA Vertical Slice
+
+Copper Gorge is mission 4. It introduces one destructible AA gun beyond the first
+ridge, with one distant tank and slower jets so the new air-defense decision dominates
+the route. The gun only tracks an exposed helicopter within range and above a minimum
+height; it cannot aim directly overhead or through solid ridge bounds. It shows a
+flashing aim cue and dotted sight line for 1.3 seconds, then fires a three-round burst
+at the last warned position. Diving low cancels the warning; a direct bomb destroys
+the gun and awards 150 points. Cannon fire also works.
+
+The AA logic is a small pure state machine for deterministic tests; the Phaser entity
+only handles physics, art, and the visible warning. Earlier missions remain unchanged.
+SAM stays unimplemented until keyboard and touch rescue-trip playtesting establishes
+that AA is fair and enjoyable. All 113 unit tests, the production build, and all 10
+browser smoke routes passed without captured browser errors. Manual AA acceptance is
+still open.

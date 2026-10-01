@@ -278,14 +278,19 @@ the helicopter or return early, and find the next objective without searching bl
 
 ### Phase 2 - Add Air Defenses in a Feature-Driven Mission
 
-- [ ] Add a destructible AA gun with a visible aiming or burst warning and a clear
+- [x] Add a destructible AA gun with a visible aiming or burst warning and a clear
       safe approach or bomb counterplay
-- [ ] Author the next mission around AA placement and rescue routes rather than
+- [x] Author the next mission around AA placement and rescue routes rather than
       increasing enemy counts alone
 - [ ] After AA is accepted, add a SAM launcher with an avoidable projectile and a
       readable lock warning as a separate vertical slice
-- [ ] Validate each defense with focused logic tests, one gameplay route, and manual
+- [~] Validate each defense with focused logic tests, one gameplay route, and manual
       keyboard and touch playtesting
+
+Copper Gorge (mission 4) places one AA gun beyond the first ridge and reduces tank
+and jet pressure while the new threat is learned. Pure AA timing/visibility tests and
+a keyboard browser bomb route pass. Manual keyboard and touch rescue trips remain
+before accepting AA; only then decide whether a SAM belongs here or in a later mission.
 
 Acceptance: The new defenses make the player plan altitude, approach, and attack
 timing while preserving fair landing and rescue opportunities. Add the SAM to that
@@ -315,11 +320,11 @@ in the rescue loop.
 - [x] Secondary weapon — air-to-air lock-on missile (pulled forward for jet balance)
 - [x] Bombs
 - [ ] Rockets
-- [ ] AA guns
+- [x] AA guns
 - [ ] SAM launchers
 - [x] Night mission
 - [x] Multiple levels
-- [ ] Additional feature-driven levels
+- [~] Additional feature-driven levels
 - [ ] Difficulty settings
 - [ ] Gamepad support
 - [x] Mobile controls
