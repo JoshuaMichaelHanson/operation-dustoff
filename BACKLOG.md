@@ -250,7 +250,9 @@ Do not implement until MVP is complete.
 ## Next Development Phases (priority order)
 
 Work through these phases in order, delivering and playtesting one vertical slice at a
-time. Reassess the remaining backlog after Phase 3. The sections below retain detailed
+time. Phases 4–8 target a seven-mission campaign: keep the six current missions and
+add only a boss finale. Validate fuel and weather in existing missions before the
+campaign pass assigns their final placement. The sections below retain detailed
 requirements; this roadmap determines what to work on next.
 
 ### Phase 1 - Make Rescues More Tense and Rewarding
@@ -317,12 +319,91 @@ silhouettes for this PR. A full 14-person victory trip remains a follow-up playt
 Acceptance: The player can fly an SF team to a threatened camp, deploy it, protect
 hostages from one truck-borne attack, rescue the survivors, and finish the mission.
 
-### After Phase 3 - Reassess
+### Phase 4 - Make Fuel a Rescue-Route Decision
 
-Use playtest feedback to choose among rockets, difficulty settings, gamepad support,
-local high scores, pause controls, an audio configurator, fuel, weather, and a boss
-helicopter. Keep new weapons or systems only when they create a distinct decision
-in the rescue loop.
+- [x] Introduce fuel as an optional `LevelConfig` rule in one existing mission;
+      validate it before enabling it elsewhere
+- [x] Drain fuel during flight, refill on a safe base landing, and show a readable
+      gauge, return warning, and clear outcome at empty fuel
+- [x] Tune a normal camp-to-base rescue trip to have a safe margin while long detours
+      and loitering make the player reconsider the route
+- [x] Cover fuel math, refilling, failure, HUD feedback, and keyboard/touch routes
+
+Acceptance: The player can judge whether to continue toward another camp or return
+to base, and never becomes stuck in an unwinnable state without clear feedback.
+
+### Phase 5 - Add Readable Weather
+
+- [ ] Introduce one gameplay weather rule in one existing mission: predictable
+      horizontal wind that changes flight planning without taking control away
+- [ ] Pair wind with restrained rain or dust visuals and a direction cue; keep POWs,
+      projectiles, landing surfaces, and solid terrain readable
+- [ ] Keep weather values in `LevelConfig`; validate calm and windy routes, including
+      fuel use and landing on keyboard and touch
+
+Acceptance: The player can anticipate wind, compensate during approach and landing,
+and still complete a rescue trip. Weather adds a decision beyond a new palette.
+
+### Phase 6 - Build the Boss Helicopter Finale
+
+- [ ] Add a distinct, destructible boss helicopter with telegraphed attacks, limited
+      attack patterns, readable health, and clear cannon/missile counterplay
+- [ ] Add one final authored mission, bringing the campaign to seven levels; require
+      both the rescue target and boss defeat, with the fight connected to a pickup
+      or return route
+- [ ] Limit simultaneous AA, SAM, jet, and ground threats so the boss remains legible
+- [ ] Test attack timing, damage, victory gating, and a focused browser encounter
+
+Acceptance: The player can evade and defeat the boss, bring survivors home, and see
+campaign completion only after both objectives are met.
+
+### Phase 7 - Refine the Full Campaign
+
+- [ ] Give each mission one clear new lesson while carrying forward a selected set of
+      earlier mechanics; the last mission culminates in the boss fight
+- [ ] Rebalance rescue targets, travel time, fuel, wind, and enemy placement across
+      the campaign instead of making every later mission longer or more crowded
+- [ ] Strengthen Copper Gorge with earlier tank/jet pressure around AA, Sable Reach
+      with a carefully spaced earlier threat around SAM, and Dustline Hold with jets
+      and a later truck wave or spaced air threat while SF defend POWs
+- [ ] Keep a maximum of seven selectable missions; reduce repeated trips or empty
+      travel where combinations make later missions demanding enough
+- [ ] Keep direct mission selection for testing and verify the whole campaign's
+      progression, carried score/lives, retry flow, and final victory
+- [ ] Complete a full keyboard playthrough and selected touch routes before acceptance
+
+Acceptance: The campaign builds on earlier mechanics without losing each mission's
+identity, and its total length remains practical to replay. AA, SAM, and SF missions
+gain challenge through placement and combinations rather than tougher health bars.
+
+Working seven-level ladder (fuel and weather placement stays adjustable after tests):
+
+| Level | Main lesson | Selected earlier pressure to carry forward |
+| --- | --- | --- |
+| 1 Green Valley | Rescue, tank, and basic flight | None |
+| 2 Highland Pass | Terrain and exposed-POW timing | Tank and jets |
+| 3 Black Ridge | Night route and tighter jet timing; introduce light fuel pressure | Terrain and POW timing |
+| 4 Copper Gorge | AA approach under meaningful pressure | Terrain, tank, jets, and fuel |
+| 5 Sable Reach | SAM counterplay; introduce readable wind | One spaced AA or jet threat, plus fuel |
+| 6 Dustline Hold | SF protection against truck infantry | Fuel or wind, jets, and one later truck wave or spaced air threat |
+| 7 Finale | Boss helicopter during a rescue | A small, legible selection of earlier threats and weather |
+
+### Phase 8 - Add Local High Scores
+
+- [ ] Record a small top-ten table for full campaign runs; exclude direct mission
+      selection from campaign rankings
+- [ ] Store anonymous score, furthest mission, completion, and date locally with
+      validation and graceful handling when browser storage is unavailable
+- [ ] Show the table on the title and end screens, and cover ordering, persistence,
+      and corrupted-data recovery with tests
+
+Acceptance: Completed and failed campaign runs appear in a local table after a
+restart. Scores are comparable because the campaign rules and scoring are settled.
+
+Gamepad/joystick support and the audio configurator remain later polish. Phaser's
+existing input system and browser-local storage are sufficient; do not add a backend
+or a new framework. Keep the campaign at seven missions unless playtesting makes a
+clear case to merge the boss into an existing mission and finish with six.
 
 ## Feature Inventory
 

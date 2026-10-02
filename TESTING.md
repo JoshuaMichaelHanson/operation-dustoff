@@ -140,6 +140,11 @@ Board survivors, return to base, and complete the 14-person rescue target. Also 
 the camp without deploying SF to confirm that the truck is a real threat. Verify
 the SF touch button is reachable and is hidden on missions without ground combat.
 
+Fuel checks on Dustline Hold: watch the gauge drain only while airborne, land inside
+the marked base zone to refill, and confirm a return cue appears before fuel runs out.
+Loiter until empty to confirm the loss says OUT OF FUEL, consumes one helicopter, and
+respawns with a full tank. Repeat the flight and landing with the touch stick.
+
 Pure tests should cover the virtual-stick dead zone, cardinal and diagonal direction
 selection, held Cannon state, one-shot Missile consumption, and touch capability
 detection.
@@ -188,7 +193,10 @@ Current routes:
    seven living hostages assigned to terrain-safe rally positions.
 8. Select Dustline Hold, transport and deploy both SF soldiers, open Camp 1, and
    retain checkpoints for the truck attack, the distinct SF and hostile silhouettes
-   during combat, POW boarding, the first rescue unload, and browser errors.
+   during combat, POW boarding, fuel on the base approach, the first rescue unload,
+   and browser errors.
+9. On Dustline Hold, drain fuel in flight, refill at base, retain a low-fuel cue and
+   empty-fuel loss checkpoint, and check that a replacement helicopter has a full tank.
 
 Each route retains a checkpoint PNG and `browser-console.json` under
 `test-results/gameplay/`. The console report includes warnings, errors, and uncaught page

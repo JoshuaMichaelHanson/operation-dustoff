@@ -29,6 +29,8 @@ describe('level configuration', () => {
     expect(LEVELS.slice(0, 5).every((level) => !level.groundCombat)).toBe(true);
     expect(LEVELS[5]!.groundCombat).toBe(true);
     expect(LEVELS[5]!.tankPositions).toHaveLength(0);
+    expect(LEVELS.map((level) => level.fuelCapacityMs ?? 0))
+      .toEqual([0, 0, 0, 0, 0, 55_000]);
   });
 
   it('provides enough hostages and keeps objectives inside each world', () => {

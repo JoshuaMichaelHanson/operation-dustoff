@@ -481,7 +481,9 @@ The campaign currently contains six selectable missions:
    Land by a camp and press `G` or tap SF to deploy them. Opening the first camp
    summons one reinforcement truck with three hostile infantry; deployed SF engage
    the squad while hostages run and board. The open ground route keeps the new
-   ground combat readable before terrain navigation is added.
+   ground combat readable before terrain navigation is added. This mission also
+   trials a 55-second airborne fuel tank: a safe base landing refills it, and an
+   empty tank costs a helicopter. Earlier missions have unlimited fuel.
 
 Starting at Green Valley advances through all six missions after each victory. Score
 and surviving helicopters carry forward; failure retries the current mission as a new
