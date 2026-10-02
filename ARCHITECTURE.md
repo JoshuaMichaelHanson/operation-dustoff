@@ -294,8 +294,14 @@ This keeps balancing changes cheap.
 
 Keep mission differences in a small `LevelConfig` data module consumed by the existing
 `GameScene`. Level data owns world length, rescue target, camp and tank positions, jet
-timing, AA and SAM positions, the ground-combat flag, solid flight obstacles, and environment colors. Do not create one scene class
+timing, AA and SAM positions, the ground-combat flag, optional fuel capacity, solid
+flight obstacles, and environment colors. Do not create one scene class
 per level or a general map engine.
+
+`FuelTank` keeps airborne fuel and the conservative base-return estimate independent
+of Phaser. `GameScene` drains it during flight, refills it on a safe base landing,
+and handles empty fuel as a helicopter loss. `Hud` shows the optional gauge and
+return cue only for fuel-enabled missions.
 
 The sixth mission creates a small `GroundCombat` system from its level flag.
 `GroundCombatModel` owns deterministic SF, truck, and hostile-unit state; the system

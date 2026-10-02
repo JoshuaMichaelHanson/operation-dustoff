@@ -1178,3 +1178,64 @@ five-person rescue unload; the full 14-person victory trip has not been manually
 verified. Keep that trip and physical phone/tablet SF-control checks as explicit
 follow-up playtests in `BACKLOG.md`. Reassess and plan the next phases after the PR.
 This acceptance update changes documentation only.
+
+## 2026-10-01 - Proposed Phases After Ground Combat
+
+The user proposed a boss helicopter, fuel, weather effects, and local high scores,
+followed by a campaign pass that carries earlier mechanics forward and ends with the
+boss. Gamepad/joystick support and sound configuration can wait as polish.
+
+The draft in `BACKLOG.md` recommends fuel first, weather second, and the boss third.
+Each changes flight or combat, so the finale should be tuned after their rules are
+known. Next, revise mission pacing and feature layering across the campaign. Put the
+local high-score table last so campaign runs are compared under stable scoring and
+mission lengths. This changes the user's tentative ordering and remains open for
+review. Proposed fuel and weather missions should be short; assess total campaign
+length before locking a final mission count. Keep input and weather rules in the
+existing Phaser/`LevelConfig` structure and use browser-local storage for scores.
+No gameplay code was changed while drafting this roadmap.
+
+## 2026-10-01 - Seven-Mission Campaign Target
+
+The user clarified that fuel and weather should be tested as mechanics, then combined
+with earlier enemies and SF across a compact campaign. AA, SAM, and Dustline Hold are
+currently too isolated or easy: AA and SAM each appear alone, while the SF mission has
+few jets and one truck. Target seven selectable missions total by keeping the six
+existing missions and adding one boss finale. Six remains an option if the final
+playtest shows that the boss fits an existing mission better.
+
+The revised `BACKLOG.md` introduces fuel and weather as optional `LevelConfig` rules
+in existing missions rather than adding separate fuel and weather levels. After those
+slices and the boss encounter work, the campaign pass will layer selected prior
+threats into later missions: more meaningful tank/jet pressure around AA, a spaced
+earlier threat around SAM, and another well-timed threat while SF guard POWs. Keep
+warnings readable and reduce repetitive travel so difficulty comes from decisions.
+The boss remains the final objective alongside rescuing survivors. Local high scores
+follow the campaign pass; joystick and sound configuration remain later polish.
+This roadmap change is documentation only.
+
+## 2026-10-01 - Phase 4 Fuel Trial in Dustline Hold
+
+Fuel is an optional `LevelConfig.fuelCapacityMs` rule, enabled only in Dustline Hold
+with a 55-second airborne tank. `FuelTank` owns deterministic drain, full refill,
+critical threshold, and a base-return estimate using 200 pixels/second plus a
+six-second landing reserve. Fuel does not drain while safely landed; refilling
+requires the existing safe base landing zone, the same rule used to unload POWs.
+The HUD adds a seconds/bar gauge and a directional return cue. Reaching zero uses
+the existing helicopter-loss and passenger-regroup path, shows an OUT OF FUEL
+notice, and gives a replacement helicopter a full tank if lives remain.
+
+The 45- and 50-second trials each showed about five seconds at the end of the
+existing Dustline SF rescue browser route in their respective runs, before an
+approach checkpoint was available to distinguish flight margin from landing
+timing. At 55 seconds, the approach checkpoint showed 43 seconds remaining
+with five POWs aboard, then 55 seconds after landing and unloading at base.
+Extended loitering still requires a return decision. The browser
+fuel check must keep the helicopter airborne through depletion; releasing Up near
+base let it land and legitimately refuel. The forced-touch check needs a browser
+context with `hasTouch: true`; the `?touch=1` query alone only shows touch controls.
+The unit suite has 129 passing tests. The full browser suite passed all 15 routes
+at the 50-second setting; after the final 55-second adjustment, all three
+Dustline routes passed, including keyboard depletion/refill, touch flight/refill,
+and the SF rescue route. Fuel failure screenshots show zero fuel, one life lost,
+an OUT OF FUEL notice, and a replacement helicopter with a full tank.

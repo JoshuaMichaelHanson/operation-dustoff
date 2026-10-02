@@ -22,6 +22,9 @@ export interface HudState {
   missileLocked: boolean;
   missileReady: boolean;
   bombReady: boolean;
+  fuelSeconds?: number;
+  fuelRatio?: number;
+  fuelWarning?: string;
   intel: string;
   threatWarning: string;
 }
@@ -36,10 +39,13 @@ export class Hud {
   private readonly passengersText: Phaser.GameObjects.Text;
   private readonly healthText: Phaser.GameObjects.Text;
   private readonly livesText: Phaser.GameObjects.Text;
+  private readonly fuelText: Phaser.GameObjects.Text | null;
+  private readonly fuelBar: Phaser.GameObjects.Graphics | null;
   private readonly statusText: Phaser.GameObjects.Text;
   private readonly intelText: Phaser.GameObjects.Text;
 
-  constructor(scene: Phaser.Scene, groundCombatEnabled = false) {
+  constructor(scene: Phaser.Scene, groundCombatEnabled = false,
+    fuelEnabled = false) {
     scene.add
       .rectangle(GAME_WIDTH / 2, 43, GAME_WIDTH, 86, 0x11150f, 0.92)
       .setScrollFactor(0)
@@ -53,7 +59,11 @@ export class Hud {
     this.rescuedText = this.createMetric(scene, 350, '#8fe388');
     this.passengersText = this.createMetric(scene, 610, '#9fc7c5');
     this.healthText = this.createMetric(scene, 850, '#8fe388');
-    this.livesText = this.createMetric(scene, 1090, '#d6dec3');
+    this.fuelText = fuelEnabled ? this.createMetric(scene, 1000, '#8fe388') : null;
+    this.fuelBar = fuelEnabled
+      ? scene.add.graphics().setScrollFactor(0).setDepth(1001) : null;
+    this.livesText = this.createMetric(scene,
+      fuelEnabled ? 1165 : 1090, '#d6dec3');
 
     scene.add
       .text(
@@ -109,6 +119,18 @@ export class Hud {
       .setText(`HULL ${state.health}`)
       .setColor(this.getHealthColor(state.health, state.maximumHealth));
     this.livesText.setText(`CHOPPERS ${state.lives}`);
+    if (this.fuelText && this.fuelBar && state.fuelRatio !== undefined) {
+      const ratio = Math.max(0, Math.min(1, state.fuelRatio));
+      const color = ratio <= 0.2 ? 0xe46b56
+        : ratio <= 0.4 ? 0xf3d45a : 0x8fe388;
+      this.fuelText.setText(`FUEL ${state.fuelSeconds ?? 0}s`)
+        .setColor(ratio <= 0.2 ? '#e46b56'
+          : ratio <= 0.4 ? '#f3d45a' : '#8fe388');
+      this.fuelBar.clear();
+      this.fuelBar.fillStyle(0x314039).fillRect(947, 35, 106, 5);
+      this.fuelBar.fillStyle(color).fillRect(949, 36,
+        Math.round(102 * ratio), 3);
+    }
 
     const flightState = state.isLanded ? 'LANDED' : 'AIRBORNE';
     const tankState = `${state.destroyedTanks}/${state.totalTanks}`;
@@ -121,8 +143,9 @@ export class Hud {
     this.statusText.setText(
       `L${state.levelNumber}/${state.levelCount}   ${flightState}   TANKS ${tankState}   CAMPS ${state.openCamps}/${state.totalCamps}${missileState}${bombState}`,
     );
-    this.intelText.setText(state.threatWarning || state.intel);
-    this.intelText.setColor(state.threatWarning ? '#ff7b62' : '#d6dec3');
+    const warning = state.threatWarning || state.fuelWarning;
+    this.intelText.setText(warning || state.intel);
+    this.intelText.setColor(warning ? '#ff7b62' : '#d6dec3');
   }
 
   private createMetric(
