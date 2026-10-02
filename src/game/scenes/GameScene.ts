@@ -52,6 +52,7 @@ import {
   isGroundPathClear,
 } from '../logic/hostageRally';
 import { formatIntelCue, nearestX } from '../logic/battlefieldIntel';
+import { FuelTank } from '../logic/fuel';
 import {
   canStartHostageThreat,
   HOSTAGE_THREAT,
@@ -120,6 +121,7 @@ export class GameScene extends Phaser.Scene {
   private nextHostageThreatAt = Number.POSITIVE_INFINITY;
   private fullLoadBonusReady = false;
   private groundCombat: GroundCombat | null = null;
+  private fuelTank: FuelTank | null = null;
 
   constructor() {
     super('GameScene');
@@ -151,6 +153,8 @@ export class GameScene extends Phaser.Scene {
     this.nextHostageThreatAt = Number.POSITIVE_INFINITY;
     this.fullLoadBonusReady = false;
     this.groundCombat = null;
+    this.fuelTank = this.level.fuelCapacityMs
+      ? new FuelTank(this.level.fuelCapacityMs) : null;
     this.gameState = new GameState(this.level.rescueTarget, {
       score: this.initialScore,
       lives: this.initialLives,
@@ -403,6 +407,16 @@ export class GameScene extends Phaser.Scene {
   update(time: number, delta: number): void {
     this.touchControls?.update();
     const shot = this.helicopter.update(time);
+    if (this.fuelTank && !this.playerDestroyed) {
+      const fuelEvent = this.fuelTank.update(delta,
+        !this.helicopter.isLanded,
+        this.rescueBase.canUnload(this.helicopter));
+      if (fuelEvent === 'empty') {
+        this.destroyHelicopter('OUT OF FUEL');
+        this.updateHud();
+        return;
+      }
+    }
     this.touchControls?.setFacingDirection(this.helicopter.facingDirection);
     if (this.playerInput.consumeSfPress() && this.groundCombat &&
       !this.playerDestroyed &&
@@ -804,7 +818,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createFlightDisplay(): void {
-    this.hud = new Hud(this, !!this.groundCombat);
+    this.hud = new Hud(this, !!this.groundCombat, !!this.fuelTank);
 
     this.targetText = this.add
       .text(
@@ -812,10 +826,14 @@ export class GameScene extends Phaser.Scene {
         GAME_HEIGHT - 38,
         `L${this.levelIndex + 1}: ${this.level.name} — ${this.level.samPositions.length > 0
           ? 'FLY LOW TO BREAK SAM LOCK OR BOMB THE LAUNCHER'
+          : this.groundCombat && this.fuelTank
+          ? 'CARRY SF TO CAMP — G: DEPLOY; BASE REFUELS FUEL'
           : this.groundCombat
           ? 'CARRY SF TO A CAMP — LAND AND PRESS G TO DEPLOY'
           : this.level.aaPositions.length > 0
           ? 'FLY LOW OR BOMB THE AA GUN'
+          : this.fuelTank
+          ? 'FUEL LIMITED — REFILL BY LANDING AT BASE'
           : 'DESTROY TANKS AND CAMPS'}`,
         {
           backgroundColor: '#243128',
@@ -853,6 +871,13 @@ export class GameScene extends Phaser.Scene {
       missileLocked: this.getMissileLockTarget() !== null,
       missileReady: this.helicopter.isMissileReady(this.time.now),
       bombReady: this.helicopter.isBombReady(this.time.now),
+      fuelSeconds: this.fuelTank?.secondsRemaining,
+      fuelRatio: this.fuelTank?.ratio,
+      fuelWarning: this.fuelTank?.shouldReturn(
+        Math.abs(this.helicopter.x - RESCUE_BASE.centerX))
+        ? `${this.fuelTank.isCritical ? 'FUEL CRITICAL' : 'FUEL LOW'} — RETURN TO ${formatIntelCue(
+          'BASE', this.helicopter.x, RESCUE_BASE.centerX)}`
+        : '',
       intel: [
         formatIntelCue('BASE', this.helicopter.x, RESCUE_BASE.centerX),
         formatIntelCue('POW', this.helicopter.x, nearestX(
@@ -1345,7 +1370,7 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private destroyHelicopter(): void {
+  private destroyHelicopter(cause?: 'OUT OF FUEL'): void {
     this.playerDestroyed = true;
     this.clearHostageThreat(this.time.now);
     for (const aaGun of this.aaGuns) {
@@ -1384,11 +1409,12 @@ export class GameScene extends Phaser.Scene {
     this.destroyProjectiles(this.samMissiles);
     this.destroyProjectiles(this.bombs);
     this.showHelicopterExplosion(explosionX, explosionY);
+    if (cause === 'OUT OF FUEL') this.showFuelFailureNotice();
 
     this.targetText.setText(
       this.gameState.isGameOver
-        ? 'ALL HELICOPTERS LOST'
-        : `HELICOPTER LOST — ${this.gameState.lives} REMAINING`,
+        ? cause ?? 'ALL HELICOPTERS LOST'
+        : `${cause ?? 'HELICOPTER LOST'} — ${this.gameState.lives} REMAINING`,
     );
     this.targetText.setColor('#e46b56');
 
@@ -1397,7 +1423,7 @@ export class GameScene extends Phaser.Scene {
         this.scene.start('GameOverScene', {
           rescued: this.gameState.rescued,
           score: this.gameState.score,
-          reason: 'ALL HELICOPTERS LOST',
+          reason: cause ?? 'ALL HELICOPTERS LOST',
           levelIndex: this.levelIndex,
         });
       });
@@ -1409,6 +1435,7 @@ export class GameScene extends Phaser.Scene {
         PLAYER.respawnX,
         RESCUE_BASE.surfaceY - 21,
       );
+      this.fuelTank?.refill();
       this.playerDestroyed = false;
       this.configureCamera();
       this.updateObjectiveText();
@@ -1417,6 +1444,29 @@ export class GameScene extends Phaser.Scene {
 
   private showHelicopterExplosion(x: number, y: number): void {
     this.showExplosion(x, y, 28, 18, 240, 0.01);
+  }
+
+  private showFuelFailureNotice(): void {
+    const notice = this.add.text(
+      GAME_WIDTH / 2,
+      182,
+      'OUT OF FUEL — HELICOPTER LOST',
+      {
+        backgroundColor: '#35221d',
+        color: '#f4a180',
+        fontFamily: 'Courier New',
+        fontSize: '20px',
+        fontStyle: 'bold',
+        padding: { x: 12, y: 7 },
+      },
+    ).setOrigin(0.5).setScrollFactor(0).setDepth(1500);
+    this.tweens.add({
+      targets: notice,
+      alpha: 0,
+      delay: 2_200,
+      duration: 800,
+      onComplete: () => notice.destroy(),
+    });
   }
 
   private showPassengerRegroupNotice(count: number): void {

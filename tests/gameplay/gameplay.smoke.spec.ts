@@ -75,8 +75,9 @@ async function holdKeys(
   }
 }
 
-async function startGame(page: Page, levelIndex = 0): Promise<void> {
-  await page.goto('/');
+async function startGame(page: Page, levelIndex = 0,
+  touch = false): Promise<void> {
+  await page.goto(touch ? '/?touch=1' : '/');
   await expect(page.locator('#game canvas')).toBeVisible();
   for (let index = 0; index < levelIndex; index += 1) {
     await page.mouse.click(1_105, 539);
@@ -140,6 +141,61 @@ test('renders solid terrain and distinct environments on harder missions', async
   await attachConsoleReport(testInfo, issues);
 
   expect(issues).toEqual([]);
+});
+
+test('drains and refills Dustline Hold fuel, then warns before an empty tank', async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(90_000);
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page, 5);
+  await attachScreenshot(page, testInfo, 'fuel-full-at-base');
+  await holdKeys(page, ['ArrowUp', 'ArrowRight'], 2_800);
+  await attachScreenshot(page, testInfo, 'fuel-used-in-flight');
+  await holdKeys(page, ['ArrowUp', 'ArrowLeft'], 3_000);
+  await holdKeys(page, ['ArrowDown'], 4_300);
+  await holdKeys(page, ['ArrowRight'], 350);
+  await page.waitForTimeout(500);
+  await attachScreenshot(page, testInfo, 'fuel-refilled-at-base');
+  await holdKeys(page, ['ArrowUp', 'ArrowRight'], 2_000);
+  await page.keyboard.down('ArrowUp');
+  try {
+    await page.waitForTimeout(47_000);
+    await attachScreenshot(page, testInfo, 'fuel-return-warning');
+    await page.waitForTimeout(6_300);
+    await attachScreenshot(page, testInfo, 'fuel-empty-life-lost');
+  } finally {
+    await page.keyboard.up('ArrowUp');
+  }
+  await page.waitForTimeout(2_500);
+  await attachScreenshot(page, testInfo, 'fuel-respawned-full');
+  await attachConsoleReport(testInfo, issues);
+
+  expect(issues).toEqual([]);
+});
+
+test('shows Dustline Hold fuel through a touch flight and base landing', async ({
+  browser,
+}, testInfo) => {
+  const context = await browser.newContext({
+    hasTouch: true,
+    viewport: { width: 1280, height: 720 },
+  });
+  const page = await context.newPage();
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page, 5, true);
+  await attachScreenshot(page, testInfo, 'fuel-touch-full');
+  await holdTouch(page, 145, 585, 145, 520, 1_800);
+  await attachScreenshot(page, testInfo, 'fuel-touch-airborne');
+  await holdTouch(page, 145, 585, 145, 660, 3_000);
+  await page.waitForTimeout(500);
+  await attachScreenshot(page, testInfo, 'fuel-touch-refilled');
+  await attachConsoleReport(testInfo, issues);
+
+  expect(issues).toEqual([]);
+  await context.close();
 });
 
 test('drops a bomb over the Highland Pass ridge to destroy its armored tank', async ({
@@ -266,6 +322,7 @@ test('carries SF to Dustline Hold and defends a released POW camp', async ({
   await attachScreenshot(page, testInfo, 'level-6-sf-ground-defense');
   await page.waitForTimeout(2_000);
   await holdKeys(page, ['ArrowUp', 'ArrowLeft'], 5_000);
+  await attachScreenshot(page, testInfo, 'level-6-return-approach');
   await holdKeys(page, ['ArrowDown'], 4_000);
   await page.waitForTimeout(5_500);
   await attachScreenshot(page, testInfo, 'level-6-survivors-rescued');

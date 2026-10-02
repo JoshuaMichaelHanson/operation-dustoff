@@ -35,6 +35,7 @@ export interface LevelConfig {
   aaPositions: readonly number[];
   samPositions: readonly number[];
   groundCombat?: boolean;
+  fuelCapacityMs?: number;
   jetInitialSpawnDelayMs: number;
   jetSpawnIntervalMs: number;
   flightObstacles: readonly FlightObstacleConfig[];
@@ -203,6 +204,7 @@ export const LEVELS: readonly LevelConfig[] = [
     aaPositions: [],
     samPositions: [],
     groundCombat: true,
+    fuelCapacityMs: 55_000,
     jetInitialSpawnDelayMs: 60000,
     jetSpawnIntervalMs: 30000,
     flightObstacles: [],
