@@ -122,6 +122,7 @@ export class GameScene extends Phaser.Scene {
   private fullLoadBonusReady = false;
   private groundCombat: GroundCombat | null = null;
   private fuelTank: FuelTank | null = null;
+  private dustStreaks: Phaser.GameObjects.Rectangle[] = [];
 
   constructor() {
     super('GameScene');
@@ -155,6 +156,7 @@ export class GameScene extends Phaser.Scene {
     this.groundCombat = null;
     this.fuelTank = this.level.fuelCapacityMs
       ? new FuelTank(this.level.fuelCapacityMs) : null;
+    this.dustStreaks = [];
     this.gameState = new GameState(this.level.rescueTarget, {
       score: this.initialScore,
       lives: this.initialLives,
@@ -183,6 +185,8 @@ export class GameScene extends Phaser.Scene {
       PLAYER.respawnX,
       RESCUE_BASE.surfaceY - 21,
       this.playerInput,
+      this.level.wind?.acceleration ?? 0,
+      this.level.wind?.maximumDriftSpeed ?? 0,
     );
     this.audioManager = new AudioManager(this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -405,6 +409,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
+    this.updateWindDust(delta);
     this.touchControls?.update();
     const shot = this.helicopter.update(time);
     if (this.fuelTank && !this.playerDestroyed) {
@@ -610,6 +615,7 @@ export class GameScene extends Phaser.Scene {
       this.createNightSkyDetails();
     }
     this.createClouds();
+    this.createWindDust();
 
     for (let x = -1024; x <= this.level.worldWidth + 1024; x += 512) {
       this.add
@@ -690,6 +696,32 @@ export class GameScene extends Phaser.Scene {
         .setScrollFactor(0.1 + frame * 0.025, 0.2)
         .setAlpha(Phaser.Math.FloatBetween(minimumAlpha, maximumAlpha))
         .setDepth(-29);
+    }
+  }
+
+  private createWindDust(): void {
+    const wind = this.level.wind;
+    if (!wind) return;
+    for (let index = 0; index < 26; index += 1) {
+      const streak = this.add.rectangle(
+        (index * 227 + 41) % GAME_WIDTH,
+        145 + ((index * 83) % 480),
+        18 + (index % 4) * 7,
+        2,
+        wind.dustColor,
+        0.16,
+      ).setScrollFactor(0).setDepth(-4);
+      this.dustStreaks.push(streak);
+    }
+  }
+
+  private updateWindDust(delta: number): void {
+    const direction = Math.sign(this.level.wind?.acceleration ?? 0);
+    if (direction === 0) return;
+    for (const streak of this.dustStreaks) {
+      streak.x += direction * 42 * Math.min(delta, 50) / 1000;
+      if (streak.x > GAME_WIDTH + 30) streak.x = -30;
+      if (streak.x < -30) streak.x = GAME_WIDTH + 30;
     }
   }
 
@@ -818,16 +850,21 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createFlightDisplay(): void {
-    this.hud = new Hud(this, !!this.groundCombat, !!this.fuelTank);
+    this.hud = new Hud(this, !!this.groundCombat, !!this.fuelTank,
+      this.level.wind ? Math.sign(this.level.wind.acceleration) as -1 | 1
+        : undefined);
+    const windHint = this.level.wind
+      ? `WIND PUSHES ${this.level.wind.acceleration > 0 ? 'RIGHT' : 'LEFT'}`
+      : '';
 
     this.targetText = this.add
       .text(
         GAME_WIDTH / 2,
         GAME_HEIGHT - 38,
         `L${this.levelIndex + 1}: ${this.level.name} — ${this.level.samPositions.length > 0
-          ? 'FLY LOW TO BREAK SAM LOCK OR BOMB THE LAUNCHER'
+          ? `FLY LOW TO BREAK SAM LOCK OR BOMB THE LAUNCHER${windHint ? `; ${windHint}` : ''}`
           : this.groundCombat && this.fuelTank
-          ? 'CARRY SF TO CAMP — G: DEPLOY; BASE REFUELS FUEL'
+          ? `CARRY SF TO CAMP — G: DEPLOY; ${windHint ? `${windHint}; ` : ''}BASE REFUELS`
           : this.groundCombat
           ? 'CARRY SF TO A CAMP — LAND AND PRESS G TO DEPLOY'
           : this.level.aaPositions.length > 0

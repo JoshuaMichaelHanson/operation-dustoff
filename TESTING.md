@@ -145,6 +145,14 @@ the marked base zone to refill, and confirm a return cue appears before fuel run
 Loiter until empty to confirm the loss says OUT OF FUEL, consumes one helicopter, and
 respawns with a full tank. Repeat the flight and landing with the touch stick.
 
+Weather checks: on Sable Reach, confirm `WIND ←` and the dust move left while
+approaching the SAM. Countersteer and land on the base deck with the touch stick.
+On Dustline Hold, confirm `WIND →` and right-moving dust. Release horizontal
+input in flight, countersteer, and land near Camp 1; the helicopter should settle
+when grounded. Carry POWs back while watching fuel, land at base, and confirm
+rescue scoring and refill. Repeat takeoff and base landing with touch controls.
+Select Green Valley to compare a calm route.
+
 Pure tests should cover the virtual-stick dead zone, cardinal and diagonal direction
 selection, held Cannon state, one-shot Missile consumption, and touch capability
 detection.
@@ -197,6 +205,9 @@ Current routes:
    and browser errors.
 9. On Dustline Hold, drain fuel in flight, refill at base, retain a low-fuel cue and
    empty-fuel loss checkpoint, and check that a replacement helicopter has a full tank.
+10. Check leftward wind on Sable Reach through a keyboard SAM approach and a
+    touch flight that corrects onto the base deck; compare Dustline's rightward
+    wind during its keyboard rescue and touch fuel routes.
 
 Each route retains a checkpoint PNG and `browser-console.json` under
 `test-results/gameplay/`. The console report includes warnings, errors, and uncaught page

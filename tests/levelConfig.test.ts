@@ -31,6 +31,15 @@ describe('level configuration', () => {
     expect(LEVELS[5]!.tankPositions).toHaveLength(0);
     expect(LEVELS.map((level) => level.fuelCapacityMs ?? 0))
       .toEqual([0, 0, 0, 0, 0, 55_000]);
+    expect(LEVELS.slice(0, 4).every((level) => !level.wind)).toBe(true);
+    expect(LEVELS[4]!.wind).toMatchObject({
+      acceleration: -30,
+      maximumDriftSpeed: 40,
+    });
+    expect(LEVELS[5]!.wind).toMatchObject({
+      acceleration: 30,
+      maximumDriftSpeed: 40,
+    });
   });
 
   it('provides enough hostages and keeps objectives inside each world', () => {

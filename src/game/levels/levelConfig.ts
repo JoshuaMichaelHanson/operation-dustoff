@@ -36,6 +36,11 @@ export interface LevelConfig {
   samPositions: readonly number[];
   groundCombat?: boolean;
   fuelCapacityMs?: number;
+  wind?: {
+    acceleration: number;
+    maximumDriftSpeed: number;
+    dustColor: number;
+  };
   jetInitialSpawnDelayMs: number;
   jetSpawnIntervalMs: number;
   flightObstacles: readonly FlightObstacleConfig[];
@@ -173,6 +178,11 @@ export const LEVELS: readonly LevelConfig[] = [
     tankPositions: [],
     aaPositions: [],
     samPositions: [1690],
+    wind: {
+      acceleration: -30,
+      maximumDriftSpeed: 40,
+      dustColor: 0xc7c395,
+    },
     jetInitialSpawnDelayMs: 8000,
     jetSpawnIntervalMs: 18000,
     flightObstacles: [
@@ -205,6 +215,11 @@ export const LEVELS: readonly LevelConfig[] = [
     samPositions: [],
     groundCombat: true,
     fuelCapacityMs: 55_000,
+    wind: {
+      acceleration: 30,
+      maximumDriftSpeed: 40,
+      dustColor: 0xe4d2a7,
+    },
     jetInitialSpawnDelayMs: 60000,
     jetSpawnIntervalMs: 30000,
     flightObstacles: [],
