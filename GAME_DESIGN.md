@@ -485,6 +485,13 @@ The campaign currently contains six selectable missions:
    trials a 55-second airborne fuel tank: a safe base landing refills it, and an
    empty tank costs a helicopter. Earlier missions have unlimited fuel.
 
+Sable Reach trials steady leftward wind; Dustline Hold pushes right while also
+testing fuel. In flight, steering still controls the helicopter, while releasing
+horizontal input lets it settle into a modest downwind drift. Ground contact stops
+the wind push. Sparse moving dust and a persistent direction arrow make the
+condition readable without hiding POWs, projectiles, or landing surfaces. The
+first four missions stay calm until the campaign balance pass.
+
 Starting at Green Valley advances through all six missions after each victory. Score
 and surviving helicopters carry forward; failure retries the current mission as a new
 run. The title screen also allows direct mission selection so later missions can be

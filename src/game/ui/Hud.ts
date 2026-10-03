@@ -45,7 +45,7 @@ export class Hud {
   private readonly intelText: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene, groundCombatEnabled = false,
-    fuelEnabled = false) {
+    fuelEnabled = false, windDirection?: -1 | 1) {
     scene.add
       .rectangle(GAME_WIDTH / 2, 43, GAME_WIDTH, 86, 0x11150f, 0.92)
       .setScrollFactor(0)
@@ -105,6 +105,13 @@ export class Hud {
       fontSize: '15px',
       fontStyle: 'bold',
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(1001);
+    if (windDirection) scene.add.text(22, 90,
+      `WIND ${windDirection > 0 ? '→' : '←'}`, {
+        color: '#e4d2a7',
+        fontFamily: 'Courier New',
+        fontSize: '15px',
+        fontStyle: 'bold',
+      }).setScrollFactor(0).setDepth(1001);
   }
 
   update(state: HudState): void {

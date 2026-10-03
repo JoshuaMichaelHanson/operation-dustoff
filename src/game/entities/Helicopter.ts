@@ -8,6 +8,7 @@ import {
   getFlightAttitude,
   getHorizontalControlAcceleration,
   getHorizontalDrag,
+  getWindAcceleration,
   getVerticalControlAcceleration,
   isSafeLanding,
 } from '../logic/helicopterMotion';
@@ -50,6 +51,8 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     x: number,
     y: number,
     private readonly controls: PlayerInput,
+    private readonly windAcceleration = 0,
+    private readonly maximumWindDriftSpeed = 0,
   ) {
     super(scene, x, y, 'helicopter');
 
@@ -196,7 +199,9 @@ export class Helicopter extends Phaser.Physics.Arcade.Sprite {
     const touchingGround = body.blocked.down || body.touching.down;
     body.setDragX(getHorizontalDrag(touchingGround, horizontalInput));
     body.setAccelerationX(
-      getHorizontalControlAcceleration(horizontalInput, body.velocity.x),
+      getHorizontalControlAcceleration(horizontalInput, body.velocity.x) +
+      getWindAcceleration(this.windAcceleration, this.maximumWindDriftSpeed,
+        body.velocity.x, horizontalInput, touchingGround),
     );
 
     const verticalInput = this.controls.verticalDirection;

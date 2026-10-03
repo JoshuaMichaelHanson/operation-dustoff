@@ -1239,3 +1239,44 @@ at the 50-second setting; after the final 55-second adjustment, all three
 Dustline routes passed, including keyboard depletion/refill, touch flight/refill,
 and the SF rescue route. Fuel failure screenshots show zero fuel, one life lost,
 an OUT OF FUEL notice, and a replacement helicopter with a full tank.
+
+## 2026-10-02 - Phase 5 Weather Trial in Dustline Hold
+
+Dustline Hold now uses optional level data for a steady rightward wind: 25 px/s²
+while steering, with a 35 px/s hands-off drift. Releasing horizontal input eases
+toward that drift instead of leaving the previous velocity untouched. Wind stops
+on ground contact, so a safe landing and base refuel remain possible. A fixed HUD
+arrow and sparse, faint moving dust streaks communicate direction without covering
+units or terrain. The first five missions stay calm.
+
+Pitfall: Phaser Arcade ignores horizontal drag while nonzero acceleration is set.
+Simply adding a constant wind acceleration let the helicopter continue sliding
+after the player released the stick. The pure wind rule now supplies bounded
+braking toward the drift speed; ground contact restores the original drag. The
+existing Dustline browser rescue route also needed a shorter final outbound
+steer so it opened Camp 1 rather than firing past it into Camp 2. The updated
+keyboard route shows a POW unloaded and fuel refilled; the touch route shows a
+windy takeoff and safe base landing. Pure tests cover calm, grounded, downwind,
+and countersteering cases.
+Final verification: 131 Vitest tests, the production build, and all 15 browser
+routes pass with no captured browser console errors. The windy Dustline route
+unloaded one POW at base in the final full-suite run; the scripted result is a
+checkpoint, not a full 14-person mission victory or a physical-device feel test.
+
+## 2026-10-02 - Wind Strength and Opposite Mission Directions
+
+The user found the first Dustline wind acceptable and requested a slight increase
+plus different directions by mission. Sable Reach now pushes left and Dustline
+Hold pushes right, each at 30 px/s² steering influence and a 40 px/s hands-off
+drift. Missions 1–4 remain calm. The existing HUD arrow and dust animation
+derive their direction from the signed level value, and Sable's mission cue now
+calls out its leftward push. The Sable keyboard SAM route still destroys the
+launcher; its new touch route countersteers and lands on the base deck. Dustline's
+keyboard route still unloads a POW and refills fuel, and its touch route still
+lands safely with a full tank. Physical-device feel and full mission victories
+remain separate playtest checks.
+Verification: 131 Vitest tests and the production build pass. Five focused
+browser routes pass without captured browser errors: Sable SAM, Sable touch
+landing, Dustline keyboard rescue, Dustline touch refill, and Dustline airborne
+fuel depletion. The depletion screenshots show a base refill, an empty-fuel life
+loss, and a replacement helicopter with a full tank.
