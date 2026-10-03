@@ -41,6 +41,22 @@ export function getHorizontalControlAcceleration(
   return inputDirection * acceleration;
 }
 
+export function getWindAcceleration(
+  windAcceleration: number,
+  maximumDriftSpeed: number,
+  velocityX: number,
+  inputDirection: ControlDirection,
+  touchingGround: boolean,
+): number {
+  if (touchingGround || windAcceleration === 0) return 0;
+  if (inputDirection !== 0) return windAcceleration;
+
+  const targetSpeed = Math.sign(windAcceleration) * maximumDriftSpeed;
+  const correction = (targetSpeed - velocityX) * 2;
+  return Math.max(-HELICOPTER.horizontalDrag,
+    Math.min(HELICOPTER.horizontalDrag, correction));
+}
+
 export function getVerticalControlAcceleration(
   inputDirection: ControlDirection,
 ): number {

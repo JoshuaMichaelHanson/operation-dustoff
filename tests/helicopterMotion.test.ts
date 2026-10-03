@@ -5,6 +5,7 @@ import {
   getHorizontalControlAcceleration,
   getFlightAttitude,
   getHorizontalDrag,
+  getWindAcceleration,
   getVerticalControlAcceleration,
   isSafeLanding,
 } from '../src/game/logic/helicopterMotion';
@@ -109,5 +110,22 @@ describe('helicopter landing rules', () => {
         velocityY: HELICOPTER.safeLandingVerticalSpeed + 1,
       }),
     ).toBe(false);
+  });
+});
+
+describe('wind flight rules', () => {
+  it('pushes an airborne helicopter and caps its hands-off drift', () => {
+    expect(getWindAcceleration(30, 40, 0, 0, false)).toBe(80);
+    expect(getWindAcceleration(30, 40, 40, 0, false)).toBe(0);
+    expect(getWindAcceleration(-30, 40, 0, 0, false)).toBe(-80);
+    expect(getWindAcceleration(-30, 40, -40, 0, false)).toBe(0);
+  });
+
+  it('brakes released controls without overpowering countersteering', () => {
+    expect(getWindAcceleration(30, 40, -260, 0, false)).toBe(190);
+    expect(getWindAcceleration(30, 40, 260, 0, false)).toBe(-190);
+    expect(getWindAcceleration(30, 40, 80, -1, false)).toBe(30);
+    expect(getWindAcceleration(30, 40, 0, 0, true)).toBe(0);
+    expect(getWindAcceleration(0, 0, 0, 0, false)).toBe(0);
   });
 });

@@ -303,6 +303,12 @@ of Phaser. `GameScene` drains it during flight, refills it on a safe base landin
 and handles empty fuel as a helicopter loss. `Hud` shows the optional gauge and
 return cue only for fuel-enabled missions.
 
+Optional `LevelConfig.wind` holds horizontal acceleration, hands-off drift speed,
+and dust tint. `Helicopter` applies the pure wind rule while airborne and retains
+its usual ground handling. `GameScene` animates sparse screen-space dust, while
+`Hud` displays a fixed direction arrow. Weather does not change projectiles or
+hostage movement.
+
 The sixth mission creates a small `GroundCombat` system from its level flag.
 `GroundCombatModel` owns deterministic SF, truck, and hostile-unit state; the system
 draws silhouettes and short combat tracers. `GameScene` passes released POW positions

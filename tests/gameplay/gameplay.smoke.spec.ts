@@ -289,6 +289,29 @@ test('approaches the Sable Reach SAM and drops a bomb without browser errors', a
   expect(issues).toEqual([]);
 });
 
+test('lands by touch against the leftward Sable Reach wind', async ({
+  browser,
+}, testInfo) => {
+  const context = await browser.newContext({
+    hasTouch: true,
+    viewport: { width: 1280, height: 720 },
+  });
+  const page = await context.newPage();
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page, 4, true);
+  await holdTouch(page, 145, 585, 210, 520, 1_000);
+  await attachScreenshot(page, testInfo, 'level-5-left-wind-touch-flight');
+  await holdTouch(page, 145, 585, 80, 660, 500);
+  await holdTouch(page, 145, 585, 145, 660, 3_000);
+  await page.waitForTimeout(400);
+  await attachScreenshot(page, testInfo, 'level-5-left-wind-touch-landing');
+  await attachConsoleReport(testInfo, issues);
+
+  expect(issues).toEqual([]);
+  await context.close();
+});
+
 test('carries SF to Dustline Hold and defends a released POW camp', async ({
   page,
 }, testInfo) => {
@@ -303,7 +326,7 @@ test('carries SF to Dustline Hold and defends a released POW camp', async ({
       await page.keyboard.down('ArrowUp');
       await page.waitForTimeout(260);
       await page.keyboard.up('ArrowUp');
-      await page.waitForTimeout(840);
+      await page.waitForTimeout(segment === 4 ? 250 : 840);
     }
   } finally {
     await page.keyboard.up('ArrowRight');

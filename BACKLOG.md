@@ -334,12 +334,20 @@ to base, and never becomes stuck in an unwinnable state without clear feedback.
 
 ### Phase 5 - Add Readable Weather
 
-- [ ] Introduce one gameplay weather rule in one existing mission: predictable
+- [x] Introduce one gameplay weather rule in existing missions: predictable
       horizontal wind that changes flight planning without taking control away
-- [ ] Pair wind with restrained rain or dust visuals and a direction cue; keep POWs,
+- [x] Pair wind with restrained rain or dust visuals and a direction cue; keep POWs,
       projectiles, landing surfaces, and solid terrain readable
-- [ ] Keep weather values in `LevelConfig`; validate calm and windy routes, including
+- [x] Keep weather values in `LevelConfig`; validate calm and windy routes, including
       fuel use and landing on keyboard and touch
+
+Sable Reach pushes left and Dustline Hold pushes right; both use a modestly stronger
+30 px/s² wind with a 40 px/s hands-off drift. Dustline combines wind with fuel.
+The helicopter eases toward the downwind drift when controls are released, so
+approach timing changes with direction. A persistent HUD arrow and sparse moving
+dust reveal the condition. Missions 1–4 stay calm. Pure wind rules, Sable keyboard
+SAM and touch landing routes, and Dustline keyboard rescue/touch fuel routes are
+covered; physical-device control feel remains in the playtesting section below.
 
 Acceptance: The player can anticipate wind, compensate during approach and landing,
 and still complete a rescue trip. Weather adds a decision beyond a new palette.
@@ -422,8 +430,8 @@ clear case to merge the boss into an existing mission and finish with six.
 - [ ] Local high-score table
 - [x] Full-load rescue bonus
 - [ ] Boss helicopter
-- [ ] Fuel
-- [ ] Weather effects
+- [x] Fuel
+- [x] Weather effects
 - [x] POW panic / dive-for-cover behavior
 - [ ] Pause and resume from keyboard and touch controls
 
