@@ -281,7 +281,7 @@ Properties:
 
 ### Air-to-Air Missile
 
-The lock-on missile is the anti-jet secondary weapon. It launches with `X`, requires a
+The lock-on missile is the anti-jet and anti-boss secondary weapon. It launches with `X`, requires a
 valid target in front of the helicopter, and has its own reload time.
 
 ### Bomb
@@ -462,7 +462,7 @@ never reduce the clarity of collision boundaries or gameplay silhouettes.
 
 ### Authored Mission Progression (Post-MVP)
 
-The campaign currently contains six selectable missions:
+The campaign currently contains seven selectable missions:
 
 1. **Green Valley — Standard:** the accepted original battlefield with one tank,
    three camps, sparse clouds, and no solid flight-path terrain.
@@ -484,6 +484,17 @@ The campaign currently contains six selectable missions:
    ground combat readable before terrain navigation is added. This mission also
    trials a 55-second airborne fuel tank: a safe base landing refills it, and an
    empty tank costs a helicopter. Earlier missions have unlimited fuel.
+7. **Last Light — Finale:** a distinct armored helicopter patrols the approach to
+   Camp 1. Its visible aim line warns before aimed fire, spread fire, and a
+   limited air-launched missile volley. The boss carries three missiles total;
+   they steer briefly, then fly straight and expire. Their speed is below the
+   player's top horizontal speed, so a timely retreat can outrun them.
+   Cannon rounds or five locked air-to-air missiles can destroy it; a fixed HUD
+   gauge shows its fifteen hull points and the faster damaged phase. The player
+   must also bring six POWs home.
+   Two camps provide rescue supply, one low ridge shapes the approach, and AA,
+   ground SAM launchers, ground squads, and jets during the boss fight stay out
+   of this encounter.
 
 Sable Reach trials steady leftward wind; Dustline Hold pushes right while also
 testing fuel. In flight, steering still controls the helicopter, while releasing
@@ -492,7 +503,7 @@ the wind push. Sparse moving dust and a persistent direction arrow make the
 condition readable without hiding POWs, projectiles, or landing surfaces. The
 first four missions stay calm until the campaign balance pass.
 
-Starting at Green Valley advances through all six missions after each victory. Score
+Starting at Green Valley advances through all seven missions after each victory. Score
 and surviving helicopters carry forward; failure retries the current mission as a new
 run. The title screen also allows direct mission selection so later missions can be
 tested without completing the full campaign first.

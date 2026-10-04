@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { MISSILE, WORLD_HEIGHT } from '../constants';
 import { getHomingMissileVelocity } from '../logic/missileGuidance';
 import type { Jet } from './Jet';
+import type { BossHelicopter } from './BossHelicopter';
 
 export class HomingMissile extends Phaser.Physics.Arcade.Sprite {
   private nextTrailAt: number;
@@ -12,7 +13,7 @@ export class HomingMissile extends Phaser.Physics.Arcade.Sprite {
     x: number,
     y: number,
     direction: -1 | 1,
-    private readonly target: Jet,
+    private readonly target: Jet | BossHelicopter,
     private readonly launchedAt: number,
     private readonly worldWidth: number,
   ) {

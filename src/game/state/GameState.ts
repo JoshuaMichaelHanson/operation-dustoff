@@ -5,10 +5,12 @@ export class GameState {
   private rescuedHostages = 0;
   private currentScore: number;
   private remainingLives: number;
+  private bossDefeated = false;
 
   constructor(
     private readonly target: number = MISSION.rescueTarget,
     initial?: { score?: number; lives?: number },
+    private readonly requiresBoss = false,
   ) {
     this.currentScore = Math.max(0, initial?.score ?? 0);
     this.remainingLives = Math.max(
@@ -34,7 +36,16 @@ export class GameState {
   }
 
   get isVictory(): boolean {
-    return this.rescuedHostages >= this.target;
+    return this.rescuedHostages >= this.target &&
+      (!this.requiresBoss || this.bossDefeated);
+  }
+
+  get isBossDefeated(): boolean {
+    return this.bossDefeated;
+  }
+
+  defeatBoss(): void {
+    this.bossDefeated = true;
   }
 
   get isGameOver(): boolean {

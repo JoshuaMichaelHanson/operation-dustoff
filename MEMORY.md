@@ -1280,3 +1280,76 @@ browser routes pass without captured browser errors: Sable SAM, Sable touch
 landing, Dustline keyboard rescue, Dustline touch refill, and Dustline airborne
 fuel depletion. The depletion screenshots show a base refill, an empty-fuel life
 loss, and a replacement helicopter with a full tank.
+
+## 2026-10-03 - Last Light Boss Finale
+
+Last Light is the seventh selectable mission: a compact 3100-pixel route with
+one low ridge, two camps, and a six-POW rescue target. A nine-hull armored
+helicopter patrols the approach to Camp 1. Its pure `BossAttack` state machine
+alternates a two-shot aimed volley and a three-round spread after a visible
+1.35-second warning, with a cooldown and range-escape cancellation. The Phaser
+entity draws an original code-generated silhouette, rotor blur, world health bar,
+warning line, and reticle. The HUD also shows fixed boss health and direction.
+
+Cannon hits deal one hull point; a locked missile deals three. Boss destruction
+awards 800 points. `GameState` requires both boss defeat and six rescues in this
+mission, in either order. The boss shares the existing enemy projectile and
+player missile flows. Last Light has no tank, AA, SAM, or ground squad, and jets
+are suppressed while the boss is active so its attack remains readable.
+
+The focused browser route showed the boss warning, three missile hits and boss
+destruction, Camp 1 opened with short cannon fire, six POWs boarded, a safe
+return and unload, and the `CAMPAIGN COMPLETE` screen at 1400 points. A second
+route showed cannon fire reducing boss health from nine to one and the player
+taking 28 hull damage while the warning remained visible. The browser driver
+must hold the `X` key across Phaser frames; an instantaneous Playwright press
+was missed by `JustDown`. A brief ground reposition after opening Camp 1 lets
+the two far rally POWs board without firing extra cannon rounds into them.
+The forced-touch route showed a green boss missile lock button and a tap reducing
+boss health from nine to six with no browser errors.
+Final verification: all 135 Vitest tests, the production build, and all 19
+browser gameplay routes pass. The full-suite finale screenshot shows six POWs
+rescued and `CAMPAIGN COMPLETE`; browser console reports contain no errors.
+Physical-device feel and a full seven-mission campaign playthrough remain
+follow-up playtests in the existing backlog.
+
+## 2026-10-03 - Last Light Boss Balance and Art Pass
+
+After the first browser playtest, the boss was too quick to defeat with three
+missiles. It now has fifteen hull points, requiring five locked missiles or
+longer cannon exposure. Its patrol is faster, the telegraph remains visible for
+1.25 seconds, and the normal cooldown is 3.2 seconds. Below half health, aimed
+and spread volleys each add one salvo and the cooldown becomes 2.6 seconds.
+The fixed HUD and world health bar turn amber and the HUD labels this phase
+`ENRAGED`. Damage per projectile remains fourteen to keep evasion meaningful.
+
+The generated texture was redrawn at 176 by 84 pixels with a broad armored
+fuselage, framed canopy, engine housing, tail rotor, weapon pods, belly cannon,
+and skids. The Arcade collision body follows the enlarged silhouette. The
+focused keyboard fight still ended with six POWs rescued, 1400 points, and
+three helicopters remaining; a cannon route reached six of fifteen hull and
+visibly entered the damaged phase. Keyboard and touch missile routes reported
+no browser console errors. All 136 Vitest tests, the production build, and all
+19 browser gameplay routes pass.
+
+## 2026-10-03 - Finite Boss Missile Volley
+
+The boss now inserts a warned missile pattern between aimed and spread fire. It
+holds three air-launched missiles total, sending up to two per warning, spaced
+520 ms apart. The yellow lock line and `BOSS MISSILE LOCK` cue distinguish this
+from the red gun warning. Boss missiles reuse the ground SAM projectile class,
+terrain collision, and player damage flow, but use a separate flight profile:
+220 speed versus the player's 260 top horizontal speed, 1.4 seconds of steering,
+then straight flight and expiry at 3.6 seconds. A retreat or ridge can defeat
+the attack; it cannot chase like the player's guided missile. Ground SAM values
+remain unchanged.
+
+The browser escape route captures the lock, inbound missiles, and a leftward
+retreat with two orange missiles trailing behind a player still at 100 hull.
+The five-missile boss kill and six-POW return route still reached campaign
+completion with three helicopters remaining. Unit tests cover the three-shot
+magazine, launch spacing, and guidance cutoff. All 137 Vitest tests and the
+production build pass. The 20-route browser run passed 19 routes; an unrelated
+earlier terrain route saw a browser `ERR_NO_BUFFER_SPACE` loading error, then
+passed cleanly when rerun alone. All four Last Light routes passed in the full
+run.

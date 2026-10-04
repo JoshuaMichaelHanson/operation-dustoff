@@ -312,6 +312,95 @@ test('lands by touch against the leftward Sable Reach wind', async ({
   await context.close();
 });
 
+test('defeats the Last Light boss and completes a rescue', async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(90_000);
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page, 6);
+  await holdKeys(page, ['ArrowUp', 'ArrowRight'], 3_200);
+  await attachScreenshot(page, testInfo, 'level-7-boss-approach');
+  for (let shot = 0; shot < 5; shot += 1) {
+    await holdKeys(page, ['x'], 120);
+    await page.waitForTimeout(2_250);
+    if (shot === 0) {
+      await attachScreenshot(page, testInfo, 'level-7-first-missile');
+    }
+  }
+  await attachScreenshot(page, testInfo, 'level-7-boss-missiles');
+  await holdKeys(page, ['ArrowRight'], 2_900);
+  await holdKeys(page, ['ArrowLeft'], 500);
+  await holdKeys(page, ['ArrowDown'], 2_700);
+  await attachScreenshot(page, testInfo, 'level-7-camp-approach');
+  await holdKeys(page, ['Space'], 1_050);
+  await holdKeys(page, ['ArrowRight'], 300);
+  await page.waitForTimeout(7_000);
+  await attachScreenshot(page, testInfo, 'level-7-pow-boarding');
+  await holdKeys(page, ['ArrowUp', 'ArrowLeft'], 5_500);
+  await attachScreenshot(page, testInfo, 'level-7-return-approach');
+  await holdKeys(page, ['ArrowDown'], 4_000);
+  await page.waitForTimeout(8_000);
+  await attachScreenshot(page, testInfo, 'level-7-campaign-complete');
+  await attachConsoleReport(testInfo, issues);
+
+  expect(issues).toEqual([]);
+});
+
+test('damages the Last Light boss with cannon fire', async ({
+  page,
+}, testInfo) => {
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page, 6);
+  await holdKeys(page, ['ArrowUp', 'ArrowRight'], 1_800);
+  await holdKeys(page, ['ArrowRight'], 2_100);
+  await attachScreenshot(page, testInfo, 'level-7-cannon-approach');
+  await holdKeys(page, ['Space'], 2_000);
+  await attachScreenshot(page, testInfo, 'level-7-cannon-hit');
+  await attachConsoleReport(testInfo, issues);
+
+  expect(issues).toEqual([]);
+});
+
+test('evades a finite boss missile volley', async ({ page }, testInfo) => {
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page, 6);
+  await holdKeys(page, ['ArrowUp', 'ArrowRight'], 3_200);
+  await page.waitForTimeout(4_400);
+  await attachScreenshot(page, testInfo, 'level-7-boss-missile-lock');
+  await page.waitForTimeout(1_300);
+  await attachScreenshot(page, testInfo, 'level-7-boss-missile-inbound');
+  await holdKeys(page, ['ArrowLeft'], 2_600);
+  await attachScreenshot(page, testInfo, 'level-7-boss-missile-escape');
+  await attachConsoleReport(testInfo, issues);
+
+  expect(issues).toEqual([]);
+});
+
+test('launches a touch missile at the Last Light boss', async ({
+  browser,
+}, testInfo) => {
+  const context = await browser.newContext({
+    hasTouch: true,
+    viewport: { width: 1280, height: 720 },
+  });
+  const page = await context.newPage();
+  const issues = captureBrowserIssues(page);
+
+  await startGame(page, 6, true);
+  await holdTouch(page, 145, 585, 210, 520, 3_200);
+  await attachScreenshot(page, testInfo, 'level-7-touch-missile-lock');
+  await page.touchscreen.tap(995, 615);
+  await page.waitForTimeout(2_000);
+  await attachScreenshot(page, testInfo, 'level-7-touch-missile-hit');
+  await attachConsoleReport(testInfo, issues);
+
+  expect(issues).toEqual([]);
+  await context.close();
+});
+
 test('carries SF to Dustline Hold and defends a released POW camp', async ({
   page,
 }, testInfo) => {

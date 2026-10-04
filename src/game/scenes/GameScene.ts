@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import {
   AA_GUN,
   BOMB,
+  BOSS,
   CAMERA,
   GAME_HEIGHT,
   GAME_WIDTH,
@@ -22,6 +23,7 @@ import {
 import { AudioManager } from '../audio/AudioManager';
 import { AaGun } from '../entities/AaGun';
 import { Bomb } from '../entities/Bomb';
+import { BossHelicopter } from '../entities/BossHelicopter';
 import { Helicopter } from '../entities/Helicopter';
 import { HomingMissile } from '../entities/HomingMissile';
 import { Hostage } from '../entities/Hostage';
@@ -122,6 +124,7 @@ export class GameScene extends Phaser.Scene {
   private fullLoadBonusReady = false;
   private groundCombat: GroundCombat | null = null;
   private fuelTank: FuelTank | null = null;
+  private boss: BossHelicopter | null = null;
   private dustStreaks: Phaser.GameObjects.Rectangle[] = [];
 
   constructor() {
@@ -156,11 +159,12 @@ export class GameScene extends Phaser.Scene {
     this.groundCombat = null;
     this.fuelTank = this.level.fuelCapacityMs
       ? new FuelTank(this.level.fuelCapacityMs) : null;
+    this.boss = null;
     this.dustStreaks = [];
     this.gameState = new GameState(this.level.rescueTarget, {
       score: this.initialScore,
       lives: this.initialLives,
-    });
+    }, !!this.level.boss);
     this.physics.world.setBounds(0, 0, this.level.worldWidth, WORLD_HEIGHT);
     this.createBattlefield();
 
@@ -208,6 +212,8 @@ export class GameScene extends Phaser.Scene {
     this.prisonCamps = this.level.campPositions.map(
       (x) => new PrisonCamp(this, x, GROUND_Y - 36),
     );
+    this.boss = this.level.boss
+      ? new BossHelicopter(this, this.level.boss) : null;
     this.groundCombat = this.level.groundCombat
       ? new GroundCombat(this, this.level.worldWidth, this.level.flightObstacles)
       : null;
@@ -370,6 +376,22 @@ export class GameScene extends Phaser.Scene {
         }
       },
     );
+    if (this.boss) {
+      this.physics.add.overlap(this.boss, this.cannonRounds,
+        (_bossObject, roundObject) => {
+          const round = roundObject as Phaser.Physics.Arcade.Image;
+          if (!round.active) return;
+          round.disableBody(true, true);
+          this.damageBoss(1);
+        });
+      this.physics.add.overlap(this.boss, this.missiles,
+        (_bossObject, missileObject) => {
+          const missile = missileObject as HomingMissile;
+          if (!missile.active) return;
+          missile.destroy();
+          this.damageBoss(MISSILE.damage);
+        });
+    }
     this.physics.add.overlap(
       this.helicopter,
       this.enemyRounds,
@@ -394,8 +416,10 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.helicopter, this.samMissiles,
       (helicopterObject, missileObject) => {
         const helicopter = helicopterObject as Helicopter;
-        (missileObject as SamMissile).destroy();
-        if (!this.playerDestroyed && helicopter.takeDamage(SAM.missileDamage)) {
+        const missile = missileObject as SamMissile;
+        const damage = missile.damage;
+        missile.destroy();
+        if (!this.playerDestroyed && helicopter.takeDamage(damage)) {
           this.destroyHelicopter();
         }
       });
@@ -507,6 +531,22 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    if (this.boss?.active) {
+      const bossStep = this.boss.update(time,
+        this.playerDestroyed ? undefined : this.helicopter);
+      for (const bossShot of bossStep.shots) {
+        this.fireEnemyRound(bossShot);
+        this.showWeaponFlash(bossShot.x, bossShot.y, 0xffa681, 9);
+      }
+      if (bossStep.missileTarget && !this.playerDestroyed) {
+        const missile = new SamMissile(this, this.boss.x,
+          this.boss.y + 24, bossStep.missileTarget,
+          this.helicopter, time, this.level.worldWidth, 'boss');
+        this.samMissiles.add(missile);
+        this.showWeaponFlash(missile.x, missile.y, 0xffd166, 14);
+      }
+    }
+
     this.trySpawnJet(time);
     for (const child of [...this.jets.getChildren()]) {
       const jet = child as Jet;
@@ -588,6 +628,11 @@ export class GameScene extends Phaser.Scene {
 
     this.recycleOffscreenProjectiles(this.cannonRounds);
     this.recycleOffscreenProjectiles(this.enemyRounds);
+
+    if (this.gameState.isVictory) {
+      this.startVictoryScene();
+      return;
+    }
 
     this.updateHud();
   }
@@ -852,7 +897,7 @@ export class GameScene extends Phaser.Scene {
   private createFlightDisplay(): void {
     this.hud = new Hud(this, !!this.groundCombat, !!this.fuelTank,
       this.level.wind ? Math.sign(this.level.wind.acceleration) as -1 | 1
-        : undefined);
+        : undefined, !!this.level.boss);
     const windHint = this.level.wind
       ? `WIND PUSHES ${this.level.wind.acceleration > 0 ? 'RIGHT' : 'LEFT'}`
       : '';
@@ -863,6 +908,8 @@ export class GameScene extends Phaser.Scene {
         GAME_HEIGHT - 38,
         `L${this.levelIndex + 1}: ${this.level.name} — ${this.level.samPositions.length > 0
           ? `FLY LOW TO BREAK SAM LOCK OR BOMB THE LAUNCHER${windHint ? `; ${windHint}` : ''}`
+          : this.level.boss
+          ? 'DEFEAT THE BOSS WITH CANNON OR MISSILES — RESCUE POWS TO WIN'
           : this.groundCombat && this.fuelTank
           ? `CARRY SF TO CAMP — G: DEPLOY; ${windHint ? `${windHint}; ` : ''}BASE REFUELS`
           : this.groundCombat
@@ -910,6 +957,8 @@ export class GameScene extends Phaser.Scene {
       bombReady: this.helicopter.isBombReady(this.time.now),
       fuelSeconds: this.fuelTank?.secondsRemaining,
       fuelRatio: this.fuelTank?.ratio,
+      bossHealth: this.boss?.health,
+      bossMaximumHealth: this.level.boss ? BOSS.health : undefined,
       fuelWarning: this.fuelTank?.shouldReturn(
         Math.abs(this.helicopter.x - RESCUE_BASE.centerX))
         ? `${this.fuelTank.isCritical ? 'FUEL CRITICAL' : 'FUEL LOW'} — RETURN TO ${formatIntelCue(
@@ -940,6 +989,9 @@ export class GameScene extends Phaser.Scene {
               .map((launcher) => launcher.x),
           ))]
           : []),
+        ...(this.boss?.active
+          ? [formatIntelCue('BOSS', this.helicopter.x, this.boss.x)]
+          : []),
         ...(this.groundCombat
           ? [`SF ${this.groundCombat.sfAboard} ABOARD / ${this.groundCombat.sfDeployed} GROUND`,
             `HOSTILES ${this.groundCombat.hostileAlive}`]
@@ -951,6 +1003,13 @@ export class GameScene extends Phaser.Scene {
           this.helicopter.x,
           this.pendingHostageThreat.source.x,
         )} FIRE ON ${formatIntelCue('POW', this.helicopter.x, this.pendingHostageThreat.target.x)}`
+        : this.boss?.isMissileWarning
+          ? 'BOSS MISSILE LOCK — FLY AWAY OR TAKE RIDGE COVER'
+        : this.samMissiles.getChildren().some((child) =>
+          child.active && (child as SamMissile).isBossMissile)
+          ? 'BOSS MISSILE INBOUND — OUTRUN IT OR TAKE COVER'
+        : this.boss?.isWarning
+          ? 'BOSS ATTACK INCOMING — MOVE OUT OF THE SIGHT LINE'
         : this.aaGuns.some((gun) => gun.isWarning)
           ? `AA AIMING ${formatIntelCue('GUN', this.helicopter.x, nearestX(
             this.helicopter.x,
@@ -1187,7 +1246,7 @@ export class GameScene extends Phaser.Scene {
     x: number,
     y: number,
     direction: -1 | 1,
-    target: Jet,
+    target: Jet | BossHelicopter,
     time: number,
   ): void {
     const missile = new HomingMissile(
@@ -1204,12 +1263,15 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.shake(70, 0.002);
   }
 
-  private getMissileLockTarget(): Jet | null {
-    let nearestTarget: Jet | null = null;
+  private getMissileLockTarget(): Jet | BossHelicopter | null {
+    let nearestTarget: Jet | BossHelicopter | null = null;
     let nearestDistance = Number.POSITIVE_INFINITY;
 
-    for (const child of this.jets.getChildren()) {
-      const jet = child as Jet;
+    const targets: (Jet | BossHelicopter)[] = [
+      ...this.jets.getChildren() as Jet[],
+      ...(this.boss?.active ? [this.boss] : []),
+    ];
+    for (const jet of targets) {
       if (
         !jet.active ||
         !canLockMissileTarget(
@@ -1360,6 +1422,7 @@ export class GameScene extends Phaser.Scene {
   private trySpawnJet(time: number): void {
     if (
       this.playerDestroyed ||
+      this.boss?.active ||
       time < this.nextJetSpawnAt ||
       this.jets.countActive(true) >= JET.maximumActive
     ) {
@@ -1410,6 +1473,7 @@ export class GameScene extends Phaser.Scene {
   private destroyHelicopter(cause?: 'OUT OF FUEL'): void {
     this.playerDestroyed = true;
     this.clearHostageThreat(this.time.now);
+    if (this.boss?.active) this.boss.cancelAttack(this.time.now);
     for (const aaGun of this.aaGuns) {
       if (aaGun.active) {
         aaGun.cancelAttack(this.time.now);
@@ -1599,6 +1663,20 @@ export class GameScene extends Phaser.Scene {
     this.gameState.awardScore(JET.scoreValue);
     this.showScoreAward(x, y - 28, JET.scoreValue);
     this.showJetExplosion(x, y);
+  }
+
+  private damageBoss(amount: number): void {
+    const boss = this.boss;
+    if (!boss?.active) return;
+    const x = boss.x;
+    const y = boss.y;
+    if (boss.takeDamage(amount)) {
+      this.gameState.defeatBoss();
+      this.gameState.awardScore(BOSS.scoreValue);
+      this.showScoreAward(x, y - 62, BOSS.scoreValue, 'BOSS DOWN');
+      this.showExplosion(x, y, 42, 24, 260, 0.008);
+      this.updateObjectiveText();
+    }
   }
 
   private awardAaDestruction(
@@ -1978,6 +2056,13 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    if (this.boss?.active &&
+      this.gameState.rescued >= this.gameState.rescueTarget) {
+      this.targetText.setText('RESCUE TARGET MET — DEFEAT THE BOSS TO WIN');
+      this.targetText.setColor('#ffb978');
+      return;
+    }
+
     if (passengers === this.helicopter.passengerCapacity) {
       this.targetText.setText(
         `HELICOPTER FULL — RETURN TO BASE FOR +${RESCUE_BASE.fullLoadBonus}`,
@@ -2016,7 +2101,11 @@ export class GameScene extends Phaser.Scene {
 
     const campInstruction = `${closedCampCount} PRISON ${closedCampCount === 1 ? 'CAMP' : 'CAMPS'}`;
     this.targetText.setText(
-      this.groundCombat && this.groundCombat.sfAboard > 0
+      this.boss?.active
+        ? `BOSS ${this.boss.health}/${BOSS.health} — OPEN ${campInstruction} AND RESCUE POWS`
+        : this.level.boss
+        ? `BOSS DOWN — OPEN ${campInstruction} AND RESCUE POWS`
+      : this.groundCombat && this.groundCombat.sfAboard > 0
         ? `SF ${this.groundCombat.sfAboard} ABOARD — OPEN ${campInstruction} AND DEPLOY`
         : remainingSam > 0
         ? `SAM ACTIVE — FLY LOW OR BOMB IT   OPEN ${campInstruction}`

@@ -208,6 +208,9 @@ Current routes:
 10. Check leftward wind on Sable Reach through a keyboard SAM approach and a
     touch flight that corrects onto the base deck; compare Dustline's rightward
     wind during its keyboard rescue and touch fuel routes.
+11. Select Last Light, capture the boss warning and health gauge, hit it with
+    cannon and missiles, open Camp 1, board six POWs, return to base, and retain
+    the campaign-complete screen with a clean browser-console report.
 
 Each route retains a checkpoint PNG and `browser-console.json` under
 `test-results/gameplay/`. The console report includes warnings, errors, and uncaught page
@@ -287,6 +290,32 @@ Manual keyboard and touch acceptance:
 4. Destroy the launcher with a bomb or cannon; confirm 200 points and the objective update.
 5. Complete a rescue trip with the launcher active and another after destroying it on
    keyboard and touch. Confirm landing and boarding remain practical.
+
+## Boss Helicopter and Last Light
+
+Pure tests cover warning duration, aimed and spread volleys, the finite missile
+magazine and guidance cutoff, the longer damaged-phase volleys and shorter
+cooldown, range escape, and victory gating when the boss or rescue target is
+completed first.
+The focused browser routes show cannon damage, keyboard and touch missile hits,
+the boss missile warning and outrun escape, Camp 1 opening, six POWs boarding
+and unloading, and the campaign-complete screen.
+
+Manual keyboard and touch checks:
+
+1. Select Last Light and confirm the boss patrol, HUD health gauge, warning line,
+   low ridge, and first camp are distinguishable.
+2. Move after an aimed warning and leave attack range during another warning;
+   the marked shot should be avoidable and range escape should cancel acquisition.
+   When the yellow boss missile lock appears, fly away or take ridge cover;
+   missiles should stop steering and expire within a few seconds.
+3. Fight once with cannon fire and once with locked missiles. Confirm both reduce
+   boss health, five missiles destroy it, its HUD changes below half health, and
+   destruction awards 800 points.
+4. Open Camp 1, board at least six POWs, return to base, and verify that the final
+   victory appears only after both objectives are complete.
+5. Repeat the missile and rescue controls by touch. Confirm no other air defense
+   or ground squad obscures the boss encounter.
 
 ---
 

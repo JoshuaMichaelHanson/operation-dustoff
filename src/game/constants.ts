@@ -89,6 +89,26 @@ export const JET = {
   maximumActive: 1,
 } as const;
 
+export const BOSS = {
+  health: 15,
+  scoreValue: 800,
+  patrolSpeed: 76,
+  attackRange: 830,
+  warningMs: 1250,
+  burstSpacingMs: 260,
+  cooldownMs: 3200,
+  damagedCooldownMs: 2600,
+  projectileSpeed: 350,
+  projectileDamage: 14,
+  missileAmmo: 3,
+  missileSpacingMs: 520,
+  missileSpeed: 220,
+  missileTurnRadiansPerSecond: 1.25,
+  missileGuideMs: 1400,
+  missileLifetimeMs: 3600,
+  missileDamage: 24,
+} as const;
+
 export const MISSILE = {
   cooldownMs: 2200,
   lockRange: 900,
