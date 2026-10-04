@@ -9,9 +9,9 @@ import {
 } from '../src/game/levels/levelConfig';
 
 describe('level configuration', () => {
-  it('adds separate AA and SAM missions after the original campaign', () => {
-    expect(LEVELS).toHaveLength(6);
-    expect(LEVELS.map((level) => level.difficultyRank)).toEqual([1, 2, 3, 4, 5, 6]);
+  it('adds air defenses and a boss finale after the original campaign', () => {
+    expect(LEVELS).toHaveLength(7);
+    expect(LEVELS.map((level) => level.difficultyRank)).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(LEVELS[1]!.tankPositions.length).toBeGreaterThan(
       LEVELS[0]!.tankPositions.length,
     );
@@ -30,7 +30,7 @@ describe('level configuration', () => {
     expect(LEVELS[5]!.groundCombat).toBe(true);
     expect(LEVELS[5]!.tankPositions).toHaveLength(0);
     expect(LEVELS.map((level) => level.fuelCapacityMs ?? 0))
-      .toEqual([0, 0, 0, 0, 0, 55_000]);
+      .toEqual([0, 0, 0, 0, 0, 55_000, 0]);
     expect(LEVELS.slice(0, 4).every((level) => !level.wind)).toBe(true);
     expect(LEVELS[4]!.wind).toMatchObject({
       acceleration: -30,
@@ -40,6 +40,12 @@ describe('level configuration', () => {
       acceleration: 30,
       maximumDriftSpeed: 40,
     });
+    expect(LEVELS.slice(0, 6).every((level) => !level.boss)).toBe(true);
+    expect(LEVELS[6]!.boss).toMatchObject({ x: 1650, y: 450 });
+    expect(LEVELS[6]!.aaPositions).toHaveLength(0);
+    expect(LEVELS[6]!.samPositions).toHaveLength(0);
+    expect(LEVELS[6]!.rescueTarget).toBeLessThanOrEqual(PRISON_CAMP.hostageCount);
+    expect(LEVELS[6]!.jetInitialSpawnDelayMs).toBeGreaterThan(60_000);
   });
 
   it('provides enough hostages and keeps objectives inside each world', () => {
@@ -78,6 +84,7 @@ describe('level configuration', () => {
     expect(getNextLevelIndex(2)).toBe(3);
     expect(getNextLevelIndex(3)).toBe(4);
     expect(getNextLevelIndex(4)).toBe(5);
+    expect(getNextLevelIndex(5)).toBe(6);
     expect(getNextLevelIndex(LEVELS.length - 1)).toBeNull();
   });
 });

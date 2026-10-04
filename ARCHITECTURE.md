@@ -294,7 +294,8 @@ This keeps balancing changes cheap.
 
 Keep mission differences in a small `LevelConfig` data module consumed by the existing
 `GameScene`. Level data owns world length, rescue target, camp and tank positions, jet
-timing, AA and SAM positions, the ground-combat flag, optional fuel capacity, solid
+timing, AA and SAM positions, the optional boss position and patrol width, the
+ground-combat flag, optional fuel capacity, solid
 flight obstacles, and environment colors. Do not create one scene class
 per level or a general map engine.
 
@@ -308,6 +309,17 @@ and dust tint. `Helicopter` applies the pure wind rule while airborne and retain
 its usual ground handling. `GameScene` animates sparse screen-space dust, while
 `Hud` displays a fixed direction arrow. Weather does not change projectiles or
 hostage movement.
+
+`BossAttack` is a small pure timing and shot-pattern state machine. The
+`BossHelicopter` Phaser entity owns patrol motion, collision body, warning line,
+and health art. `GameScene` connects its shots to the existing enemy-projectile
+group and its damage to cannon and lock-on missile overlaps. `GameState` gates
+the finale on both rescues and boss defeat; ordinary missions still win from
+their rescue target alone.
+The boss's finite missile magazine uses a third warned attack pattern. Its
+air-launched missiles reuse `SamMissile` collision and terrain handling with a
+boss flight profile: slower than the player, briefly guided, then ballistic and
+short lived. Ground SAM behavior retains its own speed, tracking, and damage.
 
 The sixth mission creates a small `GroundCombat` system from its level flag.
 `GroundCombatModel` owns deterministic SF, truck, and hostile-unit state; the system
