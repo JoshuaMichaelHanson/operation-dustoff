@@ -24,6 +24,20 @@ describe('victory condition', () => {
     expect(gameState.score).toBe(300);
   });
 
+  it('requires both boss defeat and rescues in either order for the finale', () => {
+    const rescueFirst = new GameState(6, undefined, true);
+    rescueFirst.recordRescue(6);
+    expect(rescueFirst.isVictory).toBe(false);
+    rescueFirst.defeatBoss();
+    expect(rescueFirst.isVictory).toBe(true);
+
+    const bossFirst = new GameState(6, undefined, true);
+    bossFirst.defeatBoss();
+    expect(bossFirst.isVictory).toBe(false);
+    bossFirst.recordRescue(6);
+    expect(bossFirst.isVictory).toBe(true);
+  });
+
   it('carries score and remaining helicopters into the next mission', () => {
     const gameState = new GameState(7, { score: 900, lives: 2 });
 

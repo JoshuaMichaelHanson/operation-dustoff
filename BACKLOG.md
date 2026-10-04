@@ -354,13 +354,25 @@ and still complete a rescue trip. Weather adds a decision beyond a new palette.
 
 ### Phase 6 - Build the Boss Helicopter Finale
 
-- [ ] Add a distinct, destructible boss helicopter with telegraphed attacks, limited
+- [x] Add a distinct, destructible boss helicopter with telegraphed attacks, limited
       attack patterns, readable health, and clear cannon/missile counterplay
-- [ ] Add one final authored mission, bringing the campaign to seven levels; require
+- [x] Add one final authored mission, bringing the campaign to seven levels; require
       both the rescue target and boss defeat, with the fight connected to a pickup
       or return route
-- [ ] Limit simultaneous AA, SAM, jet, and ground threats so the boss remains legible
-- [ ] Test attack timing, damage, victory gating, and a focused browser encounter
+- [x] Limit simultaneous AA, SAM, jet, and ground threats so the boss remains legible
+- [x] Test attack timing, damage, victory gating, and a focused browser encounter
+
+Last Light is the seventh selectable mission. A fifteen-hull boss patrols the route
+to Camp 1, warns before alternating aimed and spread volleys, and can be brought
+down with cannon fire or five locked missiles. Below half health it fires longer
+volleys on a shorter cooldown, with the phase shown in its health displays. Its
+third attack pattern locks and launches a short pair of slow, finite-guidance
+missiles; it carries three missiles total. The player can outrun the pair or use
+ridge cover. The player must also rescue six POWs. The finale has one low ridge
+and two camps, with no tank, ground SAM launcher, AA, or ground squad; jets do
+not spawn during the boss fight. Browser routes show cannon damage, keyboard
+and touch missile hits, an outrun boss missile volley, a six-POW pickup and
+unload, and the campaign-complete screen.
 
 Acceptance: The player can evade and defeat the boss, bring survivors home, and see
 campaign completion only after both objectives are met.
@@ -429,7 +441,7 @@ clear case to merge the boss into an existing mission and finish with six.
 - [x] Backward flight and explicit keyboard/touch turn control
 - [ ] Local high-score table
 - [x] Full-load rescue bonus
-- [ ] Boss helicopter
+- [x] Boss helicopter
 - [x] Fuel
 - [x] Weather effects
 - [x] POW panic / dive-for-cover behavior

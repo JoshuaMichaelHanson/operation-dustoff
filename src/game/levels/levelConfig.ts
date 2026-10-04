@@ -10,6 +10,12 @@ export interface FlightObstacleConfig {
   height: number;
 }
 
+export interface BossConfig {
+  x: number;
+  y: number;
+  patrolHalfWidth: number;
+}
+
 export interface LevelEnvironment {
   skyBands: readonly [number, number, number, number];
   distantMountainTint: number;
@@ -34,6 +40,7 @@ export interface LevelConfig {
   tankPositions: readonly number[];
   aaPositions: readonly number[];
   samPositions: readonly number[];
+  boss?: BossConfig;
   groundCombat?: boolean;
   fuelCapacityMs?: number;
   wind?: {
@@ -233,6 +240,36 @@ export const LEVELS: readonly LevelConfig[] = [
       obstacleEdgeColor: 0xd3c292,
       cloudAlpha: [0.1, 0.2],
       cloudSpacing: [400, 680],
+      night: false,
+    },
+  },
+  {
+    id: 'last-light',
+    name: 'LAST LIGHT',
+    difficultyLabel: 'FINALE',
+    difficultyRank: 7,
+    worldWidth: 3100,
+    rescueTarget: 6,
+    campPositions: [1950, 2700],
+    tankPositions: [],
+    aaPositions: [],
+    samPositions: [],
+    boss: { x: 1650, y: 450, patrolHalfWidth: 170 },
+    jetInitialSpawnDelayMs: 120_000,
+    jetSpawnIntervalMs: 120_000,
+    flightObstacles: [
+      { x: 1050, width: 230, height: 135 },
+    ],
+    environment: {
+      skyBands: [0x131d27, 0x243142, 0x4c4c57, 0x74605a],
+      distantMountainTint: 0xaa8b86,
+      farRidgeTint: 0x4d4d5b,
+      nearRidgeTint: 0x53616a,
+      groundTint: 0x89776b,
+      obstacleColor: 0x53545e,
+      obstacleEdgeColor: 0xb9a49a,
+      cloudAlpha: [0.12, 0.22],
+      cloudSpacing: [440, 700],
       night: false,
     },
   },

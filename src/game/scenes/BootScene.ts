@@ -101,6 +101,7 @@ export class BootScene extends Phaser.Scene {
     this.createAaGunTexture();
     this.createSamLauncherTexture();
     this.createSamMissileTexture();
+    this.createBossHelicopterTexture();
     this.scene.start('TitleScene');
   }
 
@@ -178,6 +179,65 @@ export class BootScene extends Phaser.Scene {
     graphics.fillRect(13, 47, 14, 3);
     graphics.fillRect(53, 47, 14, 3);
     graphics.generateTexture('sam-launcher', 80, 50);
+    graphics.destroy();
+  }
+
+  private createBossHelicopterTexture(): void {
+    const graphics = this.add.graphics();
+    // Dark outline and broad tail keep the silhouette distinct from the player.
+    graphics.fillStyle(0x1c2028);
+    graphics.fillTriangle(7, 22, 27, 47, 21, 58);
+    graphics.fillRect(17, 35, 53, 15);
+    graphics.fillRect(54, 25, 92, 42);
+    graphics.fillTriangle(140, 27, 174, 43, 140, 61);
+    graphics.fillRect(84, 13, 12, 17);
+    graphics.fillRect(72, 9, 36, 5);
+    // Tail rotor, engine housing, and layered armor plates.
+    graphics.fillStyle(0x56505a);
+    graphics.fillRect(10, 31, 15, 4);
+    graphics.fillRect(15, 25, 4, 16);
+    graphics.fillStyle(0x853d45);
+    graphics.fillRect(25, 39, 46, 7);
+    graphics.fillRect(58, 29, 80, 32);
+    graphics.fillStyle(0xb65d55);
+    graphics.fillRect(64, 32, 54, 10);
+    graphics.fillRect(61, 47, 68, 6);
+    graphics.fillStyle(0x62333e);
+    graphics.fillRect(67, 44, 56, 5);
+    graphics.fillRect(72, 56, 65, 6);
+    graphics.fillStyle(0xd38a66);
+    graphics.fillRect(68, 34, 28, 3);
+    graphics.fillRect(70, 49, 25, 2);
+    // Framed, angular canopy with separate panes.
+    graphics.fillStyle(0x111d28);
+    graphics.fillTriangle(119, 29, 143, 29, 139, 51);
+    graphics.fillTriangle(145, 30, 167, 42, 142, 51);
+    graphics.fillStyle(0x80b5c3);
+    graphics.fillTriangle(122, 32, 140, 32, 137, 46);
+    graphics.fillStyle(0xaad3d3);
+    graphics.fillTriangle(145, 33, 162, 42, 142, 46);
+    graphics.lineStyle(2, 0x24232d);
+    graphics.lineBetween(141, 31, 139, 50);
+    // Landing skids, belly cannon, and twin weapon pods.
+    graphics.fillStyle(0x27262e);
+    graphics.fillRect(65, 61, 19, 11);
+    graphics.fillRect(119, 61, 19, 11);
+    graphics.fillRect(58, 72, 91, 4);
+    graphics.fillRect(92, 60, 17, 14);
+    graphics.fillRect(91, 72, 20, 5);
+    graphics.fillStyle(0x6d7472);
+    graphics.fillRect(65, 63, 15, 5);
+    graphics.fillRect(122, 63, 14, 5);
+    graphics.fillRect(94, 63, 12, 5);
+    graphics.fillStyle(0xe6ae72);
+    graphics.fillRect(27, 38, 5, 4);
+    graphics.fillRect(101, 34, 7, 4);
+    graphics.fillRect(116, 51, 5, 3);
+    graphics.fillStyle(0x412c38);
+    graphics.fillCircle(77, 44, 2);
+    graphics.fillCircle(97, 44, 2);
+    graphics.fillCircle(113, 44, 2);
+    graphics.generateTexture('boss-helicopter', 176, 84);
     graphics.destroy();
   }
 

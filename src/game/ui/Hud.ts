@@ -25,6 +25,8 @@ export interface HudState {
   fuelSeconds?: number;
   fuelRatio?: number;
   fuelWarning?: string;
+  bossHealth?: number;
+  bossMaximumHealth?: number;
   intel: string;
   threatWarning: string;
 }
@@ -43,9 +45,12 @@ export class Hud {
   private readonly fuelBar: Phaser.GameObjects.Graphics | null;
   private readonly statusText: Phaser.GameObjects.Text;
   private readonly intelText: Phaser.GameObjects.Text;
+  private readonly bossText: Phaser.GameObjects.Text | null;
+  private readonly bossBar: Phaser.GameObjects.Graphics | null;
 
   constructor(scene: Phaser.Scene, groundCombatEnabled = false,
-    fuelEnabled = false, windDirection?: -1 | 1) {
+    fuelEnabled = false, windDirection?: -1 | 1,
+    bossEnabled = false) {
     scene.add
       .rectangle(GAME_WIDTH / 2, 43, GAME_WIDTH, 86, 0x11150f, 0.92)
       .setScrollFactor(0)
@@ -112,6 +117,16 @@ export class Hud {
         fontSize: '15px',
         fontStyle: 'bold',
       }).setScrollFactor(0).setDepth(1001);
+    this.bossText = bossEnabled ? scene.add.text(GAME_WIDTH / 2, 126, '', {
+      color: '#ffb978',
+      backgroundColor: '#281e26',
+      fontFamily: 'Courier New',
+      fontSize: '16px',
+      fontStyle: 'bold',
+      padding: { x: 8, y: 3 },
+    }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(1001) : null;
+    this.bossBar = bossEnabled
+      ? scene.add.graphics().setScrollFactor(0).setDepth(1001) : null;
   }
 
   update(state: HudState): void {
@@ -126,6 +141,20 @@ export class Hud {
       .setText(`HULL ${state.health}`)
       .setColor(this.getHealthColor(state.health, state.maximumHealth));
     this.livesText.setText(`CHOPPERS ${state.lives}`);
+    if (this.bossText && this.bossBar && state.bossMaximumHealth) {
+      const health = state.bossHealth ?? 0;
+      this.bossText.setText(health > 0
+        ? `BOSS HULL ${health}/${state.bossMaximumHealth}${health <=
+          state.bossMaximumHealth / 2 ? '  ENRAGED' : ''}` : 'BOSS DOWN');
+      this.bossText.setColor(health <= state.bossMaximumHealth / 2 && health > 0
+        ? '#ffe08a' : health > 0 ? '#ffb978' : '#8fe388');
+      this.bossBar.clear();
+      this.bossBar.fillStyle(0x281e26).fillRect(GAME_WIDTH / 2 - 92, 155, 184, 8);
+      this.bossBar.fillStyle(health <= state.bossMaximumHealth / 2 && health > 0
+        ? 0xffd166 : health > 0 ? 0xff826c : 0x8fe388).fillRect(
+        GAME_WIDTH / 2 - 90, 157,
+        Math.round(180 * health / state.bossMaximumHealth), 4);
+    }
     if (this.fuelText && this.fuelBar && state.fuelRatio !== undefined) {
       const ratio = Math.max(0, Math.min(1, state.fuelRatio));
       const color = ratio <= 0.2 ? 0xe46b56
